@@ -7,6 +7,7 @@ Web monorepo: the `@algovn/ui` design system + Next.js apps.
 - `packages/ui` — design system: full shadcn sweep, charts, AppShell, composites, dark-first tokens
 - `packages/config` — shared tsconfig + ESLint flat configs
 - `apps/showcase` — living documentation (`pnpm --filter showcase dev`)
+- `apps/landing` — algovn.com landing page, phone-launcher UI (`pnpm --filter landing dev`)
 
 ## Commands
 
