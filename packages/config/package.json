@@ -1,0 +1,21 @@
+{
+  "name": "@algovn/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig/*": "./tsconfig/*.json",
+    "./eslint/base": "./eslint/base.js",
+    "./eslint/react": "./eslint/react.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-turbo": "^2.10.4",
+    "typescript-eslint": "^8.63.0"
+  }
+}
