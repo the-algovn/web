@@ -10,9 +10,11 @@ Web monorepo: the `@algovn/ui` design system + Next.js apps.
 
 ## Commands
 
+```bash
 pnpm install
 pnpm dev          # turbo dev (showcase on :3000)
 pnpm turbo lint typecheck test build
+```
 
 ## Adding an app
 
