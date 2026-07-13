@@ -89,12 +89,16 @@ export function AppShell({ brand, navigation, headerRight, children }: AppShellP
           <Breadcrumb className="hidden md:block">
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href="/">Home</Link>
-                </BreadcrumbLink>
+                {pathname === "/" ? (
+                  <BreadcrumbPage>Home</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link href="/">Home</Link>
+                  </BreadcrumbLink>
+                )}
               </BreadcrumbItem>
               {segments.map((segment, i) => (
-                <React.Fragment key={segment}>
+                <React.Fragment key={segments.slice(0, i + 1).join("/")}>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
                     {i === segments.length - 1 ? (
