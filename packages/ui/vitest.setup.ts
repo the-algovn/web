@@ -1,4 +1,15 @@
 import "@testing-library/jest-dom/vitest"
+import { cleanup } from "@testing-library/react"
+import { afterEach } from "vitest"
+
+// Testing Library's auto-cleanup only self-registers when it finds a global
+// `afterEach` (see @testing-library/react/dist/index.js). This project doesn't
+// set `test.globals: true`, so `afterEach` isn't global and DOM from one `it()`
+// leaks into the next within a file, causing "multiple elements" query errors
+// once tests share matching text/roles. Register cleanup explicitly instead.
+afterEach(() => {
+  cleanup()
+})
 
 // Newer Node versions define global `localStorage`/`sessionStorage` accessors that
 // return undefined without `--localstorage-file`. Vitest's jsdom environment only
