@@ -7,14 +7,8 @@ COPY packages ./packages
 COPY apps/landing ./apps/landing
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter landing build
-RUN mkdir -p /app/apps/landing/public
 
-FROM node:24-alpine AS runtime
-WORKDIR /app
-ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
-COPY --from=build /app/apps/landing/.next/standalone ./
-COPY --from=build /app/apps/landing/.next/static ./apps/landing/.next/static
-COPY --from=build /app/apps/landing/public ./apps/landing/public
-USER node
-EXPOSE 3000
-CMD ["node", "apps/landing/server.js"]
+FROM nginx:alpine AS runtime
+COPY apps/landing/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/apps/landing/out /usr/share/nginx/html
+EXPOSE 80
