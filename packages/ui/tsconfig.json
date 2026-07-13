@@ -1,7 +1,6 @@
 {
   "extends": "@algovn/config/tsconfig/react-library",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@algovn/ui": ["./src/components"],
       "@algovn/ui/lib/*": ["./src/lib/*"],
