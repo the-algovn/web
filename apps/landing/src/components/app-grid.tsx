@@ -22,12 +22,16 @@ export function AppGrid() {
           ) : (
             <span className="relative inline-block cursor-default opacity-50" title="Coming soon">
               <TileFace app={app} />
-              <span className="absolute -top-1 -right-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white/90">
+              <span
+                aria-hidden
+                className="absolute -top-1 -right-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white/90"
+              >
                 soon
               </span>
             </span>
           )}
           <span className="max-w-20 truncate text-xs font-medium text-white/90">{app.name}</span>
+          {app.status === "soon" && <span className="sr-only">(coming soon)</span>}
         </li>
       ))}
     </ul>
