@@ -45,6 +45,11 @@ export function AuroraBackground() {
         uPointerStrength: { value: 0 },
       },
     })
+    if (!gl.getProgramParameter(program.program, gl.LINK_STATUS)) {
+      gl.getExtension("WEBGL_lose_context")?.loseContext()
+      canvas.remove()
+      return
+    }
     const mesh = new Mesh(gl, { geometry: new Triangle(gl), program })
 
     const pointerTarget = { x: 0.5, y: 0.5 }
