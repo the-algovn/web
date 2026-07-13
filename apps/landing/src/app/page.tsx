@@ -1,6 +1,7 @@
 import { StatusBar } from "@/components/status-bar"
 import { ProfileWidget } from "@/components/profile-widget"
 import { AppGrid } from "@/components/app-grid"
+import { Dock } from "@/components/dock"
 
 export default function Home() {
   return (
@@ -10,7 +11,7 @@ export default function Home() {
         <ProfileWidget />
         <AppGrid />
       </div>
-      {/* Dock (Task 5) */}
+      <Dock />
     </main>
   )
 }
