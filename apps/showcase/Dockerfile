@@ -7,6 +7,7 @@ COPY packages ./packages
 COPY apps/showcase ./apps/showcase
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter showcase build
+RUN mkdir -p /app/apps/showcase/public
 
 FROM node:24-alpine AS runtime
 WORKDIR /app
