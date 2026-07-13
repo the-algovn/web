@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+.env*
+.DS_Store
+docs/superpowers/
+.superpowers/
