@@ -18,6 +18,15 @@ export default react.map(config => {
     rules: {
       "@typescript-eslint/no-empty-object-type": "off",
       "react/prop-types": "off",
+    },
+  },
+  {
+    // vendored shadcn registry files — extend this list when vendoring new components
+    files: [
+      "src/components/{accordion,alert,alert-dialog,aspect-ratio,attachment,avatar,badge,breadcrumb,bubble,button,button-group,calendar,card,carousel,chart,checkbox,collapsible,combobox,command,context-menu,dialog,direction,drawer,dropdown-menu,empty,field,form,hover-card,input,input-group,input-otp,item,kbd,label,marker,menubar,message,message-scroller,native-select,navigation-menu,pagination,popover,progress,radio-group,resizable,scroll-area,select,separator,sheet,sidebar,skeleton,slider,sonner,spinner,switch,table,tabs,textarea,toggle,toggle-group,tooltip}.tsx",
+      "src/hooks/use-mobile.ts",
+    ],
+    rules: {
       "@typescript-eslint/no-unused-vars": "off",
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/purity": "off",
