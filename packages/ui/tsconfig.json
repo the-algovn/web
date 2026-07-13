@@ -1,0 +1,13 @@
+{
+  "extends": "@algovn/config/tsconfig/react-library",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@algovn/ui": ["./src/components"],
+      "@algovn/ui/lib/*": ["./src/lib/*"],
+      "@algovn/ui/hooks/*": ["./src/hooks/*"],
+      "@algovn/ui/*": ["./src/components/*"]
+    }
+  },
+  "include": ["src", "vitest.setup.ts", "vitest.config.mts"]
+}
