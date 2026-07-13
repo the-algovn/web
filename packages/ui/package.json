@@ -9,9 +9,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./globals.css": "./src/styles/globals.css",
-    "./lib/*": "./src/lib/*",
-    "./hooks/*": "./src/hooks/*",
-    "./*": "./src/components/*"
+    "./lib/*": "./src/lib/*.ts",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./*": "./src/components/*.tsx"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
