@@ -1,7 +1,7 @@
 import { Activity, ArrowRight, Cpu, Timer, Wallet } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@algovn/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@algovn/ui/card"
+import { Card, CardDescription, CardHeader, CardTitle } from "@algovn/ui/card"
 import { PageHeader } from "@algovn/ui/page-header"
 import { StatCard } from "@algovn/ui/stat-card"
 
