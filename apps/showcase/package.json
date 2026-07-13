@@ -12,6 +12,7 @@
   "dependencies": {
     "@algovn/ui": "workspace:*",
     "@hookform/resolvers": "^5.4.0",
+    "@tanstack/react-table": "^8.21.3",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.24.0",
     "next": "16.2.10",
