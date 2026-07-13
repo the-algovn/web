@@ -1,5 +1,6 @@
 import { StatusBar } from "@/components/status-bar"
 import { ProfileWidget } from "@/components/profile-widget"
+import { AppGrid } from "@/components/app-grid"
 
 export default function Home() {
   return (
@@ -7,7 +8,7 @@ export default function Home() {
       <StatusBar />
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 pt-4 pb-36">
         <ProfileWidget />
-        {/* AppGrid (Task 4) */}
+        <AppGrid />
       </div>
       {/* Dock (Task 5) */}
     </main>
