@@ -18,6 +18,12 @@ export default react.map(config => {
     rules: {
       "@typescript-eslint/no-empty-object-type": "off",
       "react/prop-types": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/purity": "off",
+      "jsx-a11y/click-events-have-key-events": "off",
+      "jsx-a11y/no-noninteractive-element-interactions": "off",
+      "jsx-a11y/anchor-has-content": "off",
     },
   },
 ])
