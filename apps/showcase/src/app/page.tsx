@@ -23,7 +23,7 @@ export default function Home() {
     <div className="mx-auto max-w-5xl">
       <PageHeader
         title="algovn design system"
-        description="Dark-first, instrument-panel UI kit for algovn SaaS apps."
+        description="Dark-first, instrument-panel UI kit for algovn SaaS apps — continuously deployed."
         actions={
           <Button asChild>
             <Link href="/components/buttons">
