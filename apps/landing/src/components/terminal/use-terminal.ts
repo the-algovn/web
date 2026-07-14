@@ -23,6 +23,7 @@ export function useTerminal() {
   const sessionRef = useRef<Session>({ planSeen: false, unknownHinted: false })
   const historyRef = useRef<string[]>([])
   const histIdxRef = useRef(0)
+  const genRef = useRef(0)
   const crtRef = useRef(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
@@ -45,6 +46,7 @@ export function useTerminal() {
   })
 
   const reset = useCallback(() => {
+    genRef.current += 1
     setLines([])
     setBuffer("")
     setActive(false)
@@ -88,21 +90,28 @@ export function useTerminal() {
           )
         },
       }
-      const result = await runCommand(raw, ctx)
-      if (result.clear) {
-        reset()
-        return
-      }
-      const out: TermLine[] = result.lines.map((text) => ({ kind: "output", text }))
-      if (result.stagger) {
-        for (const line of out) {
-          setLines((prev) => [...prev, line])
-          await new Promise((r) => setTimeout(r, STAGGER_MS))
+      // a reset (Ctrl+L / clear) bumps the generation; stale continuations bail out
+      const gen = genRef.current
+      try {
+        const result = await runCommand(raw, ctx)
+        if (gen !== genRef.current) return
+        if (result.clear) {
+          reset()
+          return
         }
-      } else {
-        setLines((prev) => [...prev, ...out])
+        const out: TermLine[] = result.lines.map((text) => ({ kind: "output", text }))
+        if (result.stagger) {
+          for (const line of out) {
+            if (gen !== genRef.current) return
+            setLines((prev) => [...prev, line])
+            await new Promise((r) => setTimeout(r, STAGGER_MS))
+          }
+        } else {
+          setLines((prev) => [...prev, ...out])
+        }
+      } finally {
+        setBusy(false)
       }
-      setBusy(false)
     },
     [reset, setTheme],
   )
