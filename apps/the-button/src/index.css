@@ -1,0 +1,9 @@
+@import "@algovn/ui/globals.css";
+@source "../../../packages/ui/src";
+
+:root {
+  /* @algovn/ui's @theme maps --font-sans/--font-mono to these variables;
+     Next apps set them via next/font — here they come from @fontsource. */
+  --font-geist-sans: "Geist Variable";
+  --font-geist-mono: "Geist Mono Variable";
+}
