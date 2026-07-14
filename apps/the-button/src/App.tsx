@@ -36,6 +36,13 @@ export default function App() {
 
 type Milestone = { threshold: number; title: string }
 
+// The banner shows the highest milestone reached, whichever source saw it
+// first: a late SSE frame must not clobber a higher one from the snapshot,
+// and the snapshot must not be ignored just because SSE landed first.
+function higher(current: Milestone | null, next: Milestone): Milestone {
+  return current && current.threshold >= next.threshold ? current : next
+}
+
 function Home() {
   const { user, token } = useAuth()
   const tokenRef = useRef<string | null>(null)
@@ -84,7 +91,7 @@ function Home() {
     const live = new LiveCounter({
       onEvent: event => {
         if (event.type === "counter") setTotal(event.total)
-        else setMilestone({ threshold: event.threshold, title: event.title })
+        else setMilestone(current => higher(current, { threshold: event.threshold, title: event.title }))
       },
       onModeChange: setMode,
     })
@@ -104,7 +111,7 @@ function Home() {
           .map(m => ({ threshold: Number(m.threshold ?? "0"), title: m.title ?? "" }))
           .filter(m => m.threshold > 0 && m.title !== "")
           .sort((a, b) => b.threshold - a.threshold)[0]
-        if (latest) setMilestone(current => (current ? current : latest))
+        if (latest) setMilestone(current => higher(current, latest))
       })
       .catch(() => {
         // offline/unreachable: the fallback catalog is already rendered
