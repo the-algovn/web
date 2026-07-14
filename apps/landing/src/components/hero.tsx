@@ -38,21 +38,23 @@ export function Hero() {
       <p className="mt-1 text-sm text-muted-foreground">{profile.bio}</p>
 
       {term.active && (
-        <div role="log" aria-live="polite" className="mt-6 text-sm">
-          {term.lines.map((line, i) =>
-            line.kind === "input" ? (
-              <p key={i} className="mt-2">
-                <span className="text-muted-foreground">~ $ </span>
-                {line.text}
-              </p>
-            ) : (
-              <p key={i} className="whitespace-pre-wrap text-muted-foreground">
-                {line.text}
-              </p>
-            ),
-          )}
+        <>
+          <div role="log" aria-live="polite" className="mt-6 text-sm">
+            {term.lines.map((line, i) =>
+              line.kind === "input" ? (
+                <p key={i} className="mt-2 whitespace-pre-wrap">
+                  <span className="text-muted-foreground">~ $ </span>
+                  {line.text}
+                </p>
+              ) : (
+                <p key={i} className="whitespace-pre-wrap text-muted-foreground">
+                  {line.text}
+                </p>
+              ),
+            )}
+          </div>
           {!term.busy && (
-            <p className="mt-2" onClick={term.focusCursor}>
+            <p className="mt-2 whitespace-pre-wrap text-sm" onClick={term.focusCursor}>
               <span className="text-muted-foreground">~ $ </span>
               {term.buffer}
               <span
@@ -63,7 +65,7 @@ export function Hero() {
               </span>
             </p>
           )}
-        </div>
+        </>
       )}
 
       <input
