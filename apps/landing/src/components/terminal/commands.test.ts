@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import { createFilesystem } from "./filesystem"
 import { runCommand, type CommandCtx, FORTUNES, COMMAND_NAMES } from "./commands"
 
-export function makeCtx(overrides: Partial<CommandCtx> = {}): CommandCtx {
+function makeCtx(overrides: Partial<CommandCtx> = {}): CommandCtx {
   return {
     fs: createFilesystem(),
     session: { planSeen: false, unknownHinted: false },

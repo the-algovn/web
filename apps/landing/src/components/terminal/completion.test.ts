@@ -13,6 +13,10 @@ describe("command completion", () => {
     expect(complete("cow", fs, fresh())).toBe("cowsay")
   })
 
+  it("completes with a leading-space buffer", () => {
+    expect(complete(" who", fs, fresh())).toBe(" whoami")
+  })
+
   it("returns null on ambiguity or no match", () => {
     expect(complete("c", fs, fresh())).toBeNull()
     expect(complete("zzz", fs, fresh())).toBeNull()
@@ -30,6 +34,10 @@ describe("file completion", () => {
     expect(complete("cat fin", fs, fresh())).toBe("cat finders.txt")
   })
 
+  it("completes across a multi-space buffer", () => {
+    expect(complete("cat  READ", fs, fresh())).toBe("cat  README.md")
+  })
+
   it("completes directories with a trailing slash and descends", () => {
     expect(complete("ls proj", fs, fresh())).toBe("ls projects/")
     expect(complete("cat projects/the", fs, fresh())).toBe("cat projects/the-button")
@@ -42,5 +50,9 @@ describe("file completion", () => {
 
   it("returns null for a hopeless path", () => {
     expect(complete("cat ghost/x", fs, fresh())).toBeNull()
+  })
+
+  it("returns null for an already-complete token", () => {
+    expect(complete("cat README.md", fs, fresh())).toBeNull()
   })
 })
