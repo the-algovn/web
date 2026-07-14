@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createFilesystem } from "./filesystem"
-import { runCommand, type CommandCtx } from "./commands"
+import { runCommand, type CommandCtx, FORTUNES } from "./commands"
 
 export function makeCtx(overrides: Partial<CommandCtx> = {}): CommandCtx {
   return {
@@ -119,5 +119,104 @@ describe("unix basics", () => {
 
   it("blank input produces no output", async () => {
     expect((await runCommand("   ", makeCtx())).lines).toEqual([])
+  })
+})
+
+describe("joke pack", () => {
+  it("sudo is denied", async () => {
+    expect((await runCommand("sudo reboot", makeCtx())).lines).toEqual([
+      "duc is not in the sudoers file. This incident will be reported.",
+    ])
+  })
+
+  it("sudo make me a sandwich complies", async () => {
+    expect((await runCommand("sudo make me a sandwich", makeCtx())).lines).toEqual(["Okay."])
+  })
+
+  it("rm -rf / melts down, staggered, and triggers the glitch", async () => {
+    let glitched = false
+    const ctx = makeCtx({ triggerGlitch: () => (glitched = true) })
+    const result = await runCommand("rm -rf /", ctx)
+    expect(result.stagger).toBe(true)
+    expect(result.lines[result.lines.length - 1]).toBe(
+      "filesystem restored from snapshot. nice try.",
+    )
+    expect(glitched).toBe(true)
+  })
+
+  it("rm -rf / skips the glitch under reduced motion", async () => {
+    let glitched = false
+    const ctx = makeCtx({ reducedMotion: true, triggerGlitch: () => (glitched = true) })
+    await runCommand("rm -rf /", ctx)
+    expect(glitched).toBe(false)
+  })
+
+  it("ordinary rm is denied", async () => {
+    expect((await runCommand("rm README.md", makeCtx())).lines).toEqual([
+      "rm: cannot remove 'README.md': Permission denied",
+    ])
+  })
+
+  it("cowsay draws the cow with a sized bubble", async () => {
+    const { lines } = await runCommand("cowsay hi", makeCtx())
+    expect(lines[1]).toBe("< hi >")
+    expect(lines[0]).toBe(" ____")
+    expect(lines).toContain("         \\  (oo)\\_______")
+  })
+
+  it("cowsay defaults to moo", async () => {
+    expect((await runCommand("cowsay", makeCtx())).lines[1]).toBe("< moo >")
+  })
+
+  it("fortune draws from the curated list", async () => {
+    const { lines } = await runCommand("fortune", makeCtx())
+    expect(FORTUNES).toContain(lines[0])
+  })
+
+  it("exit and logout are futile", async () => {
+    expect((await runCommand("exit", makeCtx())).lines).toEqual(["there is no escape."])
+    expect((await runCommand("logout", makeCtx())).lines).toEqual(["there is no escape."])
+  })
+})
+
+describe("effect commands", () => {
+  it("matrix starts the rain", async () => {
+    let started = false
+    const ctx = makeCtx({ startMatrix: () => (started = true) })
+    expect((await runCommand("matrix", ctx)).lines).toEqual([
+      "follow the white rabbit… (press any key to wake up)",
+    ])
+    expect(started).toBe(true)
+  })
+
+  it("matrix respects reduced motion", async () => {
+    let started = false
+    const ctx = makeCtx({ reducedMotion: true, startMatrix: () => (started = true) })
+    expect((await runCommand("matrix", ctx)).lines).toEqual(["motion is reduced — no rain today."])
+    expect(started).toBe(false)
+  })
+
+  it("crt reports the toggled state", async () => {
+    expect((await runCommand("crt", makeCtx({ toggleCrt: () => true }))).lines).toEqual(["crt: on"])
+    expect((await runCommand("crt", makeCtx({ toggleCrt: () => false }))).lines).toEqual([
+      "crt: off",
+    ])
+  })
+
+  it("theme flips and reports", async () => {
+    const calls: string[] = []
+    const ctx = makeCtx({
+      setTheme: (target) => {
+        calls.push(target)
+        return "light"
+      },
+    })
+    expect((await runCommand("theme", ctx)).lines).toEqual(["theme: light"])
+    expect((await runCommand("theme light", ctx)).lines).toEqual(["theme: light"])
+    expect(calls).toEqual(["toggle", "light"])
+  })
+
+  it("theme rejects nonsense", async () => {
+    expect((await runCommand("theme neon", makeCtx())).lines).toEqual(["usage: theme [light|dark]"])
   })
 })

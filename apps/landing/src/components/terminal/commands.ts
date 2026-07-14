@@ -24,6 +24,58 @@ export function rot13(s: string): string {
   })
 }
 
+export const FORTUNES = [
+  "it works on my machine.",
+  "there are only two hard things in computer science: cache invalidation and naming things.",
+  "the best code is no code at all.",
+  "premature optimization is the root of all evil. — donald knuth",
+  "weeks of coding can save you hours of planning.",
+  "a good programmer looks both ways before crossing a one-way street.",
+  "99 little bugs in the code. take one down, patch it around. 127 little bugs in the code.",
+  "documentation is a love letter that you write to your future self.",
+  "talk is cheap. show me the code. — linus torvalds",
+  "simplicity is prerequisite for reliability. — dijkstra",
+  "first, solve the problem. then, write the code.",
+  "any sufficiently advanced bug is indistinguishable from a feature.",
+]
+
+function cowsay(args: string[]): CommandResult {
+  const msg = args.join(" ") || "moo"
+  return {
+    lines: [
+      ` ${"_".repeat(msg.length + 2)}`,
+      `< ${msg} >`,
+      ` ${"-".repeat(msg.length + 2)}`,
+      "        \\   ^__^",
+      "         \\  (oo)\\_______",
+      "            (__)\\       )\\/\\",
+      "                ||----w |",
+      "                ||     ||",
+    ],
+  }
+}
+
+function rm(args: string[], ctx: CommandCtx): CommandResult {
+  const flags = args.filter((a) => a.startsWith("-")).join("")
+  const target = args.find((a) => !a.startsWith("-"))
+  const nuking = flags.includes("r") && flags.includes("f") && (target === "/" || target === "/*")
+  if (!nuking) return { lines: [`rm: cannot remove '${target ?? ""}': Permission denied`] }
+  if (!ctx.reducedMotion) ctx.triggerGlitch()
+  return {
+    stagger: true,
+    lines: [
+      "removing /home/duc/projects ...",
+      "removing /home/duc/README.md ...",
+      "removing /etc ...",
+      "removing /usr/bin ...",
+      "removing /boot ...",
+      "rm: cannot remove '/proc/consciousness': Operation not permitted",
+      "...",
+      "filesystem restored from snapshot. nice try.",
+    ],
+  }
+}
+
 const HELP_LINES = [
   "available commands:",
   "",
@@ -72,6 +124,27 @@ const REGISTRY: Record<string, Handler> = {
   date: () => ({ lines: [new Date().toString()] }),
   clear: () => ({ lines: [], clear: true }),
   cd: () => ({ lines: ["you're already home."] }),
+  sudo: (args) =>
+    args.join(" ") === "make me a sandwich"
+      ? { lines: ["Okay."] }
+      : { lines: ["duc is not in the sudoers file. This incident will be reported."] },
+  rm,
+  cowsay: (args) => cowsay(args),
+  fortune: () => ({ lines: [FORTUNES[Math.floor(Math.random() * FORTUNES.length)]] }),
+  exit: () => ({ lines: ["there is no escape."] }),
+  logout: () => ({ lines: ["there is no escape."] }),
+  matrix: (_args, ctx) => {
+    if (ctx.reducedMotion) return { lines: ["motion is reduced — no rain today."] }
+    ctx.startMatrix()
+    return { lines: ["follow the white rabbit… (press any key to wake up)"] }
+  },
+  crt: (_args, ctx) => ({ lines: [`crt: ${ctx.toggleCrt() ? "on" : "off"}`] }),
+  theme: (args, ctx) => {
+    const target = args[0]
+    if (target && target !== "light" && target !== "dark")
+      return { lines: ["usage: theme [light|dark]"] }
+    return { lines: [`theme: ${ctx.setTheme(target ?? "toggle")}`] }
+  },
 }
 
 /** Every runnable command except decrypt — used by help-adjacent tooling and tab completion. */
