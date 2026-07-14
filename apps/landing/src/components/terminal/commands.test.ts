@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createFilesystem } from "./filesystem"
-import { runCommand, type CommandCtx, FORTUNES } from "./commands"
+import { runCommand, type CommandCtx, FORTUNES, COMMAND_NAMES } from "./commands"
 
 export function makeCtx(overrides: Partial<CommandCtx> = {}): CommandCtx {
   return {
@@ -218,5 +218,50 @@ describe("effect commands", () => {
 
   it("theme rejects nonsense", async () => {
     expect((await runCommand("theme neon", makeCtx())).lines).toEqual(["usage: theme [light|dark]"])
+  })
+})
+
+describe("the trail", () => {
+  it("decrypt .vault 42 opens the vault", async () => {
+    const { lines } = await runCommand("decrypt .vault 42", makeCtx())
+    const text = lines.join("\n")
+    expect(text).toContain("VAULT OPENED — WELL DUG.")
+    expect(text).toContain("algovn{cursor_was_real}")
+    expect(text).toContain("email this flag to minhducle.dev@gmail.com")
+    expect(text).toContain("subject: 'i found it' — and you enter finders.txt")
+  })
+
+  it("wrong key fails cryptically", async () => {
+    expect((await runCommand("decrypt .vault 41", makeCtx())).lines).toEqual([
+      "decryption failed. think bigger. or smaller. or… deeper.",
+    ])
+  })
+
+  it("wrong target is not encrypted", async () => {
+    expect((await runCommand("decrypt README.md 42", makeCtx())).lines).toEqual([
+      "decrypt: README.md: not encrypted",
+    ])
+  })
+
+  it("bare decrypt shows usage", async () => {
+    expect((await runCommand("decrypt", makeCtx())).lines).toEqual([
+      "usage: decrypt .vault <key>",
+    ])
+  })
+
+  it("decrypt is never listed in COMMAND_NAMES or help", async () => {
+    expect(COMMAND_NAMES).not.toContain("decrypt")
+  })
+
+  it("the full trail plays end to end", async () => {
+    const ctx = makeCtx()
+    const la = await runCommand("ls -la", ctx)
+    expect(la.lines[0]).toContain(".plan")
+    await runCommand("cat .plan", ctx)
+    expect(ctx.session.planSeen).toBe(true)
+    const vault = await runCommand("cat .vault", ctx)
+    expect(vault.lines.join("\n")).toContain("usage: decrypt .vault <key>")
+    const finale = await runCommand("decrypt .vault 42", ctx)
+    expect(finale.lines.join("\n")).toContain("algovn{cursor_was_real}")
   })
 })

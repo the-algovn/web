@@ -1,4 +1,4 @@
-import { resolvePath, type VFS } from "./filesystem"
+import { resolvePath, type VFS, VAULT_BLOB } from "./filesystem"
 
 export type CommandResult = { lines: string[]; clear?: boolean; stagger?: boolean }
 
@@ -144,6 +144,26 @@ const REGISTRY: Record<string, Handler> = {
     if (target && target !== "light" && target !== "dark")
       return { lines: ["usage: theme [light|dark]"] }
     return { lines: [`theme: ${ctx.setTheme(target ?? "toggle")}`] }
+  },
+  decrypt: (args) => {
+    const [target, key] = args
+    if (!target) return { lines: ["usage: decrypt .vault <key>"] }
+    if (target.replace(/^\.\//, "") !== ".vault")
+      return { lines: [`decrypt: ${target}: not encrypted`] }
+    if (key !== "42")
+      return { lines: ["decryption failed. think bigger. or smaller. or… deeper."] }
+    return {
+      lines: [
+        "┌────────────────────────────────┐",
+        "│    VAULT OPENED — WELL DUG.    │",
+        "└────────────────────────────────┘",
+        "",
+        `  ${rot13(atob(VAULT_BLOB))}`,
+        "",
+        "  email this flag to minhducle.dev@gmail.com",
+        "  subject: 'i found it' — and you enter finders.txt",
+      ],
+    }
   },
 }
 
