@@ -40,6 +40,35 @@ function makeDeps() {
   return { solver, api }
 }
 
+// A solver that also exposes bench() (like the real WorkerSolver), so the
+// batcher's lazy hash-rate warm-up has something to measure. The same
+// challenge/work_factor is piggybacked across batches to keep the math
+// predictable.
+function makeDepsWithBench(hashRatePerSecond: number, workFactor: string) {
+  const chal = challenge({ workFactor })
+  const solver = {
+    solve: vi.fn(async (input: { clickCount: number }) => ({
+      type: "result" as const,
+      jobId: 1,
+      nonce: "42",
+      hashes: 10 * input.clickCount,
+      elapsedMs: 5,
+    })),
+    bench: vi.fn(async () => hashRatePerSecond),
+  }
+  const api = {
+    issueChallenge: vi.fn(async (_clicks: number, _token: string) => chal),
+    submitClicks: vi.fn(
+      async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => ({
+        userTotalClicks: "10",
+        unlocked: [],
+        nextChallenge: chal,
+      })
+    ),
+  }
+  return { solver, api }
+}
+
 beforeEach(() => {
   vi.useFakeTimers()
 })
@@ -136,15 +165,15 @@ it("re-issues after a 400 expired challenge", async () => {
   expect(api.submitClicks).toHaveBeenCalledTimes(2)
 })
 
-it("starts solving immediately at flushAt pending clicks, but still throttles the submit", async () => {
+it("starts solving immediately once clicks are pending, but still throttles the submit", async () => {
   const { solver, api } = makeDeps()
-  const b = new Batcher({ api, solver, getToken: () => "tok", flushAt: 3 })
+  const b = new Batcher({ api, solver, getToken: () => "tok" })
   b.click()
   await vi.advanceTimersByTimeAsync(10) // batch 1 done -> lastSubmitAt set
   expect(api.submitClicks).toHaveBeenCalledTimes(1)
   b.click()
   b.click()
-  b.click() // hits flushAt -> solve starts now, without waiting the 2s
+  b.click() // solve starts now, without waiting the 2s
   await vi.advanceTimersByTimeAsync(10)
   expect(solver.solve).toHaveBeenCalledTimes(2)
   expect(api.submitClicks).toHaveBeenCalledTimes(1) // submit still gated by min_interval
@@ -155,6 +184,69 @@ it("starts solving immediately at flushAt pending clicks, but still throttles th
     nonce: "42",
     clickCount: 3,
   })
+})
+
+// Task 20: solve cost is linear in click_count (expected hashes ≈
+// work_factor × click_count), so a batch sized by click count alone can hand
+// the worker minutes of hashing. The batch must instead be capped by a
+// solve-time budget (hashRate * TARGET_SOLVE_SECONDS / work_factor), and that
+// budget must re-clamp on every flush as work_factor changes.
+it("sizes a batch by a solve-time budget, capping a large pending backlog", async () => {
+  const { solver, api } = makeDepsWithBench(200_000, "2048")
+  const b = new Batcher({ api, solver, getToken: () => "tok" })
+  b.click() // warm-up click: kicks off the hash-rate bench in the background
+  await vi.advanceTimersByTimeAsync(10)
+  expect(solver.bench).toHaveBeenCalledTimes(1)
+
+  for (let i = 0; i < 5_000; i++) b.click()
+  await vi.advanceTimersByTimeAsync(10) // batch 2's solve starts; submit still gated by min_interval
+  // budget: 200k H/s * 1.5s / 2048 work_factor = 146.48... -> floor 146
+  expect(solver.solve).toHaveBeenLastCalledWith({
+    challenge: "chal-1",
+    clickCount: 146,
+    workFactor: "2048",
+  })
+  await vi.advanceTimersByTimeAsync(2_000)
+  expect(api.submitClicks.mock.calls[1]![0]).toEqual({
+    challenge: "chal-1",
+    nonce: "42",
+    clickCount: 146,
+  })
+  expect(b.pendingCount).toBe(5_000 - 146) // the remainder stays pending for the next batch
+})
+
+it("shrinks the batch when the server raises difficulty (higher work_factor)", async () => {
+  const { solver, api } = makeDepsWithBench(200_000, "32768")
+  const b = new Batcher({ api, solver, getToken: () => "tok" })
+  b.click() // warm-up click: kicks off the hash-rate bench in the background
+  await vi.advanceTimersByTimeAsync(10)
+
+  for (let i = 0; i < 5_000; i++) b.click()
+  await vi.advanceTimersByTimeAsync(10)
+  // budget: 200k H/s * 1.5s / 32768 work_factor = 9.15... -> floor 9 — the
+  // valve shrinks the batch proportionally to the raised difficulty.
+  expect(solver.solve).toHaveBeenLastCalledWith({
+    challenge: "chal-1",
+    clickCount: 9,
+    workFactor: "32768",
+  })
+  await vi.advanceTimersByTimeAsync(2_000)
+  expect(api.submitClicks.mock.calls[1]![0]).toEqual({
+    challenge: "chal-1",
+    nonce: "42",
+    clickCount: 9,
+  })
+})
+
+it("never sizes a batch below 1 click, even under an absurd work_factor", async () => {
+  const { solver, api } = makeDeps()
+  api.issueChallenge.mockResolvedValue(challenge({ workFactor: "100000000" }))
+  const b = new Batcher({ api, solver, getToken: () => "tok" })
+  for (let i = 0; i < 10; i++) b.click()
+  await vi.advanceTimersByTimeAsync(10)
+  expect(api.submitClicks).toHaveBeenCalledTimes(1)
+  expect(api.submitClicks.mock.calls[0]![0].clickCount).toBe(1) // never 0 — an invalid batch
+  expect(b.pendingCount).toBe(9) // the other 9 clicks stay pending for the next batch
 })
 
 // Task 15's overlap fix: flush a batch after max(min_interval, solve_time),

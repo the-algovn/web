@@ -14,7 +14,7 @@ import {
   type SubmitClicksRequest,
   type SubmitClicksResponse,
 } from "./api"
-import type { Solver } from "./solverClient"
+import type { Solver, WorkerSolver } from "./solverClient"
 
 export interface BatcherApi {
   issueChallenge(intendedClicks: number, token: string): Promise<IssueChallengeResponse>
@@ -29,18 +29,22 @@ export interface BatcherOptions {
   onUnlocked?: (unlocked: Achievement[]) => void
   onPendingChange?: (pending: number) => void
   onError?: (err: unknown) => void
-  // No longer changes flush timing (the solve now always starts immediately
-  // — see schedule()); kept as an accepted option for API compatibility.
-  flushAt?: number
 }
 
-const DEFAULT_FLUSH_AT = 300
 const DEFAULT_MIN_INTERVAL_S = 2
 const DEFAULT_MAX_BATCH = 10_000
 const DEFAULT_WORK_FACTOR = "16384" // matches the POW_W0 default; server value always wins
 const MAX_SUBMIT_ATTEMPTS = 3
 const FAILURE_BACKOFF_MS = 2_000
 const EXPIRY_MARGIN_MS = 10_000
+// Solve cost is linear in click_count (expected hashes ≈ work_factor ×
+// click_count), so sizing a batch by click count alone lets a big
+// accumulation (background tab, autoclicker, a server-raised difficulty L)
+// hand the worker a batch that hashes for minutes — a self-inflicted DoS on
+// the user's own browser. Size each batch by a solve-time budget instead.
+const TARGET_SOLVE_SECONDS = 1.5 // keeps the button responsive; leftover clicks simply go in the next batch
+const HASH_RATE_BENCH_MS = 200 // short: must not block the first click on a long benchmark
+const DEFAULT_HASH_RATE = 150_000 // conservative fallback if the bench fails or hasn't run yet
 
 const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
 
@@ -50,11 +54,10 @@ export class Batcher {
   private inFlight = false
   private lastSubmitAt = 0
   private flushTimer: ReturnType<typeof setTimeout> | null = null
-  private readonly flushAt: number
+  private hashRate = DEFAULT_HASH_RATE
+  private benchStarted = false
 
-  constructor(private readonly opts: BatcherOptions) {
-    this.flushAt = opts.flushAt ?? DEFAULT_FLUSH_AT
-  }
+  constructor(private readonly opts: BatcherOptions) {}
 
   get pendingCount(): number {
     return this.pending
@@ -87,12 +90,19 @@ export class Batcher {
     if (!token) return // signed out (or token expired): clicks stay pending
     this.inFlight = true
     try {
+      this.warmUpHashRate()
       if (this.challenge && expiringSoon(this.challenge)) this.challenge = null
       if (!this.challenge?.challenge) {
         this.challenge = await this.opts.api.issueChallenge(this.pending, token)
       }
       const active = this.challenge
-      const count = Math.min(this.pending, active.maxBatch ?? DEFAULT_MAX_BATCH)
+      // Budget the batch by expected solve time rather than a fixed click
+      // count: re-clamping every flush means a server-raised work_factor
+      // automatically shrinks the batch — the load valve just works.
+      const cap = Math.min(this.pending, active.maxBatch ?? DEFAULT_MAX_BATCH)
+      const workFactor = Number(active.workFactor ?? DEFAULT_WORK_FACTOR)
+      const hashBudget = this.hashRate * TARGET_SOLVE_SECONDS
+      const count = Math.min(Math.max(Math.floor(hashBudget / workFactor), 1), cap)
       // Overlap the solve with whatever remains of the min-interval wait, so
       // the submit fires at max(min_interval, solve_time) rather than their
       // sum: the click_count baked into `solved` is frozen at this count —
@@ -118,6 +128,26 @@ export class Batcher {
       this.inFlight = false
       this.schedule() // anything still pending (new clicks, replay, expiry) retries here
     }
+  }
+
+  // Measures the worker's real hash rate once, lazily, from the solver
+  // itself (solverClient's bench(), also used by ?bench mode). Fire-and-
+  // forget: the current flush keeps using whatever hashRate it already has
+  // (the conservative default until this resolves) so a slow or failed bench
+  // never blocks a click from being solved and submitted.
+  private warmUpHashRate(): void {
+    if (this.benchStarted) return
+    this.benchStarted = true
+    const solver = this.opts.solver as Partial<WorkerSolver>
+    if (typeof solver.bench !== "function") return
+    void solver
+      .bench(HASH_RATE_BENCH_MS)
+      .then(rate => {
+        this.hashRate = rate
+      })
+      .catch(() => {
+        // keep the conservative default
+      })
   }
 
   private async submit(req: SubmitClicksRequest, token: string, attempt: number): Promise<void> {
