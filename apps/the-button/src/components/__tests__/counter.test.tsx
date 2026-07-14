@@ -1,6 +1,17 @@
-import { render, screen, waitFor } from "@testing-library/react"
-import { expect, it } from "vitest"
+import { render, screen } from "@testing-library/react"
+import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { Counter } from "../counter"
+
+// Fake timers (same convention as batcher.test.ts / liveCounter.test.ts) make
+// the 600ms rAF tween deterministic instead of racing real wall-clock time,
+// which flaked under CI load when turbo ran other apps' builds concurrently.
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 it("shows a placeholder before the first total arrives", () => {
   render(<Counter total={null} />)
@@ -10,11 +21,6 @@ it("shows a placeholder before the first total arrives", () => {
 it("tweens to the new total", async () => {
   const { rerender } = render(<Counter total={null} />)
   rerender(<Counter total={1234} />)
-  // The 600ms rAF tween plus jsdom/React commit overhead runs close to
-  // waitFor's default 1000ms budget under load (e.g. lint/typecheck/build
-  // running concurrently via turbo) — give it real headroom rather than
-  // flake.
-  await waitFor(() => expect(screen.getByTestId("counter")).toHaveTextContent("1,234"), {
-    timeout: 5_000,
-  })
+  await vi.advanceTimersByTimeAsync(600)
+  expect(screen.getByTestId("counter")).toHaveTextContent("1,234")
 })
