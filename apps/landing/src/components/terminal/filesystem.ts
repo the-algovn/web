@@ -8,7 +8,7 @@ export type VNode =
 
 export type VFS = Record<string, VNode>
 
-/** base64(rot13("algovn{cursor_was_real}")) — the flag never exists in plaintext here */
+/** the encoded vault payload — decoded only by the decrypt command at display time */
 export const VAULT_BLOB = "bnl0Ymlhe3BoZWZiZV9qbmZfZXJueX0="
 
 export function createFilesystem(): VFS {
