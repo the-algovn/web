@@ -143,7 +143,7 @@ const REGISTRY: Record<string, Handler> = {
     const target = args[0]
     if (target && target !== "light" && target !== "dark")
       return { lines: ["usage: theme [light|dark]"] }
-    return { lines: [`theme: ${ctx.setTheme(target ?? "toggle")}`] }
+    return { lines: [`theme: ${ctx.setTheme((target ?? "toggle") as "light" | "dark" | "toggle")}`] }
   },
   decrypt: (args) => {
     const [target, key] = args
