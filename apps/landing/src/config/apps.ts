@@ -11,15 +11,8 @@ export const apps: AppTile[] = [
   {
     id: "the-button",
     name: "The Button",
-    description: "One button. One global counter. Press it.",
+    description: "One button. One goal. Millions of humans.",
     href: "/the-button",
-    status: "soon",
-  },
-  {
-    id: "the-song",
-    name: "The Song",
-    description: "A song a day, picked by an algorithm with taste.",
-    href: "/the-song",
     status: "soon",
   },
 ]
