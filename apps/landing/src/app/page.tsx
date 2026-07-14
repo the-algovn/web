@@ -1,19 +1,22 @@
-import { StatusBar } from "@/components/status-bar"
-import { ProfileWidget } from "@/components/profile-widget"
-import { AppGrid } from "@/components/app-grid"
-import { Dock } from "@/components/dock"
-import { AuroraBackground } from "@/components/aurora-background"
+import { Hero } from "@/components/hero"
+import { Projects } from "@/components/projects"
+import { Contact } from "@/components/contact"
 
 export default function Home() {
   return (
-    <main className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-[radial-gradient(ellipse_at_top,_oklch(0.35_0.09_280)_0%,_oklch(0.2_0.05_270)_45%,_oklch(0.13_0.03_260)_100%)]">
-      <AuroraBackground />
-      <StatusBar />
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 pt-4 pb-36">
-        <ProfileWidget />
-        <AppGrid />
+    <main className="relative isolate min-h-dvh">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 opacity-30 [background-image:linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] [background-size:60px_60px]"
+      />
+      <div className="mx-auto flex min-h-dvh w-full max-w-[770px] flex-col gap-10 px-6 py-12">
+        <Hero />
+        <Projects />
+        <Contact />
+        <footer className="mt-auto border-t pt-6 text-center text-xs text-muted-foreground">
+          © 2026 algovn — built by duc le
+        </footer>
       </div>
-      <Dock />
     </main>
   )
 }
