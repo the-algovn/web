@@ -110,7 +110,7 @@ export function useTerminal() {
           setLines((prev) => [...prev, ...out])
         }
       } finally {
-        setBusy(false)
+        if (gen === genRef.current) setBusy(false)
       }
     },
     [reset, setTheme],
@@ -133,8 +133,11 @@ export function useTerminal() {
     const onKeyDown = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return
+      if (t && t.closest("a, button, [role='button']")) return
 
       if (matrixRef.current) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return
+        if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") return
         e.preventDefault()
         setMatrixOn(false)
         return
@@ -207,6 +210,25 @@ export function useTerminal() {
       if (v && !activeRef.current) setActive(true)
     },
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (matrixRef.current) {
+        e.preventDefault()
+        setMatrixOn(false)
+        return
+      }
+      if (e.ctrlKey && !e.metaKey && !e.altKey && e.key === "c") {
+        if (window.getSelection()?.toString()) return
+        if (!activeRef.current) return
+        e.preventDefault()
+        setLines((prev) => [...prev, { kind: "input", text: `${bufferRef.current}^C` }])
+        setBuffer("")
+        return
+      }
+      if (e.ctrlKey && !e.metaKey && !e.altKey && e.key === "l") {
+        if (!activeRef.current) return
+        e.preventDefault()
+        reset()
+        return
+      }
       if (busyRef.current) return
       if (e.key === "Enter") {
         e.preventDefault()
