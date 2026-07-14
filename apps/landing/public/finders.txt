@@ -1,0 +1,6 @@
+# finders.txt — hall of fame
+# those who typed when they didn't have to,
+# who ls -la'd when ls looked complete,
+# who decrypted what was never advertised.
+
+— nobody yet. be the first.
