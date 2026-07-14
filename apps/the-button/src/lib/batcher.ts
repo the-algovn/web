@@ -1,8 +1,9 @@
 // Click batching state machine (spec §5): clicks accumulate; a batch freezes
-// and starts solving once min_interval has elapsed since the last submit (or
-// immediately when flushAt=300 clicks pile up); the submit itself never fires
-// before min_interval (server-side SETNX throttle would 429 it anyway); the
-// response's next_challenge keeps the pipeline full.
+// and starts solving immediately, overlapping the solve with whatever remains
+// of the min_interval wait; the submit itself never fires before
+// max(min_interval, solve_time) has elapsed since the last submit
+// (server-side SETNX throttle would 429 it otherwise); the response's
+// next_challenge keeps the pipeline full.
 import {
   isExpiredChallenge,
   isOutcomeUnknown,
@@ -28,6 +29,8 @@ export interface BatcherOptions {
   onUnlocked?: (unlocked: Achievement[]) => void
   onPendingChange?: (pending: number) => void
   onError?: (err: unknown) => void
+  // No longer changes flush timing (the solve now always starts immediately
+  // — see schedule()); kept as an accepted option for API compatibility.
   flushAt?: number
 }
 
@@ -68,19 +71,14 @@ export class Batcher {
   }
 
   private schedule(): void {
-    if (this.inFlight || this.pending === 0) return
-    const earliest = this.lastSubmitAt + this.minIntervalMs()
-    const delay = this.pending >= this.flushAt ? 0 : Math.max(0, earliest - Date.now())
-    if (this.flushTimer) {
-      // Already scheduled: only bring it forward (e.g. flushAt just got hit
-      // mid-wait), never push an existing timer further out.
-      if (delay > 0) return
-      clearTimeout(this.flushTimer)
-    }
+    if (this.inFlight || this.pending === 0 || this.flushTimer) return
+    // Kick off the flush right away: flush() overlaps the solve with
+    // whatever remains of the min-interval wait, so starting late here would
+    // just re-introduce that dead time in front of the solve.
     this.flushTimer = setTimeout(() => {
       this.flushTimer = null
       void this.flush()
-    }, delay)
+    }, 0)
   }
 
   private async flush(): Promise<void> {
@@ -95,13 +93,19 @@ export class Batcher {
       }
       const active = this.challenge
       const count = Math.min(this.pending, active.maxBatch ?? DEFAULT_MAX_BATCH)
-      const solved = await this.opts.solver.solve({
-        challenge: active.challenge ?? "",
-        clickCount: count,
-        workFactor: active.workFactor ?? DEFAULT_WORK_FACTOR,
-      })
-      const wait = this.lastSubmitAt + this.minIntervalMs() - Date.now()
-      if (wait > 0) await sleep(wait)
+      // Overlap the solve with whatever remains of the min-interval wait, so
+      // the submit fires at max(min_interval, solve_time) rather than their
+      // sum: the click_count baked into `solved` is frozen at this count —
+      // any clicks arriving while it solves stay pending for the next batch.
+      const remaining = this.lastSubmitAt + this.minIntervalMs() - Date.now()
+      const [solved] = await Promise.all([
+        this.opts.solver.solve({
+          challenge: active.challenge ?? "",
+          clickCount: count,
+          workFactor: active.workFactor ?? DEFAULT_WORK_FACTOR,
+        }),
+        remaining > 0 ? sleep(remaining) : Promise.resolve(),
+      ])
       await this.submit(
         { challenge: active.challenge ?? "", nonce: solved.nonce, clickCount: count },
         token,

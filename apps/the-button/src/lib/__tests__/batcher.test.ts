@@ -157,6 +157,61 @@ it("starts solving immediately at flushAt pending clicks, but still throttles th
   })
 })
 
+// Task 15's overlap fix: flush a batch after max(min_interval, solve_time),
+// never their sum — the solve must run concurrently with the remaining
+// min-interval wait, not sequentially after it.
+it("overlaps the proof-of-work solve with the min-interval wait instead of adding them", async () => {
+  const { api } = makeDeps()
+  const solve: Solver["solve"] = () =>
+    new Promise(resolve => {
+      setTimeout(
+        () => resolve({ type: "result", jobId: 1, nonce: "42", hashes: 1, elapsedMs: 300 }),
+        300
+      )
+    })
+  const solver: Solver = { solve: vi.fn(solve) }
+  const b = new Batcher({ api, solver, getToken: () => "tok" })
+  b.click()
+  await vi.advanceTimersByTimeAsync(350) // batch 1 settles (300ms solve) -> lastSubmitAt fixed
+  expect(api.submitClicks).toHaveBeenCalledTimes(1)
+
+  await vi.advanceTimersByTimeAsync(500) // a click arrives mid-interval
+  b.click()
+
+  // Correct: submit fires at max(remaining_min_interval, solve_time) =
+  // lastSubmitAt+2000 — never their sum (lastSubmitAt+2000+300), which an
+  // additive (wait-then-solve) implementation would produce instead.
+  await vi.advanceTimersByTimeAsync(1_350) // still short of both targets
+  expect(api.submitClicks).toHaveBeenCalledTimes(1)
+  await vi.advanceTimersByTimeAsync(250) // past the correct target, short of the additive-bug one
+  expect(api.submitClicks).toHaveBeenCalledTimes(2)
+})
+
+it("does not fold clicks that arrive during an in-flight solve into that batch", async () => {
+  const { api } = makeDeps()
+  const solve: Solver["solve"] = () =>
+    new Promise(resolve => {
+      setTimeout(
+        () => resolve({ type: "result", jobId: 1, nonce: "42", hashes: 1, elapsedMs: 300 }),
+        300
+      )
+    })
+  const solver: Solver = { solve: vi.fn(solve) }
+  const b = new Batcher({ api, solver, getToken: () => "tok" })
+  b.click() // 1 click kicks off a solve bound to clickCount=1
+  await vi.advanceTimersByTimeAsync(50) // solve still in flight (300ms total)
+  b.click()
+  b.click()
+  b.click()
+  b.click()
+  b.click() // 5 more clicks arrive mid-solve
+  expect(b.pendingCount).toBe(6)
+  await vi.advanceTimersByTimeAsync(300) // let the in-flight solve settle and submit
+  expect(api.submitClicks).toHaveBeenCalledTimes(1)
+  expect(api.submitClicks.mock.calls[0]![0]).toMatchObject({ clickCount: 1 })
+  expect(b.pendingCount).toBe(5) // the 5 late clicks stay pending for the next batch
+})
+
 it("keeps clicks pending while signed out", async () => {
   const { solver, api } = makeDeps()
   const b = new Batcher({ api, solver, getToken: () => null })
