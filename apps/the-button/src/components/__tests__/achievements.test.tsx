@@ -18,6 +18,9 @@ it("renders the full catalog with locked entries greyed and mocked", () => {
   )
   // locked entries keep their mocking copy visible
   expect(screen.getByText(/Seize the day\. Stretch the wrist\./)).toBeInTheDocument()
+  // header shows unlocked/total, and the first locked entry is tagged NEXT
+  expect(screen.getByText("1/12")).toBeInTheDocument()
+  expect(screen.getByText("NEXT")).toBeInTheDocument()
 })
 
 it("renders the milestone banner and hides it without a milestone", () => {
