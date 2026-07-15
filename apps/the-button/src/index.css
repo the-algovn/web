@@ -7,3 +7,18 @@
   --font-geist-sans: "Geist Variable";
   --font-geist-mono: "Geist Mono Variable";
 }
+
+@keyframes the-button-particle-rise {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -120px);
+  }
+}
+
+.the-button-particle {
+  animation: the-button-particle-rise 0.6s ease-out forwards;
+}
