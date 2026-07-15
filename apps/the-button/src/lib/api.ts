@@ -1,5 +1,6 @@
-// Thin client for the control-plane JSON convention:
-// POST <VITE_API_BASE>/algovn.button.v1.ButtonService/<Method>.
+// Thin client for the control-plane REST routes. env.apiBase already includes
+// the product prefix (…/the-button), so paths append directly, e.g.
+// GET <apiBase>/counter, POST <apiBase>/clicks.
 // Responses are protojson: camelCase fields, uint64 as decimal strings,
 // google.protobuf.Timestamp as RFC3339 strings, zero-valued fields omitted.
 import { env } from "./env"
@@ -74,14 +75,20 @@ export const isExpiredChallenge = (err: unknown): err is ApiError =>
 export const isOutcomeUnknown = (err: unknown): err is ApiError =>
   err instanceof ApiError && err.status === 502
 
-export async function postRpc<T>(method: string, body: unknown, token?: string): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" }
+export async function request<T>(
+  verb: string,
+  path: string,
+  body?: unknown,
+  token?: string
+): Promise<T> {
+  const headers: Record<string, string> = {}
   if (token) headers.Authorization = `Bearer ${token}`
-  const res = await fetch(`${env.apiBase}/algovn.button.v1.ButtonService/${method}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  })
+  const init: RequestInit = { method: verb, headers }
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json"
+    init.body = JSON.stringify(body)
+  }
+  const res = await fetch(`${env.apiBase}${path}`, init)
   if (res.ok) return (await res.json()) as T
 
   let code = "unknown"
@@ -103,13 +110,13 @@ export async function postRpc<T>(method: string, body: unknown, token?: string):
   throw new ApiError(res.status, code, message, retryAfterSeconds)
 }
 
-export const getCounter = () => postRpc<GetCounterResponse>("GetCounter", {})
+export const getCounter = () => request<GetCounterResponse>("GET", "/counter")
 
 export const listAchievements = (token?: string) =>
-  postRpc<ListAchievementsResponse>("ListAchievements", {}, token)
+  request<ListAchievementsResponse>("GET", "/achievements", undefined, token)
 
 export const issueChallenge = (intendedClicks: number, token: string) =>
-  postRpc<IssueChallengeResponse>("IssueChallenge", { intendedClicks }, token)
+  request<IssueChallengeResponse>("POST", "/challenge", { intendedClicks }, token)
 
 export const submitClicks = (req: SubmitClicksRequest, token: string) =>
-  postRpc<SubmitClicksResponse>("SubmitClicks", req, token)
+  request<SubmitClicksResponse>("POST", "/clicks", req, token)
