@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { LiveCounter, parseLiveEvent, type LiveCounterOptions, type LiveEvent } from "../liveCounter"
 
 class FakeEventSource {
@@ -110,4 +110,26 @@ it("disconnects hidden tabs and reconnects when visible again", () => {
   document.dispatchEvent(new Event("visibilitychange"))
   expect(FakeEventSource.instances).toHaveLength(2)
   live.stop()
+})
+
+describe("parseLiveEvent users field", () => {
+  it("parses a counter frame with users", () => {
+    expect(parseLiveEvent(JSON.stringify({ type: "counter", total: 5, users: 3 }))).toEqual({
+      type: "counter",
+      total: 5,
+      users: 3,
+    })
+  })
+  it("parses a counter frame without users (back-compat)", () => {
+    expect(parseLiveEvent(JSON.stringify({ type: "counter", total: 5 }))).toEqual({
+      type: "counter",
+      total: 5,
+    })
+  })
+  it("ignores a non-numeric users field", () => {
+    expect(parseLiveEvent(JSON.stringify({ type: "counter", total: 5, users: "3" }))).toEqual({
+      type: "counter",
+      total: 5,
+    })
+  })
 })

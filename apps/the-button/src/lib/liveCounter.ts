@@ -5,7 +5,7 @@
 import { getCounter } from "./api"
 import { env } from "./env"
 
-export type CounterEvent = { type: "counter"; total: number }
+export type CounterEvent = { type: "counter"; total: number; users?: number }
 export type MilestoneEvent = { type: "milestone"; threshold: number; title: string }
 export type LiveEvent = CounterEvent | MilestoneEvent
 
@@ -30,7 +30,9 @@ export function parseLiveEvent(data: string): LiveEvent | null {
   try {
     const raw = JSON.parse(data) as Record<string, unknown>
     if (raw.type === "counter" && typeof raw.total === "number") {
-      return { type: "counter", total: raw.total }
+      const event: CounterEvent = { type: "counter", total: raw.total }
+      if (typeof raw.users === "number") event.users = raw.users
+      return event
     }
     if (
       raw.type === "milestone" &&

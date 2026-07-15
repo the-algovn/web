@@ -20,6 +20,7 @@ export interface Milestone {
 
 export interface GetCounterResponse {
   total?: string
+  totalUsers?: string
 }
 
 export interface IssueChallengeResponse {
