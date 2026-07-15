@@ -5,12 +5,19 @@ import { Callback } from "./components/callback"
 import { ClickButton } from "./components/click-button"
 import { Counter } from "./components/counter"
 import { MilestoneBanner } from "./components/milestone-banner"
-import { Taglines } from "./components/taglines"
-import { issueChallenge, listAchievements, submitClicks } from "./lib/api"
+import { ParticleLayer, useParticles } from "./components/particles"
+import { PersonalStats } from "./components/personal-stats"
+import { ProgressBar } from "./components/progress-bar"
+import { SessionStats } from "./components/session-stats"
+import { StatusBar } from "./components/status-bar"
+import { TargetHeadline } from "./components/target-headline"
+import { WhyGrid } from "./components/why-grid"
+import { getCounter, issueChallenge, listAchievements, submitClicks } from "./lib/api"
 import { signIn } from "./lib/auth"
 import { Batcher } from "./lib/batcher"
 import { runBench } from "./lib/bench"
 import { mergeCatalog, type CatalogEntry } from "./lib/catalog"
+import { createEtaEstimator, type Eta } from "./lib/eta"
 import { LiveCounter, type LiveMode } from "./lib/liveCounter"
 import { createWorkerSolver } from "./lib/solverClient"
 import { createUnlockAnnouncer } from "./lib/unlocks"
@@ -50,17 +57,19 @@ function Home() {
     tokenRef.current = token
   }, [token])
   const [total, setTotal] = useState<number | null>(null)
+  const [users, setUsers] = useState<number | null>(null)
   const [mode, setMode] = useState<LiveMode>("connecting")
   const [myTotal, setMyTotal] = useState<number | null>(null)
   const [pending, setPending] = useState(0)
   const [catalog, setCatalog] = useState<CatalogEntry[]>(() => mergeCatalog(undefined))
   const [milestone, setMilestone] = useState<Milestone | null>(null)
+  const [eta, setEta] = useState<Eta>({ seconds: null, text: "calculating…" })
   const batcherRef = useRef<Batcher | null>(null)
+  const etaRef = useRef(createEtaEstimator())
+  const { particles, emit, remove } = useParticles()
 
   useEffect(() => {
     const solver = createWorkerSolver()
-    // One announcer per mount: it remembers ids it has already toasted, so a
-    // re-render or a duplicate SubmitClicksResponse never re-toasts them.
     const announce = createUnlockAnnouncer()
     batcherRef.current = new Batcher({
       api: { issueChallenge, submitClicks },
@@ -90,8 +99,14 @@ function Home() {
   useEffect(() => {
     const live = new LiveCounter({
       onEvent: event => {
-        if (event.type === "counter") setTotal(event.total)
-        else setMilestone(current => higher(current, { threshold: event.threshold, title: event.title }))
+        if (event.type === "counter") {
+          setTotal(event.total)
+          if (event.users !== undefined) setUsers(event.users)
+          etaRef.current.sample(event.total)
+          setEta(etaRef.current.eta())
+        } else {
+          setMilestone(current => higher(current, { threshold: event.threshold, title: event.title }))
+        }
       },
       onModeChange: setMode,
     })
@@ -99,8 +114,28 @@ function Home() {
     return () => live.stop()
   }, [])
 
-  // Catalog + reached milestones on load; personalized when a token exists
-  // (the anonymous rule still forwards the verified Authorization header).
+  // One-shot snapshot on mount seeds total + users before the first SSE frame.
+  useEffect(() => {
+    let cancelled = false
+    getCounter()
+      .then(res => {
+        if (cancelled) return
+        if (res.total !== undefined) {
+          const t = Number(res.total)
+          setTotal(prev => (prev === null ? t : prev))
+          etaRef.current.sample(t)
+          setEta(etaRef.current.eta())
+        }
+        if (res.totalUsers !== undefined) setUsers(Number(res.totalUsers))
+      })
+      .catch(() => {
+        // offline/unreachable: SSE (or polling) fills total; users stays —
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     listAchievements(token ?? undefined)
@@ -131,28 +166,33 @@ function Home() {
   }, [])
 
   return (
-    <main className="mx-auto flex min-h-svh max-w-4xl flex-col items-center justify-center gap-8 p-6 text-center">
-      <header className="space-y-3">
-        <h1 className="font-mono text-3xl font-semibold tracking-tight sm:text-4xl">the button</h1>
-        <Taglines />
+    <main className="mx-auto flex min-h-svh max-w-4xl flex-col items-center gap-6 p-6 text-center">
+      <StatusBar mode={mode} eta={eta} />
+      <header className="space-y-2">
+        <h1 className="font-mono text-3xl font-semibold tracking-tight sm:text-4xl">THE BUTTON.</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
+          One button. One goal. Millions of humans.
+        </p>
       </header>
       <MilestoneBanner milestone={milestone} />
+      <WhyGrid />
+      <TargetHeadline />
       <Counter total={total} />
-      <p className="text-muted-foreground text-xs">
-        {mode === "live" ? "live" : mode === "polling" ? "live updates degraded — polling" : "connecting…"}
-      </p>
+      <ProgressBar total={total} />
       {user ? (
-        <ClickButton
-          onMash={() => batcherRef.current?.click()}
-          myTotal={myTotal}
-          pending={pending}
-        />
+        <ClickButton onMash={() => batcherRef.current?.click()} onParticle={emit} />
       ) : (
         <Button size="lg" onClick={() => void signIn()}>
           sign in to contribute
         </Button>
       )}
+      {user && <PersonalStats myTotal={myTotal} pending={pending} total={total} />}
+      <SessionStats total={total} users={users} />
       <AchievementsGrid entries={catalog} />
+      <footer className="text-muted-foreground mt-4 font-mono text-xs">
+        made with questionable decisions · the button
+      </footer>
+      <ParticleLayer particles={particles} onDone={remove} />
     </main>
   )
 }

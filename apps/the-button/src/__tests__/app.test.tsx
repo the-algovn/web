@@ -5,7 +5,7 @@ import * as api from "../lib/api"
 
 it("renders the page heading and the sign-in call to action", async () => {
   render(<App />)
-  expect(screen.getByRole("heading", { name: "the button" })).toBeInTheDocument()
+  expect(screen.getByRole("heading", { name: "THE BUTTON." })).toBeInTheDocument()
   expect(
     await screen.findByRole("button", { name: /sign in to contribute/i })
   ).toBeInTheDocument()
@@ -95,4 +95,17 @@ it("replaces a lower milestone from SSE with a higher one from the RPC snapshot"
   await waitFor(() => {
     expect(screen.getByRole("status")).toHaveTextContent("5,000 clicks — Five Thousand Strong")
   })
+})
+
+it("renders the contributor count from an SSE counter frame", async () => {
+  FakeEventSource.instances = []
+  vi.stubGlobal("EventSource", FakeEventSource)
+  render(<App />)
+  const es = FakeEventSource.instances[0]!
+  act(() => {
+    es.onmessage?.({
+      data: JSON.stringify({ type: "counter", total: 1_204_882, users: 84_201 }),
+    } as MessageEvent)
+  })
+  expect(await screen.findByText("84,201")).toBeInTheDocument()
 })
