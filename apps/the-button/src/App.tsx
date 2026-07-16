@@ -170,12 +170,12 @@ function Home() {
       <div className="tb-grid-bg" aria-hidden />
       <main className="relative z-10 mx-auto flex min-h-svh max-w-3xl flex-col items-center gap-6 p-6 text-center">
       <StatusBar mode={mode} eta={eta} />
-      <header className="space-y-2">
-        <h1 className="font-mono text-3xl font-semibold tracking-tight sm:text-4xl">THE BUTTON.</h1>
-        <p className="text-muted-foreground text-sm sm:text-base">
-          One button. One goal. Millions of humans.
-        </p>
-      </header>
+      <section className="border-border w-full max-w-3xl space-y-2 border-b pt-6 pb-8 text-left">
+        <h1 className="font-mono text-4xl leading-none font-bold tracking-tight sm:text-5xl">
+          THE BUTTON.
+        </h1>
+        <p className="text-muted-foreground text-base">One button. One goal. Millions of humans.</p>
+      </section>
       <MilestoneBanner milestone={milestone} />
       <WhyGrid />
       <TargetHeadline />
