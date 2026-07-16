@@ -1,26 +1,32 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { expect, it } from "vitest"
-import { mergeCatalog } from "../../lib/catalog"
 import { AchievementsGrid } from "../achievements-grid"
 import { MilestoneBanner } from "../milestone-banner"
 
-it("renders the full catalog with locked entries greyed and mocked", () => {
-  render(<AchievementsGrid entries={mergeCatalog([{ id: "mvh", unlockedAt: "2026-07-14T00:00:00Z" }])} />)
-  const items = screen.getAllByRole("listitem")
-  expect(items).toHaveLength(12)
-  expect(screen.getByText("Minimum Viable Human").closest("[data-unlocked]")).toHaveAttribute(
-    "data-unlocked",
-    "true"
-  )
-  expect(screen.getByText("Carpal Diem").closest("[data-unlocked]")).toHaveAttribute(
-    "data-unlocked",
-    "false"
-  )
-  // locked entries keep their mocking copy visible
-  expect(screen.getByText(/Seize the day\. Stretch the wrist\./)).toBeInTheDocument()
-  // header shows unlocked/total, and the first locked entry is tagged NEXT
-  expect(screen.getByText("1/12")).toBeInTheDocument()
-  expect(screen.getByText("NEXT")).toBeInTheDocument()
+const entries = [
+  { id: "mvh", title: "Minimum Viable Human", description: "clicked once", unlockedAt: "2026-01-01" },
+  { id: "carpal", title: "Carpal Diem", description: "10k clicks" },
+  // a locked entry that is NOT the next target — hidden until expanded
+  { id: "stretch", title: "Please Stretch", description: "100k clicks" },
+]
+
+it("shows count and highest-rank + next cards collapsed, expands on VIEW ALL", async () => {
+  render(<AchievementsGrid entries={entries} />)
+  expect(screen.getByText("1/3")).toBeInTheDocument()
+  expect(screen.getByText("YOUR HIGHEST RANK")).toBeInTheDocument()
+  expect(screen.getByText("NEXT TARGET")).toBeInTheDocument()
+  // requirement string from achievement-meta (carpal = next target, shown collapsed)
+  expect(screen.getByText("10,000 clicks")).toBeInTheDocument()
+  // collapsed shows only featured + next; the third (stretch) card is hidden
+  expect(screen.getAllByRole("listitem")).toHaveLength(2)
+  expect(screen.queryByText("100,000 clicks")).not.toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole("button", { name: /view all/i }))
+  expect(screen.getByRole("button", { name: /hide/i })).toBeInTheDocument()
+  // expanded reveals every card, including the previously-hidden one
+  expect(screen.getAllByRole("listitem")).toHaveLength(3)
+  expect(screen.getByText("100,000 clicks")).toBeInTheDocument()
 })
 
 it("renders the milestone banner and hides it without a milestone", () => {

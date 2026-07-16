@@ -1,5 +1,3 @@
-import { cn } from "@algovn/ui/lib/utils"
-
 export function ClickButton({
   onMash,
   onParticle,
@@ -15,13 +13,12 @@ export function ClickButton({
         const r = e.currentTarget.getBoundingClientRect()
         onParticle(r.left + r.width / 2, r.top + r.height / 2)
       }}
-      className={cn(
-        "bg-primary text-primary-foreground size-40 rounded-full text-xl font-semibold shadow-lg sm:size-48",
-        "transition-transform duration-75 select-none active:scale-90",
-        "focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]"
-      )}
+      className="tb-ghost focus-visible:ring-ring/50 flex w-full max-w-3xl items-center justify-center gap-3 px-8 py-6 font-mono text-xl font-bold tracking-widest select-none outline-none focus-visible:ring-[3px]"
     >
-      the button
+      <span className="text-2xl font-normal" aria-hidden>
+        +
+      </span>
+      <span>CONTRIBUTE</span>
     </button>
   )
 }

@@ -6,6 +6,8 @@ export interface Particle {
   y: number
 }
 
+const PARTICLE_SHADES = ["#00ff88", "#00cc6a", "#00994d", "#00663a", "#00331a"] as const
+
 function prefersReducedMotion(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -41,8 +43,12 @@ export function ParticleLayer({
         <span
           key={p.id}
           onAnimationEnd={() => onDone(p.id)}
-          style={{ left: p.x, top: p.y }}
-          className="the-button-particle text-primary absolute font-mono text-3xl font-bold"
+          style={{
+            left: p.x,
+            top: p.y,
+            color: PARTICLE_SHADES[p.id % PARTICLE_SHADES.length],
+          }}
+          className="the-button-particle absolute font-mono text-4xl font-bold"
         >
           +
         </span>

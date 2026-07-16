@@ -13,14 +13,16 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-it("shows a placeholder before the first total arrives", () => {
+it("renders em dash when total is null", () => {
   render(<Counter total={null} />)
   expect(screen.getByTestId("counter")).toHaveTextContent("—")
 })
 
-it("tweens to the new total", async () => {
-  const { rerender } = render(<Counter total={null} />)
-  rerender(<Counter total={1234} />)
+it("renders CURRENT_COUNT label and tweens to the grouped total", async () => {
+  render(<Counter total={12345} />)
+  expect(screen.getByText("CURRENT_COUNT")).toBeInTheDocument()
   await vi.advanceTimersByTimeAsync(600)
-  expect(screen.getByTestId("counter")).toHaveTextContent("1,234")
+  // the rAF tween has settled by TWEEN_MS; assert the final grouped value
+  const el = screen.getByTestId("counter")
+  expect(el.textContent?.replace(/\s/g, "")).toContain("12,345")
 })

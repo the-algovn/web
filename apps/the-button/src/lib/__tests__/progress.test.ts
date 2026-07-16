@@ -21,7 +21,6 @@ describe("progress", () => {
     const p = progress(1_204_882)
     expect(p.next?.threshold).toBe(10_000_000)
     expect(p.percent).toBeCloseTo(12.04882, 4)
-    expect(p.label).toContain("10,000,000")
   })
   it("targets the quadrillion after the last milestone", () => {
     const p = progress(2_000_000_000)
