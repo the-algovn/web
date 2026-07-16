@@ -166,7 +166,9 @@ function Home() {
   }, [])
 
   return (
-    <main className="mx-auto flex min-h-svh max-w-4xl flex-col items-center gap-6 p-6 text-center">
+    <>
+      <div className="tb-grid-bg" aria-hidden />
+      <main className="relative z-10 mx-auto flex min-h-svh max-w-3xl flex-col items-center gap-6 p-6 text-center">
       <StatusBar mode={mode} eta={eta} />
       <header className="space-y-2">
         <h1 className="font-mono text-3xl font-semibold tracking-tight sm:text-4xl">THE BUTTON.</h1>
@@ -193,6 +195,7 @@ function Home() {
         made with questionable decisions · the button
       </footer>
       <ParticleLayer particles={particles} onDone={remove} />
-    </main>
+      </main>
+    </>
   )
 }

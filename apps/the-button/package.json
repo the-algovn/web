@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@algovn/ui": "workspace:*",
-    "@fontsource-variable/geist": "^5.2.9",
-    "@fontsource-variable/geist-mono": "^5.2.8",
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "hash-wasm": "^4.12.0",
     "lucide-react": "^1.24.0",
     "oidc-client-ts": "^3.5.0",

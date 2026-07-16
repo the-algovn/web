@@ -3,13 +3,12 @@ import { createRoot } from "react-dom/client"
 import { Toaster } from "@algovn/ui/sonner"
 import { ThemeProvider } from "@algovn/ui/theme-provider"
 import App from "./App"
-import "@fontsource-variable/geist"
-import "@fontsource-variable/geist-mono"
+import "@fontsource-variable/jetbrains-mono"
 import "./index.css"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider>
+    <ThemeProvider forcedTheme="dark">
       <App />
       <Toaster />
     </ThemeProvider>

@@ -12,5 +12,4 @@ interface ImportMetaEnv {
 // ambient `declare module '*.css'` only matches specifiers literally ending
 // in `.css`; these packages are imported by bare name and resolve to CSS via
 // their package.json `exports` map, so they need their own declarations.
-declare module "@fontsource-variable/geist"
-declare module "@fontsource-variable/geist-mono"
+declare module "@fontsource-variable/jetbrains-mono"
