@@ -1,0 +1,7 @@
+@import "@algovn/ui/globals.css";
+@source "../../../packages/ui/src";
+
+:root {
+  --font-geist-sans: "Geist Variable";
+  --font-geist-mono: "Geist Mono Variable";
+}
