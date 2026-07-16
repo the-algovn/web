@@ -41,8 +41,12 @@ export function ParticleLayer({
         <span
           key={p.id}
           onAnimationEnd={() => onDone(p.id)}
-          style={{ left: p.x, top: p.y }}
-          className="the-button-particle text-primary absolute font-mono text-3xl font-bold"
+          style={{
+            left: p.x,
+            top: p.y,
+            color: ["#00ff88", "#00cc6a", "#00994d", "#00ff88", "#00cc6a"][p.id % 5],
+          }}
+          className="the-button-particle absolute font-mono text-4xl font-bold"
         >
           +
         </span>

@@ -13,7 +13,7 @@ export function WhyGrid() {
         {WHY.map((reason, i) => (
           <li
             key={reason}
-            className="border-border bg-card flex items-start gap-3 rounded-md border p-3"
+            className="tb-box hover:border-primary flex items-start gap-3 p-3 transition-colors"
           >
             <span className="text-primary font-mono text-xs tabular-nums">
               [{String(i + 1).padStart(2, "0")}]
