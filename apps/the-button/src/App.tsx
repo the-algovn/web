@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react"
-import { Button } from "@algovn/ui/button"
 import { AchievementsGrid } from "./components/achievements-grid"
 import { Callback } from "./components/callback"
 import { ClickButton } from "./components/click-button"
@@ -184,9 +183,16 @@ function Home() {
       {user ? (
         <ClickButton onMash={() => batcherRef.current?.click()} onParticle={emit} />
       ) : (
-        <Button size="lg" onClick={() => void signIn()}>
-          sign in to contribute
-        </Button>
+        <button
+          type="button"
+          onClick={() => void signIn()}
+          className="tb-ghost focus-visible:ring-ring/50 flex w-full max-w-3xl items-center justify-center gap-3 px-8 py-6 font-mono text-xl font-bold tracking-widest outline-none focus-visible:ring-[3px]"
+        >
+          <span className="text-2xl font-normal" aria-hidden>
+            ▶
+          </span>
+          <span>SIGN IN TO CONTRIBUTE</span>
+        </button>
       )}
       {user && <PersonalStats myTotal={myTotal} pending={pending} total={total} />}
       <SessionStats total={total} users={users} />

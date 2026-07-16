@@ -50,3 +50,28 @@
   .the-button-particle,
   [class*="tb-"] { animation: none !important; }
 }
+
+/* ghost button that fills from the bottom on hover (prototype .the-button) */
+.tb-ghost {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  background: transparent;
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+.tb-ghost::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--primary);
+  transform: translateY(100%);
+  transition: transform 0.2s ease;
+}
+.tb-ghost:hover { color: var(--background); }
+.tb-ghost:hover::before { transform: translateY(0); }
+.tb-ghost:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) {
+  .tb-ghost::before { transition: none; }
+}
