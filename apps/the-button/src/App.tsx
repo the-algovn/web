@@ -197,8 +197,10 @@ function Home() {
       {user && <PersonalStats myTotal={myTotal} pending={pending} total={total} />}
       <SessionStats total={total} users={users} />
       <AchievementsGrid entries={catalog} />
-      <footer className="text-muted-foreground mt-4 font-mono text-xs">
-        made with questionable decisions · the button
+      <footer className="text-muted-foreground mt-4 flex items-center gap-3 font-mono text-xs">
+        <span>made with questionable decisions</span>
+        <span className="opacity-30">•</span>
+        <span>the button</span>
       </footer>
       <ParticleLayer particles={particles} onDone={remove} />
       </main>
