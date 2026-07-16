@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Button } from "@algovn/ui/button"
 import { Callback } from "./components/callback"
 import { LedgerDrawer } from "./components/ledger-drawer"
@@ -8,9 +9,19 @@ import { rolesFromToken } from "./lib/roles"
 import { useAuth } from "./lib/use-auth"
 
 export default function App() {
+  const [isCallback, setIsCallback] = useState(() =>
+    window.location.pathname === "/console/callback"
+  )
   const { user, token } = useAuth()
-  if (window.location.pathname === "/console/callback") {
-    return <Callback onDone={() => window.history.replaceState(null, "", "/console/")} />
+  if (isCallback) {
+    return (
+      <Callback
+        onDone={() => {
+          window.history.replaceState(null, "", "/console/")
+          setIsCallback(false)
+        }}
+      />
+    )
   }
   if (!user || !token) return <SignIn />
   const roles = rolesFromToken(token)
