@@ -75,3 +75,16 @@
 @media (prefers-reduced-motion: reduce) {
   .tb-ghost::before { transition: none; }
 }
+
+/* milestone/achievement cards (prototype .milestone-card variants) */
+.tb-card { position: relative; overflow: hidden; transition: all 0.3s ease; }
+.tb-card.tb-achieved {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(0, 255, 136, 0.05) 100%);
+}
+.tb-card.tb-achieved:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2); }
+.tb-card.tb-featured { border-width: 2px; box-shadow: 0 0 20px rgba(0, 255, 136, 0.2); }
+.tb-card.tb-next { border-style: dashed; }
+.tb-card.tb-locked { opacity: 0.5; filter: grayscale(80%); }
+.tb-card.tb-just-unlocked { animation: tb-unlock-pulse 1s ease-in-out; }
+.tb-card.tb-achieved .tb-emoji { animation: tb-emoji-bounce 2s ease-in-out infinite; }
