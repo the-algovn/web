@@ -13,7 +13,7 @@ export function PersonalStats({
 }) {
   const share = impact(myTotal, total)
   return (
-    <div className="border-border bg-card flex w-full max-w-3xl items-center justify-around gap-4 rounded-md border p-3 text-center">
+    <div className="tb-box border-l-primary flex w-full max-w-3xl items-center justify-around gap-4 border-l-[3px] p-4 text-center">
       <Stat label="YOUR_CLICKS">
         <span className="font-mono tabular-nums">
           {myTotal === null ? "—" : (myTotal + pending).toLocaleString("en-US")}

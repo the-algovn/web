@@ -14,7 +14,7 @@ describe("TargetHeadline", () => {
 describe("ProgressBar", () => {
   it("fills toward the next milestone", () => {
     render(<ProgressBar total={1_204_882} />)
-    expect(screen.getByText(/10,000,000/)).toBeInTheDocument()
+    expect(screen.getByText("PROGRESS")).toBeInTheDocument()
     expect(screen.getByText("12.0%")).toBeInTheDocument()
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "12")
   })

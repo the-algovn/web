@@ -3,7 +3,7 @@ import { avgClicksPerSession } from "../lib/sessions"
 export function SessionStats({ total, users }: { total: number | null; users: number | null }) {
   const avg = avgClicksPerSession(total, users)
   return (
-    <div className="border-border bg-card flex w-full max-w-3xl items-center justify-around gap-4 rounded-md border p-3 text-center">
+    <div className="tb-box border-l-primary flex w-full max-w-3xl items-center justify-around gap-4 border-l-[3px] p-4 text-center">
       <Stat label="TOTAL_SESSIONS" value={users === null ? "—" : users.toLocaleString("en-US")} />
       <div className="bg-border h-8 w-px" aria-hidden />
       <Stat label="AVG_CLICKS/SESSION" value={avg === null ? "—" : avg.toFixed(1)} />
