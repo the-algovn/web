@@ -3,8 +3,8 @@
 // .gitignore excludes .env*). Any VITE_* var set at build time overrides.
 export const env = {
   oidcAuthority: import.meta.env.VITE_OIDC_AUTHORITY ?? "https://id.algovn.com",
-  // Set after Zitadel onboarding (T19); empty means sign-in cannot start yet.
-  oidcClientId: import.meta.env.VITE_OIDC_CLIENT_ID ?? "",
+  // the-button-web public client in the-thing project (Zitadel).
+  oidcClientId: import.meta.env.VITE_OIDC_CLIENT_ID ?? "381980626372329841",
   apiBase: import.meta.env.VITE_API_BASE ?? "https://api.algovn.com/the-button",
   eventsUrl: import.meta.env.VITE_EVENTS_URL ?? "https://api.algovn.com/events/the-button.counter",
 }
