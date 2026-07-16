@@ -1,7 +1,7 @@
 import { progress } from "../lib/progress"
 
 export function ProgressBar({ total }: { total: number | null }) {
-  const p = total === null ? { percent: 0, label: "next: —" } : progress(total)
+  const p = total === null ? { percent: 0 } : progress(total)
   const pctText = p.percent < 1 ? p.percent.toFixed(4) : p.percent.toFixed(1)
   return (
     <div className="tb-box w-full max-w-3xl p-4 text-left">

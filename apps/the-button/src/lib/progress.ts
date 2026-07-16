@@ -22,7 +22,6 @@ export function nextMilestone(total: number): NextMilestone | null {
 export interface Progress {
   next: NextMilestone | null
   percent: number
-  label: string
 }
 
 // progress fills toward the next unreached milestone (the bar climbs, then
@@ -34,13 +33,11 @@ export function progress(total: number): Progress {
     return {
       next,
       percent: clampPercent((total / next.threshold) * 100),
-      label: `next: ${next.threshold.toLocaleString("en-US")} — ${next.title}`,
     }
   }
   return {
     next: null,
     percent: clampPercent((total / TARGET) * 100),
-    label: "next: the target — one quadrillion clicks",
   }
 }
 

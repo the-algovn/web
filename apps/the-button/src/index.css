@@ -7,43 +7,16 @@
   --font-geist-mono: "JetBrains Mono Variable";
 }
 
-/* fixed subtle grid backdrop (prototype .grid-bg) */
-.tb-grid-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.3;
-  background-image: linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 60px 60px;
-}
-
-/* reusable box surfaces */
-.tb-box {
-  background: var(--card);
-  border: 1px solid var(--border);
-}
-.tb-accent-box {
-  background: var(--card);
-  border: 2px solid var(--primary);
-}
-
 /* particle rise (kept from before) */
 @keyframes the-button-particle-rise {
   from { opacity: 1; transform: translate(-50%, 0); }
   to { opacity: 0; transform: translate(-50%, -120px); }
 }
-.the-button-particle { animation: the-button-particle-rise 0.6s ease-out forwards; }
 
 /* shared animations used by header/counter/cards */
 @keyframes tb-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 @keyframes tb-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 @keyframes tb-bump { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
-@keyframes tb-unlock-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
-  50% { box-shadow: 0 0 0 15px rgba(0, 255, 136, 0); }
-}
 @keyframes tb-emoji-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
 @media (prefers-reduced-motion: reduce) {
@@ -51,40 +24,66 @@
   [class*="tb-"] { animation: none !important; }
 }
 
-/* ghost button that fills from the bottom on hover (prototype .the-button) */
-.tb-ghost {
-  position: relative;
-  overflow: hidden;
-  border: 2px solid var(--primary);
-  color: var(--primary);
-  background: transparent;
-  transition: color 0.15s ease, transform 0.1s ease;
+@layer components {
+  /* fixed subtle grid backdrop (prototype .grid-bg) */
+  .tb-grid-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.3;
+    background-image: linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* reusable box surfaces */
+  .tb-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+  }
+  .tb-accent-box {
+    background: var(--card);
+    border: 2px solid var(--primary);
+  }
+
+  .the-button-particle { animation: the-button-particle-rise 0.6s ease-out forwards; }
+
+  /* ghost button that fills from the bottom on hover (prototype .the-button) */
+  .tb-ghost {
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    background: transparent;
+    transition: color 0.15s ease, transform 0.1s ease;
+  }
+  .tb-ghost::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--primary);
+    transform: translateY(100%);
+    transition: transform 0.2s ease;
+  }
+  .tb-ghost:hover { color: var(--background); }
+  .tb-ghost:hover::before { transform: translateY(0); }
+  .tb-ghost:active { transform: scale(0.98); }
+
+  /* milestone/achievement cards (prototype .milestone-card variants) */
+  .tb-card { position: relative; overflow: hidden; transition: all 0.3s ease; }
+  .tb-card.tb-achieved {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, var(--card) 0%, rgba(0, 255, 136, 0.05) 100%);
+  }
+  .tb-card.tb-achieved:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2); }
+  .tb-card.tb-featured { border-width: 2px; box-shadow: 0 0 20px rgba(0, 255, 136, 0.2); }
+  .tb-card.tb-next { border-style: dashed; }
+  .tb-card.tb-locked { opacity: 0.65; filter: grayscale(80%); }
+  .tb-card.tb-achieved .tb-emoji { animation: tb-emoji-bounce 2s ease-in-out infinite; }
 }
-.tb-ghost::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--primary);
-  transform: translateY(100%);
-  transition: transform 0.2s ease;
-}
-.tb-ghost:hover { color: var(--background); }
-.tb-ghost:hover::before { transform: translateY(0); }
-.tb-ghost:active { transform: scale(0.98); }
+
 @media (prefers-reduced-motion: reduce) {
   .tb-ghost::before { transition: none; }
 }
-
-/* milestone/achievement cards (prototype .milestone-card variants) */
-.tb-card { position: relative; overflow: hidden; transition: all 0.3s ease; }
-.tb-card.tb-achieved {
-  border-color: var(--primary);
-  background: linear-gradient(135deg, var(--card) 0%, rgba(0, 255, 136, 0.05) 100%);
-}
-.tb-card.tb-achieved:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2); }
-.tb-card.tb-featured { border-width: 2px; box-shadow: 0 0 20px rgba(0, 255, 136, 0.2); }
-.tb-card.tb-next { border-style: dashed; }
-.tb-card.tb-locked { opacity: 0.5; filter: grayscale(80%); }
-.tb-card.tb-just-unlocked { animation: tb-unlock-pulse 1s ease-in-out; }
-.tb-card.tb-achieved .tb-emoji { animation: tb-emoji-bounce 2s ease-in-out infinite; }

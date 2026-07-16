@@ -6,6 +6,8 @@ export interface Particle {
   y: number
 }
 
+const PARTICLE_SHADES = ["#00ff88", "#00cc6a", "#00994d", "#00663a", "#00331a"] as const
+
 function prefersReducedMotion(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -44,7 +46,7 @@ export function ParticleLayer({
           style={{
             left: p.x,
             top: p.y,
-            color: ["#00ff88", "#00cc6a", "#00994d", "#00ff88", "#00cc6a"][p.id % 5],
+            color: PARTICLE_SHADES[p.id % PARTICLE_SHADES.length],
           }}
           className="the-button-particle absolute font-mono text-4xl font-bold"
         >

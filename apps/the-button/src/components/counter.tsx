@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react"
 
 const TWEEN_MS = 600
 
-// Big number with an ease-out tween on change; each character is rendered in a
-// clipped, sliding cell so digit changes animate upward (prototype .digit-slider).
+// Big number with a rAF ease-out tween: on change, it animates from the last
+// shown value to the new total over TWEEN_MS and briefly brightens (tb-bump).
 export function Counter({ total }: { total: number | null }) {
   const [shown, setShown] = useState(0)
   const shownRef = useRef(0)
@@ -45,17 +45,7 @@ export function Counter({ total }: { total: number | null }) {
           (bump ? "[animation:tb-bump_0.15s_ease]" : "")
         }
       >
-        {text.split("").map((ch, i) =>
-          ch === "," ? (
-            <span key={i} className="tb-digit-sep text-muted-foreground">
-              {ch}
-            </span>
-          ) : (
-            <span key={i} className="tb-digit inline-block">
-              {ch}
-            </span>
-          )
-        )}
+        {text}
       </div>
     </div>
   )

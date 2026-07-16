@@ -22,7 +22,7 @@ it("renders CURRENT_COUNT label and tweens to the grouped total", async () => {
   render(<Counter total={12345} />)
   expect(screen.getByText("CURRENT_COUNT")).toBeInTheDocument()
   await vi.advanceTimersByTimeAsync(600)
-  // number is split into per-character spans, so assert on textContent
+  // the rAF tween has settled by TWEEN_MS; assert the final grouped value
   const el = screen.getByTestId("counter")
   expect(el.textContent?.replace(/\s/g, "")).toContain("12,345")
 })

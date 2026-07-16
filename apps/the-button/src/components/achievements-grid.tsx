@@ -2,7 +2,7 @@ import { useState } from "react"
 import type { CatalogEntry } from "../lib/catalog"
 import { achievementMeta } from "../lib/achievement-meta"
 
-function Card({
+function AchievementCard({
   entry,
   variant,
 }: {
@@ -89,8 +89,8 @@ export function AchievementsGrid({ entries }: { entries: CatalogEntry[] }) {
         </div>
       </div>
       <ul className="grid gap-4 sm:grid-cols-2">
-        {visible.map((entry, i) => (
-          <Card key={entry.id} entry={entry} variant={variantOf(entry, expanded ? i : entries.indexOf(entry))} />
+        {visible.map(entry => (
+          <AchievementCard key={entry.id} entry={entry} variant={variantOf(entry, entries.indexOf(entry))} />
         ))}
       </ul>
     </section>

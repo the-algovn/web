@@ -11,7 +11,12 @@ import { SessionStats } from "./components/session-stats"
 import { StatusBar } from "./components/status-bar"
 import { TargetHeadline } from "./components/target-headline"
 import { WhyGrid } from "./components/why-grid"
-import { getCounter, issueChallenge, listAchievements, submitClicks } from "./lib/api"
+import {
+  getCounter,
+  issueChallenge,
+  listAchievements,
+  submitClicks,
+} from "./lib/api"
 import { signIn } from "./lib/auth"
 import { Batcher } from "./lib/batcher"
 import { runBench } from "./lib/bench"
@@ -25,7 +30,7 @@ import { useAuth } from "./lib/use-auth"
 // No router: the app has exactly two views — the page and the OIDC callback.
 export default function App() {
   const [isCallback, setIsCallback] = useState(() =>
-    window.location.pathname.endsWith("/callback")
+    window.location.pathname.endsWith("/callback"),
   )
   if (isCallback) {
     return (
@@ -60,7 +65,9 @@ function Home() {
   const [mode, setMode] = useState<LiveMode>("connecting")
   const [myTotal, setMyTotal] = useState<number | null>(null)
   const [pending, setPending] = useState(0)
-  const [catalog, setCatalog] = useState<CatalogEntry[]>(() => mergeCatalog(undefined))
+  const [catalog, setCatalog] = useState<CatalogEntry[]>(() =>
+    mergeCatalog(undefined),
+  )
   const [milestone, setMilestone] = useState<Milestone | null>(null)
   const [eta, setEta] = useState<Eta>({ seconds: null, text: "calculating…" })
   const batcherRef = useRef<Batcher | null>(null)
@@ -76,18 +83,21 @@ function Home() {
       getToken: () => tokenRef.current,
       onUserTotal: setMyTotal,
       onPendingChange: setPending,
-      onUnlocked: unlocked => {
+      onUnlocked: (unlocked) => {
         announce(unlocked)
-        setCatalog(prev =>
-          prev.map(entry => {
-            const hit = unlocked.find(a => a.id === entry.id)
+        setCatalog((prev) =>
+          prev.map((entry) => {
+            const hit = unlocked.find((a) => a.id === entry.id)
             return hit
-              ? { ...entry, unlockedAt: hit.unlockedAt ?? new Date().toISOString() }
+              ? {
+                  ...entry,
+                  unlockedAt: hit.unlockedAt ?? new Date().toISOString(),
+                }
               : entry
-          })
+          }),
         )
       },
-      onError: err => console.error("submit failed", err),
+      onError: (err) => console.error("submit failed", err),
     })
     return () => {
       batcherRef.current = null
@@ -97,14 +107,16 @@ function Home() {
 
   useEffect(() => {
     const live = new LiveCounter({
-      onEvent: event => {
+      onEvent: (event) => {
         if (event.type === "counter") {
           setTotal(event.total)
           if (event.users !== undefined) setUsers(event.users)
           etaRef.current.sample(event.total)
           setEta(etaRef.current.eta())
         } else {
-          setMilestone(current => higher(current, { threshold: event.threshold, title: event.title }))
+          setMilestone((current) =>
+            higher(current, { threshold: event.threshold, title: event.title }),
+          )
         }
       },
       onModeChange: setMode,
@@ -117,11 +129,11 @@ function Home() {
   useEffect(() => {
     let cancelled = false
     getCounter()
-      .then(res => {
+      .then((res) => {
         if (cancelled) return
         if (res.total !== undefined) {
           const t = Number(res.total)
-          setTotal(prev => (prev === null ? t : prev))
+          setTotal((prev) => (prev === null ? t : prev))
           etaRef.current.sample(t)
           setEta(etaRef.current.eta())
         }
@@ -138,14 +150,17 @@ function Home() {
   useEffect(() => {
     let cancelled = false
     listAchievements(token ?? undefined)
-      .then(res => {
+      .then((res) => {
         if (cancelled) return
         setCatalog(mergeCatalog(res.catalog))
         const latest = (res.milestones ?? [])
-          .map(m => ({ threshold: Number(m.threshold ?? "0"), title: m.title ?? "" }))
-          .filter(m => m.threshold > 0 && m.title !== "")
+          .map((m) => ({
+            threshold: Number(m.threshold ?? "0"),
+            title: m.title ?? "",
+          }))
+          .filter((m) => m.threshold > 0 && m.title !== "")
           .sort((a, b) => b.threshold - a.threshold)[0]
-        if (latest) setMilestone(current => higher(current, latest))
+        if (latest) setMilestone((current) => higher(current, latest))
       })
       .catch(() => {
         // offline/unreachable: the fallback catalog is already rendered
@@ -168,41 +183,48 @@ function Home() {
     <>
       <div className="tb-grid-bg" aria-hidden />
       <main className="relative z-10 mx-auto flex min-h-svh max-w-3xl flex-col items-center gap-6 p-6 text-center">
-      <StatusBar mode={mode} eta={eta} />
-      <section className="border-border w-full max-w-3xl space-y-2 border-b pt-6 pb-8 text-left">
-        <h1 className="font-mono text-4xl leading-none font-bold tracking-tight sm:text-5xl">
-          THE BUTTON.
-        </h1>
-        <p className="text-muted-foreground text-base">One button. One goal. Millions of humans.</p>
-      </section>
-      <MilestoneBanner milestone={milestone} />
-      <WhyGrid />
-      <TargetHeadline />
-      <Counter total={total} />
-      <ProgressBar total={total} />
-      {user ? (
-        <ClickButton onMash={() => batcherRef.current?.click()} onParticle={emit} />
-      ) : (
-        <button
-          type="button"
-          onClick={() => void signIn()}
-          className="tb-ghost focus-visible:ring-ring/50 flex w-full max-w-3xl items-center justify-center gap-3 px-8 py-6 font-mono text-xl font-bold tracking-widest outline-none focus-visible:ring-[3px]"
-        >
-          <span className="text-2xl font-normal" aria-hidden>
-            ▶
-          </span>
-          <span>SIGN IN TO CONTRIBUTE</span>
-        </button>
-      )}
-      {user && <PersonalStats myTotal={myTotal} pending={pending} total={total} />}
-      <SessionStats total={total} users={users} />
-      <AchievementsGrid entries={catalog} />
-      <footer className="text-muted-foreground mt-4 flex items-center gap-3 font-mono text-xs">
-        <span>made with questionable decisions</span>
-        <span className="opacity-30">•</span>
-        <span>the button</span>
-      </footer>
-      <ParticleLayer particles={particles} onDone={remove} />
+        <StatusBar mode={mode} eta={eta} />
+        <section className="border-border w-full max-w-3xl space-y-2 border-b pt-6 pb-8 text-left">
+          <h1 className="font-mono text-4xl leading-none font-bold tracking-tight sm:text-5xl">
+            THE BUTTON.
+          </h1>
+          <p className="text-muted-foreground text-base">
+            One button. One goal. Millions of humans.
+          </p>
+        </section>
+        <MilestoneBanner milestone={milestone} />
+        <WhyGrid />
+        <TargetHeadline />
+        <Counter total={total} />
+        <ProgressBar total={total} />
+        {user ? (
+          <ClickButton
+            onMash={() => batcherRef.current?.click()}
+            onParticle={emit}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => void signIn()}
+            className="tb-ghost focus-visible:ring-ring/50 flex w-full max-w-3xl items-center justify-center gap-3 px-8 py-6 font-mono text-xl font-bold tracking-widest outline-none focus-visible:ring-[3px]"
+          >
+            <span className="text-2xl font-normal" aria-hidden>
+              ▶
+            </span>
+            <span>SIGN IN TO CONTRIBUTE</span>
+          </button>
+        )}
+        {user && (
+          <PersonalStats myTotal={myTotal} pending={pending} total={total} />
+        )}
+        <SessionStats total={total} users={users} />
+        <AchievementsGrid entries={catalog} />
+        <footer className="text-muted-foreground mt-4 flex items-center gap-3 font-mono text-xs">
+          <span>made with questionable decisions</span>
+          <span className="opacity-30">•</span>
+          <span>the button</span>
+        </footer>
+        <ParticleLayer particles={particles} onDone={remove} />
       </main>
     </>
   )
