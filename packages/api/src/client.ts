@@ -1,5 +1,5 @@
 // Thin client for the control-plane REST routes. baseUrl already includes the
-// product prefix (e.g. …/the-button), so paths append directly.
+// product prefix (e.g. …/the-button or …/console), so paths append directly.
 // Responses are protojson: camelCase fields, uint64 as decimal strings,
 // google.protobuf.Timestamp as RFC3339 strings, zero-valued fields omitted.
 import { ApiError } from "./errors"

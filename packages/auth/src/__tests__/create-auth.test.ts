@@ -1,4 +1,4 @@
-import { expect, it } from "vitest"
+import { expect, it, vi } from "vitest"
 import { User } from "oidc-client-ts"
 import { createAuth } from "../index"
 
@@ -57,4 +57,39 @@ it("keeps the signed-in user in memory only — never web storage", async () => 
   expect(window.localStorage.length).toBe(0)
   const stored = await userManager.getUser()
   expect(stored?.access_token).toBe("tok")
+})
+
+it("signIn triggers the manager's signinRedirect", async () => {
+  const { userManager, signIn } = createAuth(config)
+  const signinRedirect = vi.spyOn(userManager, "signinRedirect").mockResolvedValue()
+  const signoutRedirect = vi.spyOn(userManager, "signoutRedirect").mockResolvedValue()
+  await signIn()
+  expect(signinRedirect).toHaveBeenCalledTimes(1)
+  expect(signoutRedirect).not.toHaveBeenCalled()
+})
+
+it("signOut triggers the manager's signoutRedirect", async () => {
+  const { userManager, signOut } = createAuth(config)
+  const signinRedirect = vi.spyOn(userManager, "signinRedirect").mockResolvedValue()
+  const signoutRedirect = vi.spyOn(userManager, "signoutRedirect").mockResolvedValue()
+  await signOut()
+  expect(signoutRedirect).toHaveBeenCalledTimes(1)
+  expect(signinRedirect).not.toHaveBeenCalled()
+})
+
+it("completeSignIn returns the user from signinCallback", async () => {
+  const { userManager, completeSignIn } = createAuth(config)
+  const user = new User({
+    access_token: "tok",
+    token_type: "Bearer",
+    profile: { sub: "user-1", iss: "https://id.algovn.com", aud: "app", exp: 0, iat: 0 },
+  })
+  vi.spyOn(userManager, "signinCallback").mockResolvedValue(user)
+  await expect(completeSignIn()).resolves.toBe(user)
+})
+
+it("completeSignIn throws when signinCallback returns no user", async () => {
+  const { userManager, completeSignIn } = createAuth(config)
+  vi.spyOn(userManager, "signinCallback").mockResolvedValue(undefined)
+  await expect(completeSignIn()).rejects.toThrow("no user returned from the sign-in callback")
 })

@@ -4,6 +4,10 @@ import type { User, UserManager } from "oidc-client-ts"
 export function useAuth(userManager: UserManager): { user: User | null; token: string | null } {
   const [user, setUser] = useState<User | null>(null)
   useEffect(() => {
+    // guards against a stale-manager clobber: if a re-render swaps in a
+    // different userManager, a slow getUser() from the old one must not
+    // overwrite state set by the new one. Untested — unreachable while both
+    // apps pass a module-scope singleton through this hook. Do not remove.
     let cancelled = false
     void userManager.getUser().then(u => {
       if (!cancelled) setUser(u && !u.expired ? u : null)

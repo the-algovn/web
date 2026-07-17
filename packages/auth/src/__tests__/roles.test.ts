@@ -16,4 +16,7 @@ describe("rolesFromToken", () => {
     expect(rolesFromToken(fakeJwt({ sub: "1" }))).toEqual([])
     expect(rolesFromToken("not-a-jwt")).toEqual([])
   })
+  it("returns empty when the payload segment decodes but isn't valid JSON", () => {
+    expect(rolesFromToken("a.YWJj.c")).toEqual([])
+  })
 })
