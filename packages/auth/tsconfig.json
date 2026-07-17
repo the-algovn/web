@@ -1,0 +1,4 @@
+{
+  "extends": "@algovn/config/tsconfig/react-library",
+  "include": ["src", "vitest.config.mts", "vitest.setup.ts"]
+}
