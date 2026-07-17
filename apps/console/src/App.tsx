@@ -1,11 +1,11 @@
 import { useState } from "react"
+import { rolesFromToken } from "@algovn/auth"
 import { Button } from "@algovn/ui/button"
 import { Callback } from "./components/callback"
 import { LedgerDrawer } from "./components/ledger-drawer"
 import { Shell } from "./components/shell"
 import { SignIn } from "./components/sign-in"
 import { signOut } from "./lib/auth"
-import { rolesFromToken } from "./lib/roles"
 import { useAuth } from "./lib/use-auth"
 
 export default function App() {
