@@ -72,8 +72,9 @@ it("keeps the session across a reload — a fresh manager still finds the stored
   expect(stored?.access_token).toBe("tok")
 })
 
-it("signs the user out when the access token expires without renewing", async () => {
+it("signs the user out when the access token expires and renewal fails", async () => {
   const { userManager } = createAuth(config)
+  vi.spyOn(userManager, "signinSilent").mockRejectedValue(new Error("no session"))
   const removeUser = vi.spyOn(userManager, "removeUser").mockResolvedValue()
   // The expiry wiring is only reachable through oidc-client-ts's internals:
   // addAccessTokenExpired registers on events._expiredTimer, a Timer extending
@@ -81,6 +82,30 @@ it("signs the user out when the access token expires without renewing", async ()
   const events = userManager.events as unknown as { _expiredTimer: { raise: () => Promise<void> } }
   await events._expiredTimer.raise()
   expect(removeUser).toHaveBeenCalledTimes(1)
+})
+
+it("attempts a silent renewal instead of signing out when an already-expired user still has a refresh token", async () => {
+  window.localStorage.clear()
+  const { userManager } = createAuth({ ...config, origin: "http://localhost:5173" })
+  // Mirrors the real scenario: a stored user whose access token already
+  // expired (e.g. the browser was closed overnight) but whose refresh token
+  // is still good. storeUser isn't consulted by the raise() below — it
+  // documents the case this test pins, same as the browser-restart test above.
+  await userManager.storeUser(
+    new User({
+      access_token: "tok",
+      refresh_token: "refresh-tok",
+      token_type: "Bearer",
+      expires_at: Math.floor(Date.now() / 1000) - 60, // already expired
+      profile: { sub: "user-1", iss: "https://id.algovn.com", aud: "app", exp: 0, iat: 0 },
+    })
+  )
+  const signinSilent = vi.spyOn(userManager, "signinSilent").mockResolvedValue(null)
+  const removeUser = vi.spyOn(userManager, "removeUser").mockResolvedValue()
+  const events = userManager.events as unknown as { _expiredTimer: { raise: () => Promise<void> } }
+  await events._expiredTimer.raise()
+  expect(signinSilent).toHaveBeenCalledTimes(1)
+  expect(removeUser).not.toHaveBeenCalled()
 })
 
 it("signIn triggers the manager's signinRedirect", async () => {

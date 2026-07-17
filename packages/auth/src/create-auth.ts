@@ -14,6 +14,15 @@ const OFFLINE_ACCESS = "offline_access"
 const withOfflineAccess = (scope: string): string =>
   scope.split(/\s+/).includes(OFFLINE_ACCESS) ? scope : `${scope} ${OFFLINE_ACCESS}`
 
+// Tokens live in shared localStorage, so every open tab arms its own renewal
+// off the same expires_at and can call signinSilent() in the same instant.
+// With refresh-token rotation, a second concurrent call replays an
+// already-rotated token and can trip the IdP's reuse detection, signing every
+// tab out. Web Locks serialise that across tabs; jsdom (this package's test
+// environment) has no navigator.locks, hence the feature-detect fallback.
+const withRenewLock = <T,>(fn: () => Promise<T>): Promise<T> =>
+  navigator.locks ? navigator.locks.request("algovn-auth-renew", fn) : fn()
+
 export function createAuth(config: AuthConfig): AuthClient {
   const origin = config.origin ?? window.location.origin
   const userManager = new UserManager({
@@ -34,11 +43,21 @@ export function createAuth(config: AuthConfig): AuthClient {
     automaticSilentRenew: true,
   })
 
-  // A token that expired without renewing means the refresh token is gone or
-  // revoked. Drop the user so the UI shows signed-out instead of firing calls
-  // the gateway will 401. removeUser raises userUnloaded, which useAuth already
-  // handles.
-  userManager.events.addAccessTokenExpired(() => void userManager.removeUser())
+  // A token can already be expired the moment it's loaded (e.g. the browser
+  // was closed overnight) — oidc-client-ts then cancels the expiring timer and
+  // fires only this one, so automaticSilentRenew (which hooks expiring, not
+  // expired) never runs. Attempt the refresh-token grant here instead of
+  // dropping the user: signinSilent uses it whenever a refresh token is
+  // present. Only remove the user if that genuinely fails, meaning the
+  // refresh token is gone or revoked. removeUser raises userUnloaded, which
+  // useAuth already handles.
+  userManager.events.addAccessTokenExpired(async () => {
+    try {
+      await withRenewLock(() => userManager.signinSilent())
+    } catch {
+      await userManager.removeUser()
+    }
+  })
 
   return {
     userManager,
