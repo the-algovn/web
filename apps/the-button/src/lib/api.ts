@@ -51,6 +51,8 @@ export interface SubmitClicksResponse {
 export interface ListAchievementsResponse {
   catalog?: Achievement[]
   milestones?: Milestone[]
+  // Set only when personalized; protojson omits it when zero.
+  userTotalClicks?: string
 }
 
 // Error discrimination per the acp mapping (launch-blocker additions, spec §6):

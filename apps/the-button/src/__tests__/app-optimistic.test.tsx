@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import App from "../App"
 import * as api from "../lib/api"
@@ -88,4 +88,58 @@ it("does not let a stale lower frame drag the counter backward", async () => {
   })
   await vi.advanceTimersByTimeAsync(600)
   expect(counterText()).toContain("1,000")
+})
+
+// The seed lands via a promise `.then()` (listAchievements resolving), not
+// inside an act()-wrapped event like the counter tests above. Under fake
+// timers that setState commit is scheduled on a task queue advanceTimers does
+// not pump, so the DOM never updates no matter how much virtual time passes.
+// These three tests are purely promise-driven — nothing here needs timer
+// control — so they run on real timers and poll with findByText, which
+// observes the real scheduler.
+it("seeds your clicks from the achievements snapshot before any submit lands", async () => {
+  vi.useRealTimers()
+  vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
+  vi.spyOn(api, "listAchievements").mockResolvedValue({
+    catalog: [],
+    milestones: [],
+    userTotalClicks: "500",
+  })
+
+  render(<App />)
+  expect(await screen.findByText("500")).toBeInTheDocument()
+})
+
+it("shows zero, not an em dash, for a signed-in user who has never clicked", async () => {
+  // protojson omits zero-valued fields: a user with no clicks sends no
+  // userTotalClicks at all, which looks identical to an anonymous response.
+  vi.useRealTimers()
+  vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
+  vi.spyOn(api, "listAchievements").mockResolvedValue({ catalog: [], milestones: [] })
+
+  render(<App />)
+  expect(await screen.findByText("0")).toBeInTheDocument()
+})
+
+it("does not re-seed a stale total when the token is renewed", async () => {
+  vi.useRealTimers()
+  vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
+  const list = vi
+    .spyOn(api, "listAchievements")
+    .mockResolvedValue({ catalog: [], milestones: [], userTotalClicks: "500" })
+
+  const { rerender } = render(<App />)
+  expect(await screen.findByText("500")).toBeInTheDocument()
+
+  // A silent renewal hands over a new token, which re-runs the effect. The
+  // snapshot it fetches is stale relative to clicks that have already landed,
+  // so it must not win. Changing the token is what makes this test bite:
+  // rerender() alone would not re-run a [token] effect.
+  list.mockResolvedValue({ catalog: [], milestones: [], userTotalClicks: "400" })
+  authState.token = "tok-renewed"
+  rerender(<App />)
+  // Wait for the renewed token's listAchievements to actually resolve, so the
+  // assertion proves the seed was ignored — not merely that it hasn't run yet.
+  await waitFor(() => expect(list).toHaveBeenCalledTimes(2))
+  expect(screen.getByText("500")).toBeInTheDocument() // seeded once, never re-seeded
 })

@@ -164,6 +164,12 @@ function Home() {
       .then((res) => {
         if (cancelled) return
         setCatalog(mergeCatalog(res.catalog))
+        // Seed once. protojson omits zero-valued fields, so an authed user
+        // with zero clicks sends no userTotalClicks — indistinguishable on the
+        // wire from an anonymous response, hence the local `if (token)`. And
+        // `prev ??` stops a token renewal from re-seeding a snapshot that is
+        // now stale relative to submits that have already landed.
+        if (token) setMyTotal((prev) => prev ?? Number(res.userTotalClicks ?? 0))
         const latest = (res.milestones ?? [])
           .map((m) => ({
             threshold: Number(m.threshold ?? "0"),
