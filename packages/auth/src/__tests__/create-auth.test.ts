@@ -1,4 +1,4 @@
-import { expect, it, vi } from "vitest"
+import { afterEach, expect, it, vi } from "vitest"
 import { User } from "oidc-client-ts"
 import { createAuth } from "../index"
 
@@ -8,6 +8,10 @@ const config = {
   basePath: "/the-button",
   origin: "https://algovn.com",
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 it("builds PKCE settings from the injected origin, authority and basePath", () => {
   const { userManager } = createAuth(config)
@@ -84,28 +88,74 @@ it("signs the user out when the access token expires and renewal fails", async (
   expect(removeUser).toHaveBeenCalledTimes(1)
 })
 
-it("attempts a silent renewal instead of signing out when an already-expired user still has a refresh token", async () => {
+it("reaches the refresh-token grant when an already-expired user with a refresh token is loaded at page load", async () => {
   window.localStorage.clear()
-  const { userManager } = createAuth({ ...config, origin: "http://localhost:5173" })
+  const authConfig = { ...config, origin: "http://localhost:5173" }
   // Mirrors the real scenario: a stored user whose access token already
   // expired (e.g. the browser was closed overnight) but whose refresh token
-  // is still good. storeUser isn't consulted by the raise() below — it
-  // documents the case this test pins, same as the browser-restart test above.
-  await userManager.storeUser(
+  // is still good. Store it via a first manager, then read it back with a
+  // second — a reload is a brand-new UserManager over the same storage,
+  // same pattern as the reload test above.
+  const first = createAuth(authConfig)
+  await first.userManager.storeUser(
     new User({
-      access_token: "tok",
-      refresh_token: "refresh-tok",
+      access_token: "OLD-access-token",
+      refresh_token: "OLD-refresh-token",
       token_type: "Bearer",
       expires_at: Math.floor(Date.now() / 1000) - 60, // already expired
       profile: { sub: "user-1", iss: "https://id.algovn.com", aud: "app", exp: 0, iat: 0 },
     })
   )
-  const signinSilent = vi.spyOn(userManager, "signinSilent").mockResolvedValue(null)
-  const removeUser = vi.spyOn(userManager, "removeUser").mockResolvedValue()
-  const events = userManager.events as unknown as { _expiredTimer: { raise: () => Promise<void> } }
+
+  // Nothing is mocked but the network: the assertion below is that the
+  // real signinSilent path drives an actual refresh-token grant, not that
+  // some handler merely calls a mocked function.
+  const requests: { url: string; body: string }[] = []
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      const url = String(input)
+      requests.push({ url, body: init?.body ? String(init.body) : "" })
+      if (url.endsWith("/.well-known/openid-configuration")) {
+        return new Response(
+          JSON.stringify({
+            issuer: config.authority,
+            authorization_endpoint: `${config.authority}/oauth/v2/authorize`,
+            token_endpoint: `${config.authority}/oauth/v2/token`,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      }
+      if (url.endsWith("/oauth/v2/token")) {
+        return new Response(
+          JSON.stringify({
+            access_token: "NEW-access-token",
+            refresh_token: "NEW-rotated-refresh-token",
+            token_type: "Bearer",
+            expires_in: 3600,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      }
+      throw new Error(`unexpected fetch to ${url}`)
+    })
+  )
+
+  const second = createAuth(authConfig)
+  // The expiry wiring is only reachable through oidc-client-ts's internals:
+  // addAccessTokenExpired registers on events._expiredTimer, a Timer extending
+  // Event, so raise() runs the handlers. Verified against 3.5.0.
+  const events = second.userManager.events as unknown as { _expiredTimer: { raise: () => Promise<void> } }
   await events._expiredTimer.raise()
-  expect(signinSilent).toHaveBeenCalledTimes(1)
-  expect(removeUser).not.toHaveBeenCalled()
+
+  const tokenRequest = requests.find((r) => r.url.endsWith("/oauth/v2/token"))
+  const body = new URLSearchParams(tokenRequest?.body)
+  expect(body.get("grant_type")).toBe("refresh_token")
+  expect(body.get("refresh_token")).toBe("OLD-refresh-token")
+
+  const user = await second.userManager.getUser()
+  expect(user?.access_token).toBe("NEW-access-token")
+  expect(user?.refresh_token).toBe("NEW-rotated-refresh-token")
 })
 
 it("signIn triggers the manager's signinRedirect", async () => {

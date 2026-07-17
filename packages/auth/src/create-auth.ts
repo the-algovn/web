@@ -23,6 +23,15 @@ const withOfflineAccess = (scope: string): string =>
 const withRenewLock = <T,>(fn: () => Promise<T>): Promise<T> =>
   navigator.locks ? navigator.locks.request("algovn-auth-renew", fn) : fn()
 
+// Web Locks are non-reentrant: withRenewLock must be applied exactly once per
+// signinSilent() call, at the method itself, so every caller — including
+// oidc-client-ts's own SilentRenewService, which invokes signinSilent()
+// directly ~1 minute before expiry and never goes through the
+// accessTokenExpired handler below — is serialised. Wrapping the handler
+// instead (as before) left that path, the one where two tabs actually race,
+// completely unguarded. Do not also wrap the call inside the handler: nesting
+// the same lock name would have the outer request await the inner one forever.
+
 export function createAuth(config: AuthConfig): AuthClient {
   const origin = config.origin ?? window.location.origin
   const userManager = new UserManager({
@@ -43,6 +52,11 @@ export function createAuth(config: AuthConfig): AuthClient {
     automaticSilentRenew: true,
   })
 
+  // See the withRenewLock comment above: every call to signinSilent, from any
+  // caller, must go through the lock exactly once.
+  const renewSilently = userManager.signinSilent.bind(userManager)
+  userManager.signinSilent = (args) => withRenewLock(() => renewSilently(args))
+
   // A token can already be expired the moment it's loaded (e.g. the browser
   // was closed overnight) — oidc-client-ts then cancels the expiring timer and
   // fires only this one, so automaticSilentRenew (which hooks expiring, not
@@ -53,7 +67,7 @@ export function createAuth(config: AuthConfig): AuthClient {
   // useAuth already handles.
   userManager.events.addAccessTokenExpired(async () => {
     try {
-      await withRenewLock(() => userManager.signinSilent())
+      await userManager.signinSilent()
     } catch {
       await userManager.removeUser()
     }
