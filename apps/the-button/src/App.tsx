@@ -69,6 +69,7 @@ function Home() {
   // What the big counter shows: server truth plus this user's not-yet-landed
   // clicks, floored so it can never tick backward. See lib/display-total.ts.
   const [display, setDisplay] = useState<number | null>(null)
+  const [stalled, setStalled] = useState(false)
   const [prevInputs, setPrevInputs] = useState<{ total: number | null; pending: number }>({
     total: null,
     pending: 0,
@@ -91,6 +92,7 @@ function Home() {
       getToken: () => tokenRef.current,
       onUserTotal: setMyTotal,
       onPendingChange: setPending,
+      onStallChange: setStalled,
       onUnlocked: (unlocked) => {
         announce(unlocked)
         setCatalog((prev) =>
@@ -108,6 +110,7 @@ function Home() {
       onError: (err) => console.error("submit failed", err),
     })
     return () => {
+      batcherRef.current?.dispose()
       batcherRef.current = null
       solver.terminate()
     }
@@ -231,7 +234,7 @@ function Home() {
           </button>
         )}
         {user && (
-          <PersonalStats myTotal={myTotal} pending={pending} total={total} />
+          <PersonalStats myTotal={myTotal} pending={pending} stalled={stalled} total={total} />
         )}
         <SessionStats total={total} users={users} />
         <AchievementsGrid entries={catalog} />

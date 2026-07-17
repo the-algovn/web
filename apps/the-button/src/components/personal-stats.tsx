@@ -1,14 +1,15 @@
 import type { ReactNode } from "react"
-import { Badge } from "@algovn/ui/badge"
 import { impact } from "../lib/sessions"
 
 export function PersonalStats({
   myTotal,
   pending,
+  stalled,
   total,
 }: {
   myTotal: number | null
   pending: number
+  stalled: boolean
   total: number | null
 }) {
   const share = impact(myTotal, total)
@@ -18,10 +19,10 @@ export function PersonalStats({
         <span className="font-mono tabular-nums">
           {myTotal === null ? "—" : (myTotal + pending).toLocaleString("en-US")}
         </span>
-        {pending > 0 && (
-          <Badge variant="secondary" className="ml-2">
-            {pending.toLocaleString("en-US")} pending
-          </Badge>
+        {stalled && (
+          <span className="text-muted-foreground ml-2 font-mono text-xs" role="status">
+            ⚠ retrying
+          </span>
         )}
       </Stat>
       <div className="bg-border h-8 w-px" aria-hidden />
