@@ -11,6 +11,7 @@ describe("module registry", () => {
       expect(m.group.length).toBeGreaterThan(0)
       expect(m.component).toBeDefined()
       expect([null, "admin"]).toContain(m.requiredRole)
+      expect(typeof m.requiresLab).toBe("boolean")
     }
   })
 })
