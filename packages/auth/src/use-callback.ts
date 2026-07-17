@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 
 // Finishes the PKCE code exchange. IMPORTANT for callers: the onDone handler
 // must swap the view with history.replaceState — a full navigation would
-// reload the page and wipe the in-memory user store.
+// remount the app and lose whatever in-flight state it holds.
 export function useSignInCallback(
   complete: () => Promise<unknown>,
   onDone: () => void
