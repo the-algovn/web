@@ -69,6 +69,10 @@ function Home() {
   // What the big counter shows: server truth plus this user's not-yet-landed
   // clicks, floored so it can never tick backward. See lib/display-total.ts.
   const [display, setDisplay] = useState<number | null>(null)
+  const [prevInputs, setPrevInputs] = useState<{ total: number | null; pending: number }>({
+    total: null,
+    pending: 0,
+  })
   const [catalog, setCatalog] = useState<CatalogEntry[]>(() =>
     mergeCatalog(undefined),
   )
@@ -183,9 +187,13 @@ function Home() {
     }
   }, [])
 
-  useEffect(() => {
+  // Fold the monotonic floor in as inputs change, using React's documented
+  // "adjust state during render" pattern (no effect: avoids the extra render
+  // set-state-in-effect flags, and no render-time ref access).
+  if (prevInputs.total !== total || prevInputs.pending !== pending) {
+    setPrevInputs({ total, pending })
     setDisplay((prev) => mergeDisplayTotal(total, pending, prev ?? 0))
-  }, [total, pending])
+  }
 
   return (
     <>
