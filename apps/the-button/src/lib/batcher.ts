@@ -28,6 +28,7 @@ export interface BatcherOptions {
   onUserTotal?: (total: number) => void
   onUnlocked?: (unlocked: Achievement[]) => void
   onPendingChange?: (pending: number) => void
+  onStallChange?: (stalled: boolean) => void
   onError?: (err: unknown) => void
 }
 
@@ -40,6 +41,12 @@ const FAILURE_BACKOFF_MS = 2_000
 // failure — retry sooner than FAILURE_BACKOFF_MS, and well inside STALL_AFTER_MS
 // so a normal renewal never surfaces as a stall.
 const TOKEN_RETRY_MS = 500
+// How long pending clicks may sit with nothing landing before the UI admits
+// something is wrong. Time-based rather than error-counting on purpose: it
+// watches the symptom, so it catches submit failures, retry storms and token
+// gaps alike. Comfortably above a normal max(min_interval, solve_time) cycle
+// plus a couple of retries.
+const STALL_AFTER_MS = 10_000
 const EXPIRY_MARGIN_MS = 10_000
 // Solve cost is linear in click_count (expected hashes ≈ work_factor ×
 // click_count), so sizing a batch by click count alone lets a big
@@ -60,6 +67,9 @@ export class Batcher {
   private flushTimer: ReturnType<typeof setTimeout> | null = null
   private hashRate = DEFAULT_HASH_RATE
   private benchStarted = false
+  private progressAt = 0
+  private stalled = false
+  private stallTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(private readonly opts: BatcherOptions) {}
 
@@ -68,9 +78,53 @@ export class Batcher {
   }
 
   click(): void {
+    if (this.pending === 0) this.progressAt = Date.now() // a fresh wait begins
     this.pending++
     this.opts.onPendingChange?.(this.pending)
+    this.armStallCheck(STALL_AFTER_MS)
     this.schedule()
+  }
+
+  // Clears pending timers so a torn-down batcher stops re-arming itself.
+  dispose(): void {
+    if (this.stallTimer) {
+      clearTimeout(this.stallTimer)
+      this.stallTimer = null
+    }
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer)
+      this.flushTimer = null
+    }
+  }
+
+  private armStallCheck(delay: number): void {
+    if (this.stallTimer) return
+    this.stallTimer = setTimeout(() => {
+      this.stallTimer = null
+      this.evaluateStall()
+    }, delay)
+  }
+
+  private evaluateStall(): void {
+    if (this.pending === 0) {
+      this.setStalled(false)
+      return
+    }
+    const waited = Date.now() - this.progressAt
+    if (waited >= STALL_AFTER_MS) {
+      this.setStalled(true)
+      this.armStallCheck(STALL_AFTER_MS)
+    } else {
+      // Re-arm for exactly when it would trip, not a full window later.
+      this.setStalled(false)
+      this.armStallCheck(STALL_AFTER_MS - waited)
+    }
+  }
+
+  private setStalled(next: boolean): void {
+    if (next === this.stalled) return
+    this.stalled = next
+    this.opts.onStallChange?.(next)
   }
 
   private minIntervalMs(): number {
@@ -170,6 +224,8 @@ export class Batcher {
       this.lastSubmitAt = Date.now()
       this.pending -= req.clickCount
       this.opts.onPendingChange?.(this.pending)
+      this.progressAt = Date.now()
+      this.setStalled(false)
       this.challenge = res.nextChallenge ?? null
       if (res.userTotalClicks !== undefined) this.opts.onUserTotal?.(Number(res.userTotalClicks))
       if (res.unlocked?.length) this.opts.onUnlocked?.(res.unlocked)

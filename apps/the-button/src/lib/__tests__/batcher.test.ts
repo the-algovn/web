@@ -370,3 +370,42 @@ it("keeps retrying after a token gap instead of stranding pending clicks", async
   expect(api.submitClicks).toHaveBeenCalledTimes(1)
   expect(onPendingChange).toHaveBeenLastCalledWith(0)
 })
+
+it("reports a stall when clicks sit pending for 10s, and clears it when one lands", async () => {
+  const { solver } = makeDeps()
+  let down = true
+  const api = {
+    issueChallenge: vi.fn(async (_clicks: number, _token: string) => challenge()),
+    submitClicks: vi.fn(
+      async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => {
+        if (down) throw new Error("network down")
+        return { userTotalClicks: "1", unlocked: [], nextChallenge: challenge() }
+      }
+    ),
+  }
+  const onStallChange = vi.fn()
+  const b = new Batcher({ api, solver, getToken: () => "tok", onStallChange, onError: () => {} })
+
+  b.click()
+  await vi.advanceTimersByTimeAsync(9_000)
+  expect(onStallChange).not.toHaveBeenCalled() // still inside the threshold
+
+  await vi.advanceTimersByTimeAsync(1_500)
+  expect(onStallChange).toHaveBeenLastCalledWith(true)
+
+  down = false
+  await vi.advanceTimersByTimeAsync(5_000)
+  expect(onStallChange).toHaveBeenLastCalledWith(false)
+  b.dispose()
+})
+
+it("does not report a stall when batches land normally", async () => {
+  const { solver, api } = makeDeps()
+  const onStallChange = vi.fn()
+  const b = new Batcher({ api, solver, getToken: () => "tok", onStallChange })
+
+  b.click()
+  await vi.advanceTimersByTimeAsync(30_000)
+  expect(onStallChange).not.toHaveBeenCalled()
+  b.dispose()
+})
