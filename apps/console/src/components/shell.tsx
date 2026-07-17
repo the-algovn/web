@@ -7,7 +7,7 @@ function moduleFromHash(): string {
   return registry.some(m => m.id === id) ? id : "home"
 }
 
-export function Shell({ roles, topRight }: { roles: string[]; topRight?: React.ReactNode }) {
+export function Shell({ roles, enableLab, topRight }: { roles: string[]; enableLab: boolean; topRight?: React.ReactNode }) {
   const [active, setActive] = useState(moduleFromHash)
   useEffect(() => {
     const onHash = () => setActive(moduleFromHash())
@@ -15,7 +15,9 @@ export function Shell({ roles, topRight }: { roles: string[]; topRight?: React.R
     return () => window.removeEventListener("hashchange", onHash)
   }, [])
 
-  const visible = registry.filter(m => m.requiredRole === null || roles.includes(m.requiredRole))
+  const visible = registry.filter(
+    m => (!m.requiresLab || enableLab) && (m.requiredRole === null || roles.includes(m.requiredRole))
+  )
   const groups = [...new Set(visible.map(m => m.group))]
   const Active = (visible.find(m => m.id === active) ?? visible[0]!).component
 
