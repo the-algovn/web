@@ -352,3 +352,21 @@ it("discards the batch entirely on a 502 outcome-unknown response, never re-queu
   )
   expect(onUserTotal).toHaveBeenCalledWith(99) // reconciled from the next authoritative total
 })
+
+it("keeps retrying after a token gap instead of stranding pending clicks", async () => {
+  const { solver, api } = makeDeps()
+  let token: string | null = null // mid silent-renewal
+  const onPendingChange = vi.fn()
+  const b = new Batcher({ api, solver, getToken: () => token, onPendingChange })
+
+  b.click()
+  await vi.advanceTimersByTimeAsync(10)
+  expect(api.issueChallenge).not.toHaveBeenCalled() // nothing to submit with yet
+
+  // The token arrives on its own. No further click() happens — the batcher
+  // must pick the pending click back up by itself.
+  token = "tok"
+  await vi.advanceTimersByTimeAsync(600)
+  expect(api.submitClicks).toHaveBeenCalledTimes(1)
+  expect(onPendingChange).toHaveBeenLastCalledWith(0)
+})

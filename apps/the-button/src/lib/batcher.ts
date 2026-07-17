@@ -36,6 +36,10 @@ const DEFAULT_MAX_BATCH = 10_000
 const DEFAULT_WORK_FACTOR = "16384" // matches the POW_W0 default; server value always wins
 const MAX_SUBMIT_ATTEMPTS = 3
 const FAILURE_BACKOFF_MS = 2_000
+// A missing token is an expected transient during silent renewal, not a server
+// failure — retry sooner than FAILURE_BACKOFF_MS, and well inside STALL_AFTER_MS
+// so a normal renewal never surfaces as a stall.
+const TOKEN_RETRY_MS = 500
 const EXPIRY_MARGIN_MS = 10_000
 // Solve cost is linear in click_count (expected hashes ≈ work_factor ×
 // click_count), so sizing a batch by click count alone lets a big
@@ -87,7 +91,17 @@ export class Batcher {
   private async flush(): Promise<void> {
     if (this.inFlight || this.pending === 0) return
     const token = this.opts.getToken()
-    if (!token) return // signed out (or token expired): clicks stay pending
+    if (!token) {
+      // Signed out, or mid silent-renewal. schedule() is only called from
+      // click() and this method's finally, so returning bare here strands
+      // every pending click until the user happens to click again — keep the
+      // retry loop alive instead.
+      this.flushTimer = setTimeout(() => {
+        this.flushTimer = null
+        void this.flush()
+      }, TOKEN_RETRY_MS)
+      return
+    }
     this.inFlight = true
     try {
       this.warmUpHashRate()
