@@ -409,3 +409,30 @@ it("does not report a stall when batches land normally", async () => {
   expect(onStallChange).not.toHaveBeenCalled()
   b.dispose()
 })
+
+it("clears the stall hint immediately when a 502 discards the last pending clicks", async () => {
+  const { solver } = makeDeps()
+  let mode: "fail" | "502" = "fail"
+  const api = {
+    issueChallenge: vi.fn(async (_clicks: number, _token: string) => challenge()),
+    submitClicks: vi.fn(async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => {
+      if (mode === "502") throw new ApiError(502, "Unavailable", "upstream unavailable")
+      throw new Error("network down")
+    }),
+  }
+  const onStallChange = vi.fn()
+  const b = new Batcher({ api, solver, getToken: () => "tok", onStallChange, onError: () => {} })
+
+  // generic failures keep the click pending; after 10s the stall hint shows
+  b.click()
+  await vi.advanceTimersByTimeAsync(10_500)
+  expect(onStallChange).toHaveBeenLastCalledWith(true)
+
+  // the server now 502s: the batch is discarded and pending hits 0. The hint
+  // must clear right away, not linger until the armed 10s stall timer fires.
+  mode = "502"
+  await vi.advanceTimersByTimeAsync(4_000) // well under STALL_AFTER_MS
+  expect(b.pendingCount).toBe(0)
+  expect(onStallChange).toHaveBeenLastCalledWith(false)
+  b.dispose()
+})

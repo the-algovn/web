@@ -249,6 +249,10 @@ export class Batcher {
         // user_total_clicks reconciles the optimistic total.
         this.pending -= req.clickCount
         this.opts.onPendingChange?.(this.pending)
+        // Discarding a batch is not progress, so don't stamp progressAt — but
+        // if that drained the last pending clicks, clear a showing stall hint
+        // now rather than leaving it up until the armed timer fires (~10s).
+        this.evaluateStall()
         this.challenge = null
         return
       }
