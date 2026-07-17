@@ -22,6 +22,7 @@ import { Batcher } from "./lib/batcher"
 import { runBench } from "./lib/bench"
 import { mergeCatalog, type CatalogEntry } from "./lib/catalog"
 import { createEtaEstimator, type Eta } from "./lib/eta"
+import { mergeDisplayTotal } from "./lib/display-total"
 import { LiveCounter, type LiveMode } from "./lib/liveCounter"
 import { createWorkerSolver } from "./lib/solverClient"
 import { createUnlockAnnouncer } from "./lib/unlocks"
@@ -65,6 +66,9 @@ function Home() {
   const [mode, setMode] = useState<LiveMode>("connecting")
   const [myTotal, setMyTotal] = useState<number | null>(null)
   const [pending, setPending] = useState(0)
+  // What the big counter shows: server truth plus this user's not-yet-landed
+  // clicks, floored so it can never tick backward. See lib/display-total.ts.
+  const [display, setDisplay] = useState<number | null>(null)
   const [catalog, setCatalog] = useState<CatalogEntry[]>(() =>
     mergeCatalog(undefined),
   )
@@ -179,6 +183,10 @@ function Home() {
     }
   }, [])
 
+  useEffect(() => {
+    setDisplay((prev) => mergeDisplayTotal(total, pending, prev ?? 0))
+  }, [total, pending])
+
   return (
     <>
       <div className="tb-grid-bg" aria-hidden />
@@ -195,7 +203,7 @@ function Home() {
         <MilestoneBanner milestone={milestone} />
         <WhyGrid />
         <TargetHeadline />
-        <Counter total={total} />
+        <Counter total={display} />
         <ProgressBar total={total} />
         {user ? (
           <ClickButton
