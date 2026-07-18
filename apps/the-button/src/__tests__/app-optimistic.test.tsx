@@ -107,7 +107,7 @@ it("seeds your clicks from the achievements snapshot before any submit lands", a
   })
 
   render(<App />)
-  expect(await screen.findByText("500")).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByTestId("your-clicks")).toHaveTextContent("500"))
 })
 
 it("shows zero, not an em dash, for a signed-in user who has never clicked", async () => {
@@ -118,7 +118,7 @@ it("shows zero, not an em dash, for a signed-in user who has never clicked", asy
   vi.spyOn(api, "listAchievements").mockResolvedValue({ catalog: [], milestones: [] })
 
   render(<App />)
-  expect(await screen.findByText("0")).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByTestId("your-clicks")).toHaveTextContent("0"))
 })
 
 it("does not re-seed a stale total when the token is renewed", async () => {
@@ -141,5 +141,27 @@ it("does not re-seed a stale total when the token is renewed", async () => {
   // Wait for the renewed token's listAchievements to actually resolve, so the
   // assertion proves the seed was ignored — not merely that it hasn't run yet.
   await waitFor(() => expect(list).toHaveBeenCalledTimes(2))
-  expect(screen.getByText("500")).toBeInTheDocument() // seeded once, never re-seeded
+  expect(screen.getByTestId("your-clicks")).toHaveTextContent("500") // seeded once
+})
+
+it("submits exactly one click per press regardless of combo (integrity)", async () => {
+  vi.useRealTimers()
+  const issue = vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
+  vi.spyOn(api, "listAchievements").mockResolvedValue({ catalog: [], milestones: [] })
+  // Seeds the global total to 0 via the one-shot snapshot (no SSE frame in
+  // this test), so the optimistic display reflects pending clicks directly.
+  vi.spyOn(api, "getCounter").mockResolvedValue({ total: "0", totalUsers: "0" })
+
+  render(<App />)
+  const btn = await screen.findByRole("button", { name: /contribute/i })
+  // Mash fast enough to build combo.
+  for (let i = 0; i < 5; i++) fireEvent.click(btn)
+
+  // The optimistic counter reflects 5 real clicks — not 5 × any multiplier.
+  await waitFor(() => expect(counterText()).toContain("5"))
+  // issueChallenge is the only path to the server; combo must not fabricate
+  // extra intended clicks beyond the 5 presses (batching may coalesce them into
+  // one challenge, so assert it was asked for at most the real press count).
+  const intended = issue.mock.calls.reduce((sum, [n]) => sum + (n as number), 0)
+  expect(intended).toBeLessThanOrEqual(5)
 })

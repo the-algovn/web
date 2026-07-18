@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from "react"
 import { AchievementsGrid } from "./components/achievements-grid"
+import { ActivityFeed } from "./components/activity-feed"
 import { Callback } from "./components/callback"
 import { ClickButton } from "./components/click-button"
+import { ComboMeter } from "./components/combo-meter"
 import { Counter } from "./components/counter"
+import { CpsMeter } from "./components/cps-meter"
+import { Hud } from "./components/hud"
 import { Leaderboard } from "./components/leaderboard"
 import { MilestoneBanner } from "./components/milestone-banner"
 import { ParticleLayer, useParticles } from "./components/particles"
-import { PersonalStats } from "./components/personal-stats"
 import { ProgressBar } from "./components/progress-bar"
+import { Quests } from "./components/quests"
 import { SessionStats } from "./components/session-stats"
-import { StatusBar } from "./components/status-bar"
+import { TabBar, type Tab } from "./components/tab-bar"
 import { TargetHeadline } from "./components/target-headline"
 import { WhyGrid } from "./components/why-grid"
+import { XpBar } from "./components/xp-bar"
 import {
   getCounter,
   getLeaderboard,
@@ -19,17 +24,22 @@ import {
   listAchievements,
   submitClicks,
 } from "./lib/api"
+import { emptyFeed, pushTotal } from "./lib/activity"
 import { signIn } from "./lib/auth"
 import { Batcher } from "./lib/batcher"
 import { runBench } from "./lib/bench"
 import { mergeCatalog, type CatalogEntry } from "./lib/catalog"
+import { comboXpBonus, createCombo, type ComboState } from "./lib/combo"
+import { pruneRecent } from "./lib/cps"
 import { createEtaEstimator, type Eta } from "./lib/eta"
 import { mergeDisplayTotal } from "./lib/display-total"
 import { LeaderboardStream, type Row } from "./lib/leaderboardStream"
+import { levelState } from "./lib/level"
 import { LiveCounter, type LiveMode } from "./lib/liveCounter"
 import { createWorkerSolver } from "./lib/solverClient"
 import { createUnlockAnnouncer } from "./lib/unlocks"
 import { useAuth } from "./lib/use-auth"
+import { addComboBonus, loadComboBonus } from "./lib/xp-store"
 
 // No router: the app has exactly two views — the page and the OIDC callback.
 export default function App() {
@@ -93,8 +103,21 @@ function Home() {
   const [eta, setEta] = useState<Eta>({ seconds: null, text: "calculating…" })
   const [board, setBoard] = useState<{ allTime: Row[]; thisWeek: Row[] }>({ allTime: [], thisWeek: [] })
   const [myRank, setMyRank] = useState<{ allTime?: number; weekly?: number }>({})
+
+  // Cosmetic gamification (never affects submitted clicks).
+  const [tab, setTab] = useState<Tab>("play")
+  const [combo, setCombo] = useState<ComboState>({ heat: 0, multiplier: 1, label: "idle" })
+  // Lazy init (not an effect): reads the persisted cosmetic bonus once at
+  // mount without an extra post-mount render.
+  const [xpBonus, setXpBonus] = useState(() => loadComboBonus())
+  const [cps, setCps] = useState(0)
+  const [cpsHistory, setCpsHistory] = useState<number[]>([])
+  const [feed, setFeed] = useState(emptyFeed)
+
   const batcherRef = useRef<Batcher | null>(null)
   const etaRef = useRef(createEtaEstimator())
+  const comboRef = useRef(createCombo())
+  const clickTimesRef = useRef<number[]>([])
   const { particles, emit, remove } = useParticles()
 
   useEffect(() => {
@@ -139,6 +162,7 @@ function Home() {
           if (event.users !== undefined) setUsers(event.users)
           etaRef.current.sample(event.total)
           setEta(etaRef.current.eta())
+          setFeed((f) => pushTotal(f, event.total))
         } else {
           setMilestone((current) =>
             higher(current, { threshold: event.threshold, title: event.title }),
@@ -155,6 +179,19 @@ function Home() {
     const stream = new LeaderboardStream({ onFrame: setBoard })
     stream.start()
     return () => stream.stop()
+  }, [])
+
+  // Decay the combo and recompute clicks/sec on a fixed tick.
+  useEffect(() => {
+    const id = setInterval(() => {
+      const now = performance.now()
+      setCombo(comboRef.current.tick(now))
+      clickTimesRef.current = pruneRecent(clickTimesRef.current, now)
+      const c = clickTimesRef.current.length
+      setCps(c)
+      setCpsHistory((h) => [...h.slice(-15), c])
+    }, 250)
+    return () => clearInterval(id)
   }, [])
 
   // One-shot snapshot on mount seeds total + users before the first SSE frame.
@@ -244,53 +281,102 @@ function Home() {
     setDisplay((prev) => mergeDisplayTotal(total, pending, prev ?? 0))
   }
 
+  // One real click per press. Combo only drives cosmetic juice + XP bonus.
+  function handleMash() {
+    const now = performance.now()
+    const s = comboRef.current.press(now)
+    setCombo(s)
+    clickTimesRef.current = pruneRecent([...clickTimesRef.current, now], now)
+    setCps(clickTimesRef.current.length)
+    const bonus = comboXpBonus(s.multiplier)
+    if (bonus > 0) setXpBonus(addComboBonus(bonus))
+    batcherRef.current?.click()
+  }
+
+  const lvl = levelState(myTotal ?? 0, xpBonus)
+  const myClicks = (myTotal ?? 0) + pending
+
   return (
     <>
       <div className="tb-grid-bg" aria-hidden />
-      <main className="relative z-10 mx-auto flex min-h-svh max-w-3xl flex-col items-center gap-6 p-6 text-center">
-        <StatusBar mode={mode} eta={eta} />
-        <section className="border-border w-full max-w-3xl space-y-2 border-b pt-6 pb-8 text-left">
-          <h1 className="font-mono text-4xl leading-none font-bold tracking-tight sm:text-5xl">
-            THE BUTTON.
-          </h1>
-          <p className="text-muted-foreground text-base">
-            One button. One goal. Millions of humans.
-          </p>
-        </section>
-        <MilestoneBanner milestone={milestone} />
-        <WhyGrid />
-        <TargetHeadline />
-        <Counter total={display} />
-        <ProgressBar total={total} />
-        {user ? (
-          <ClickButton
-            onMash={() => batcherRef.current?.click()}
-            onParticle={emit}
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => void signIn()}
-            className="tb-ghost focus-visible:ring-ring/50 flex w-full max-w-3xl items-center justify-center gap-3 px-8 py-6 font-mono text-xl font-bold tracking-widest outline-none focus-visible:ring-[3px]"
-          >
-            <span className="text-2xl font-normal" aria-hidden>
-              ▶
-            </span>
-            <span>SIGN IN TO CONTRIBUTE</span>
-          </button>
-        )}
-        {user && (
-          <PersonalStats myTotal={myTotal} pending={pending} stalled={stalled} total={total} />
-        )}
-        <SessionStats total={total} users={users} />
-        <AchievementsGrid entries={catalog} />
-        <Leaderboard
-          allTime={board.allTime}
-          thisWeek={board.thisWeek}
-          myRank={myRank}
-          myName={user?.profile?.name ?? null}
-        />
-        <footer className="text-muted-foreground mt-4 flex items-center gap-3 font-mono text-xs">
+      <main className="relative z-10 mx-auto w-full max-w-6xl p-4 sm:p-6">
+        <div className="tb-app" data-tab={tab}>
+          <Hud mode={mode} level={lvl.level} streakDays={null} rank={myRank.allTime ?? null} />
+
+          <div className="tb-grid">
+            {/* PLAY */}
+            <section className="tb-area-hero" data-group="play" aria-label="the button">
+              <MilestoneBanner milestone={milestone} />
+              <Counter total={display} />
+              <p className="text-muted-foreground font-mono text-xs">
+                you contributed{" "}
+                <b className="text-primary tabular-nums" data-testid="your-clicks">
+                  {myClicks.toLocaleString("en-US")}
+                </b>{" "}
+                clicks
+                {stalled && (
+                  <span className="text-muted-foreground ml-2" role="status">
+                    ⚠ retrying
+                  </span>
+                )}
+              </p>
+              <ProgressBar total={total} />
+              {user ? (
+                <ClickButton onMash={handleMash} onParticle={emit} />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void signIn()}
+                  className="tb-ghost focus-visible:ring-ring/50 flex w-full items-center justify-center gap-3 px-8 py-6 font-mono text-xl font-bold tracking-widest outline-none focus-visible:ring-[3px]"
+                >
+                  <span className="text-2xl font-normal" aria-hidden>
+                    ▶
+                  </span>
+                  <span>SIGN IN TO CONTRIBUTE</span>
+                </button>
+              )}
+              <div className="tb-meters">
+                <ComboMeter multiplier={combo.multiplier} heat={combo.heat} label={combo.label} />
+                <CpsMeter cps={cps} history={cpsHistory} />
+              </div>
+              <XpBar level={lvl.level} pct={lvl.pct} xpIntoLevel={lvl.xpIntoLevel} xpForNext={lvl.xpForNext} />
+            </section>
+
+            {/* RANKS */}
+            <aside className="tb-area-rail" data-group="ranks">
+              <Leaderboard
+                allTime={board.allTime}
+                thisWeek={board.thisWeek}
+                myRank={myRank}
+                myName={user?.profile?.name ?? null}
+              />
+              <ActivityFeed items={feed.items} />
+            </aside>
+
+            {/* GOALS */}
+            <div className="tb-area-quests" data-group="goals">
+              <Quests />
+            </div>
+            <div className="tb-area-ach" data-group="goals">
+              <AchievementsGrid entries={catalog} />
+            </div>
+
+            {/* STATS */}
+            <div className="tb-area-stats" data-group="stats">
+              <SessionStats total={total} users={users} />
+              <div className="tb-box p-4 text-left font-mono text-xs">
+                <span className="text-muted-foreground">ETA: </span>
+                <span className="text-primary font-bold">{eta.text}</span>
+              </div>
+              <TargetHeadline />
+              <WhyGrid />
+            </div>
+          </div>
+
+          <TabBar active={tab} onChange={setTab} />
+        </div>
+
+        <footer className="text-muted-foreground mt-6 flex items-center justify-center gap-3 font-mono text-xs">
           <span>made with questionable decisions</span>
           <span className="opacity-30">•</span>
           <span>the button</span>
