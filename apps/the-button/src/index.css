@@ -85,7 +85,7 @@
   .tb-card.tb-achieved .tb-emoji { animation: tb-emoji-bounce 2s ease-in-out infinite; }
 
   /* ---------- Command Center layout ---------- */
-  .tb-app { container-type: inline-size; width: 100%; }
+  .tb-app { container-type: inline-size; width: 100%; display: flex; flex-direction: column; }
 
   .tb-hud {
     display: flex; align-items: center; justify-content: space-between;
@@ -159,7 +159,7 @@
   .tb-grid {
     grid-template-columns: 1fr;
     grid-template-areas: "hero" "rail" "quests" "ach" "stats";
-    padding-bottom: 76px; /* clear the fixed tab bar */
+    flex: 1; min-height: 0; overflow-y: auto;
   }
   .tb-hud .tb-tag { display: none; }
   .tb-chip-rank { display: none; }
@@ -173,7 +173,7 @@
   .tb-meters { grid-template-columns: 1fr 1fr; }
 
   .tb-tabbar {
-    display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+    display: flex; flex-shrink: 0;
     border-top: 1px solid var(--border); background: var(--card);
   }
   .tb-tab {
@@ -189,4 +189,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tb-feed-item, .tb-heat i, .tb-xp-track i, .tb-combo-val { animation: none !important; transition: none !important; }
+}
+
+@media (max-width: 767px) {
+  .tb-app { height: 100dvh; }
 }

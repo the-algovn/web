@@ -118,6 +118,7 @@ function Home() {
   const etaRef = useRef(createEtaEstimator())
   const comboRef = useRef(createCombo())
   const clickTimesRef = useRef<number[]>([])
+  const lastCpsRef = useRef(0)
   const { particles, emit, remove } = useParticles()
 
   useEffect(() => {
@@ -181,15 +182,24 @@ function Home() {
     return () => stream.stop()
   }, [])
 
-  // Decay the combo and recompute clicks/sec on a fixed tick.
+  // Decay the combo and recompute clicks/sec on a fixed tick. Skipped when
+  // there is nothing to report: no recent clicks, combo already fully decayed
+  // before and after this tick, and the last displayed cps was already 0 —
+  // otherwise this timer would re-render Home forever, even at rest.
   useEffect(() => {
     const id = setInterval(() => {
       const now = performance.now()
-      setCombo(comboRef.current.tick(now))
+      const wasIdle = comboRef.current.state().heat === 0
+      const next = comboRef.current.tick(now)
       clickTimesRef.current = pruneRecent(clickTimesRef.current, now)
       const c = clickTimesRef.current.length
+      if (c === 0 && next.heat === 0 && wasIdle && lastCpsRef.current === 0) {
+        return
+      }
+      setCombo(next)
       setCps(c)
       setCpsHistory((h) => [...h.slice(-15), c])
+      lastCpsRef.current = c
     }, 250)
     return () => clearInterval(id)
   }, [])
