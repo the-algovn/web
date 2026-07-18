@@ -436,3 +436,19 @@ it("clears the stall hint immediately when a 502 discards the last pending click
   expect(onStallChange).toHaveBeenLastCalledWith(false)
   b.dispose()
 })
+
+it("surfaces all-time and weekly ranks from the submit response", async () => {
+  const { solver, api } = makeDeps()
+  api.submitClicks = vi.fn(async () => ({
+    userTotalClicks: "10",
+    unlocked: [],
+    nextChallenge: challenge(),
+    allTimeRank: 3,
+    weeklyRank: 1,
+  }))
+  const onRank = vi.fn()
+  const b = new Batcher({ api, solver, getToken: () => "tok", onRank })
+  b.click()
+  await vi.advanceTimersByTimeAsync(10)
+  expect(onRank).toHaveBeenLastCalledWith(3, 1)
+})

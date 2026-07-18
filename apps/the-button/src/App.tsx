@@ -3,6 +3,7 @@ import { AchievementsGrid } from "./components/achievements-grid"
 import { Callback } from "./components/callback"
 import { ClickButton } from "./components/click-button"
 import { Counter } from "./components/counter"
+import { Leaderboard } from "./components/leaderboard"
 import { MilestoneBanner } from "./components/milestone-banner"
 import { ParticleLayer, useParticles } from "./components/particles"
 import { PersonalStats } from "./components/personal-stats"
@@ -13,6 +14,7 @@ import { TargetHeadline } from "./components/target-headline"
 import { WhyGrid } from "./components/why-grid"
 import {
   getCounter,
+  getLeaderboard,
   issueChallenge,
   listAchievements,
   submitClicks,
@@ -23,6 +25,7 @@ import { runBench } from "./lib/bench"
 import { mergeCatalog, type CatalogEntry } from "./lib/catalog"
 import { createEtaEstimator, type Eta } from "./lib/eta"
 import { mergeDisplayTotal } from "./lib/display-total"
+import { LeaderboardStream, type Row } from "./lib/leaderboardStream"
 import { LiveCounter, type LiveMode } from "./lib/liveCounter"
 import { createWorkerSolver } from "./lib/solverClient"
 import { createUnlockAnnouncer } from "./lib/unlocks"
@@ -55,6 +58,15 @@ function higher(current: Milestone | null, next: Milestone): Milestone {
   return current && current.threshold >= next.threshold ? current : next
 }
 
+// Empty is treated the same as absent so the initial GET's `?? prev` never
+// clobbers a board the live SSE stream already populated (the GET can resolve
+// after the first stream frame, and an empty snapshot carries no information —
+// the stream is the authoritative ongoing source).
+function rowsOf(entries: { rank: number; displayName?: string; clicks?: string }[] | undefined): Row[] | undefined {
+  if (!entries || entries.length === 0) return undefined
+  return entries.map((e) => ({ rank: e.rank, name: e.displayName ?? "", clicks: Number(e.clicks ?? "0") }))
+}
+
 function Home() {
   const { user, token } = useAuth()
   const tokenRef = useRef<string | null>(null)
@@ -79,6 +91,8 @@ function Home() {
   )
   const [milestone, setMilestone] = useState<Milestone | null>(null)
   const [eta, setEta] = useState<Eta>({ seconds: null, text: "calculating…" })
+  const [board, setBoard] = useState<{ allTime: Row[]; thisWeek: Row[] }>({ allTime: [], thisWeek: [] })
+  const [myRank, setMyRank] = useState<{ allTime?: number; weekly?: number }>({})
   const batcherRef = useRef<Batcher | null>(null)
   const etaRef = useRef(createEtaEstimator())
   const { particles, emit, remove } = useParticles()
@@ -91,6 +105,7 @@ function Home() {
       solver,
       getToken: () => tokenRef.current,
       onUserTotal: setMyTotal,
+      onRank: (allTime, weekly) => setMyRank({ allTime, weekly }),
       onPendingChange: setPending,
       onStallChange: setStalled,
       onUnlocked: (unlocked) => {
@@ -134,6 +149,12 @@ function Home() {
     })
     live.start()
     return () => live.stop()
+  }, [])
+
+  useEffect(() => {
+    const stream = new LeaderboardStream({ onFrame: setBoard })
+    stream.start()
+    return () => stream.stop()
   }, [])
 
   // One-shot snapshot on mount seeds total + users before the first SSE frame.
@@ -182,6 +203,25 @@ function Home() {
       .catch(() => {
         // offline/unreachable: the fallback catalog is already rendered
       })
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  useEffect(() => {
+    let cancelled = false
+    getLeaderboard(token ?? undefined)
+      .then((res) => {
+        if (cancelled) return
+        setBoard((prev) => ({
+          allTime: rowsOf(res.allTime) ?? prev.allTime,
+          thisWeek: rowsOf(res.thisWeek) ?? prev.thisWeek,
+        }))
+        if (res.myAllTimeRank || res.myWeeklyRank) {
+          setMyRank({ allTime: res.myAllTimeRank ?? 0, weekly: res.myWeeklyRank ?? 0 })
+        }
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -244,6 +284,12 @@ function Home() {
         )}
         <SessionStats total={total} users={users} />
         <AchievementsGrid entries={catalog} />
+        <Leaderboard
+          allTime={board.allTime}
+          thisWeek={board.thisWeek}
+          myRank={myRank}
+          myName={user?.profile?.name ?? null}
+        />
         <footer className="text-muted-foreground mt-4 flex items-center gap-3 font-mono text-xs">
           <span>made with questionable decisions</span>
           <span className="opacity-30">•</span>

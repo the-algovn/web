@@ -27,6 +27,7 @@ export interface BatcherOptions {
   getToken: () => string | null
   onUserTotal?: (total: number) => void
   onUnlocked?: (unlocked: Achievement[]) => void
+  onRank?: (allTime: number, weekly: number) => void
   onPendingChange?: (pending: number) => void
   onStallChange?: (stalled: boolean) => void
   onError?: (err: unknown) => void
@@ -229,6 +230,9 @@ export class Batcher {
       this.challenge = res.nextChallenge ?? null
       if (res.userTotalClicks !== undefined) this.opts.onUserTotal?.(Number(res.userTotalClicks))
       if (res.unlocked?.length) this.opts.onUnlocked?.(res.unlocked)
+      if (res.allTimeRank !== undefined || res.weeklyRank !== undefined) {
+        this.opts.onRank?.(res.allTimeRank ?? 0, res.weeklyRank ?? 0)
+      }
     } catch (err) {
       if (isRateLimited(err) && attempt < MAX_SUBMIT_ATTEMPTS) {
         // 429: the server un-burned the challenge — same nonce stays valid.
