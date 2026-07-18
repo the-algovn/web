@@ -309,7 +309,7 @@ function Home() {
   return (
     <>
       <div className="tb-grid-bg" aria-hidden />
-      <main className="relative z-10 mx-auto w-full max-w-6xl p-4 sm:p-6">
+      <main className="tb-main relative z-10 mx-auto w-full max-w-6xl p-4 sm:p-6">
         <div className="tb-app" data-tab={tab}>
           <Hud mode={mode} level={lvl.level} streakDays={null} rank={myRank.allTime ?? null} />
 

@@ -192,5 +192,7 @@
 }
 
 @media (max-width: 767px) {
-  .tb-app { height: 100dvh; }
+  .tb-main { padding: 0; height: 100dvh; overflow: hidden; }
+  .tb-app { height: 100%; }
+  .tb-main > footer { display: none; }
 }
