@@ -29,6 +29,7 @@ import { signIn } from "./lib/auth"
 import { Batcher } from "./lib/batcher"
 import { runBench } from "./lib/bench"
 import { mergeCatalog, type CatalogEntry } from "./lib/catalog"
+import { nextMilestone } from "./lib/progress"
 import { comboXpBonus, createCombo, type ComboState } from "./lib/combo"
 import { pruneRecent } from "./lib/cps"
 import { createEtaEstimator, type Eta } from "./lib/eta"
@@ -305,6 +306,11 @@ function Home() {
 
   const lvl = levelState(myTotal ?? 0, xpBonus)
   const myClicks = (myTotal ?? 0) + pending
+  let toNext: number | null = null
+  if (total !== null) {
+    const m = nextMilestone(total)
+    if (m) toNext = m.threshold - total
+  }
 
   return (
     <>
@@ -314,10 +320,24 @@ function Home() {
           <Hud mode={mode} level={lvl.level} streakDays={null} rank={myRank.allTime ?? null} />
 
           <div className="tb-grid">
-            {/* PLAY */}
+            {/* PLAY — left play column */}
             <section className="tb-area-hero" data-group="play" aria-label="the button">
               <MilestoneBanner milestone={milestone} />
-              <Counter total={display} />
+              <Counter
+                total={display}
+                secondary={
+                  toNext !== null ? (
+                    <div className="hidden shrink-0 text-right font-mono sm:block">
+                      <div className="text-muted-foreground text-[0.65rem] tracking-widest">
+                        TO NEXT
+                      </div>
+                      <div className="text-primary text-xl font-bold tabular-nums sm:text-2xl">
+                        {toNext.toLocaleString("en-US")}
+                      </div>
+                    </div>
+                  ) : undefined
+                }
+              />
               <p className="text-muted-foreground font-mono text-xs">
                 you contributed{" "}
                 <b className="text-primary tabular-nums" data-testid="your-clicks">
@@ -352,27 +372,30 @@ function Home() {
               <XpBar level={lvl.level} pct={lvl.pct} xpIntoLevel={lvl.xpIntoLevel} xpForNext={lvl.xpForNext} />
             </section>
 
-            {/* RANKS */}
-            <aside className="tb-area-rail" data-group="ranks">
-              <Leaderboard
-                allTime={board.allTime}
-                thisWeek={board.thisWeek}
-                myRank={myRank}
-                myName={user?.profile?.name ?? null}
-              />
-              <ActivityFeed items={feed.items} />
-            </aside>
-
-            {/* GOALS */}
-            <div className="tb-area-quests" data-group="goals">
-              <Quests />
+            {/* SIDE — right column: live social (RANKS) over progression (GOALS),
+                stacked so the column fills the hero's height instead of leaving a void */}
+            <div className="tb-area-side">
+              <div data-group="ranks">
+                <Leaderboard
+                  allTime={board.allTime}
+                  thisWeek={board.thisWeek}
+                  myRank={myRank}
+                  myName={user?.profile?.name ?? null}
+                />
+              </div>
+              <div data-group="ranks">
+                <ActivityFeed items={feed.items} />
+              </div>
+              <div data-group="goals">
+                <Quests />
+              </div>
+              <div data-group="goals">
+                <AchievementsGrid entries={catalog} />
+              </div>
             </div>
-            <div className="tb-area-ach" data-group="goals">
-              <AchievementsGrid entries={catalog} />
-            </div>
 
-            {/* STATS */}
-            <div className="tb-area-stats" data-group="stats">
+            {/* STATS — quiet full-width lore strip beneath both columns */}
+            <div className="tb-area-lore" data-group="stats">
               <SessionStats total={total} users={users} />
               <div className="tb-box p-4 text-left font-mono text-xs">
                 <span className="text-muted-foreground">ETA: </span>
