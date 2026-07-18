@@ -13,7 +13,7 @@ describe("activity feed", () => {
     s = pushTotal(s, 1012)
     s = pushTotal(s, 1015)
     expect(s.items.map((i) => i.amount)).toEqual([3, 12])
-    expect(s.items[0].id).not.toBe(s.items[1].id)
+    expect(s.items[0]!.id).not.toBe(s.items[1]!.id)
   })
 
   it("ignores non-positive deltas (stale or reset frames)", () => {
