@@ -7,4 +7,7 @@ export const env = {
   oidcClientId: import.meta.env.VITE_OIDC_CLIENT_ID ?? "381980626372329841",
   apiBase: import.meta.env.VITE_API_BASE ?? "https://api.algovn.com/the-button",
   eventsUrl: import.meta.env.VITE_EVENTS_URL ?? "https://api.algovn.com/events/the-button.counter",
+  eventsLeaderboardUrl:
+    import.meta.env.VITE_EVENTS_LEADERBOARD_URL ??
+    "https://api.algovn.com/events/the-button.leaderboard",
 }
