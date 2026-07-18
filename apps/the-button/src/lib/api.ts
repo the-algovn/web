@@ -46,6 +46,8 @@ export interface SubmitClicksResponse {
   userTotalClicks?: string
   unlocked?: Achievement[]
   nextChallenge?: IssueChallengeResponse
+  allTimeRank?: number
+  weeklyRank?: number
 }
 
 export interface ListAchievementsResponse {
@@ -53,6 +55,19 @@ export interface ListAchievementsResponse {
   milestones?: Milestone[]
   // Set only when personalized; protojson omits it when zero.
   userTotalClicks?: string
+}
+
+export interface LeaderboardEntry {
+  rank: number
+  displayName?: string
+  clicks?: string
+}
+
+export interface GetLeaderboardResponse {
+  allTime?: LeaderboardEntry[]
+  thisWeek?: LeaderboardEntry[]
+  myAllTimeRank?: number
+  myWeeklyRank?: number
 }
 
 // Error discrimination per the acp mapping (launch-blocker additions, spec §6):
@@ -81,3 +96,6 @@ export const issueChallenge = (intendedClicks: number, token: string) =>
 
 export const submitClicks = (req: SubmitClicksRequest, token: string) =>
   request<SubmitClicksResponse>("POST", "/clicks", req, token)
+
+export const getLeaderboard = (token?: string) =>
+  request<GetLeaderboardResponse>("GET", "/leaderboard", undefined, token)
