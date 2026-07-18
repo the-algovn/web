@@ -320,6 +320,17 @@ function Home() {
           <Hud mode={mode} level={lvl.level} streakDays={null} rank={myRank.allTime ?? null} />
 
           <div className="tb-grid">
+            {/* STATS — mission/context band across the top */}
+            <div className="tb-area-lore" data-group="stats">
+              <SessionStats total={total} users={users} />
+              <div className="tb-box p-4 text-left font-mono text-xs">
+                <span className="text-muted-foreground">ETA: </span>
+                <span className="text-primary font-bold">{eta.text}</span>
+              </div>
+              <TargetHeadline />
+              <WhyGrid />
+            </div>
+
             {/* PLAY — left play column */}
             <section className="tb-area-hero" data-group="play" aria-label="the button">
               <MilestoneBanner milestone={milestone} />
@@ -394,16 +405,6 @@ function Home() {
               </div>
             </div>
 
-            {/* STATS — quiet full-width lore strip beneath both columns */}
-            <div className="tb-area-lore" data-group="stats">
-              <SessionStats total={total} users={users} />
-              <div className="tb-box p-4 text-left font-mono text-xs">
-                <span className="text-muted-foreground">ETA: </span>
-                <span className="text-primary font-bold">{eta.text}</span>
-              </div>
-              <TargetHeadline />
-              <WhyGrid />
-            </div>
           </div>
 
           <TabBar active={tab} onChange={setTab} />
