@@ -1,6 +1,8 @@
 import { TARGET } from "../lib/progress"
 
-export function TargetHeadline() {
+// `eta` (optional) folds the time-to-target readout into the same box as the
+// goal, so target and ETA read as one block.
+export function TargetHeadline({ eta }: { eta?: string }) {
   return (
     <div className="tb-box w-full max-w-3xl p-5 text-left">
       <div className="text-muted-foreground font-mono text-[0.7rem] tracking-[0.1em]">TARGET</div>
@@ -8,6 +10,12 @@ export function TargetHeadline() {
         {TARGET.toLocaleString("en-US")}
       </div>
       <div className="text-muted-foreground mt-1 text-xs">one quadrillion clicks</div>
+      {eta && (
+        <div className="border-border mt-4 flex items-baseline gap-2 border-t pt-3 font-mono text-xs">
+          <span className="text-muted-foreground tracking-[0.1em]">ETA</span>
+          <span className="text-primary font-bold text-balance">{eta}</span>
+        </div>
+      )}
     </div>
   )
 }

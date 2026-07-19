@@ -322,12 +322,10 @@ function Home() {
           <div className="tb-grid">
             {/* STATS — mission/context band across the top */}
             <div className="tb-area-lore" data-group="stats">
-              <SessionStats total={total} users={users} />
-              <div className="tb-box p-4 text-left font-mono text-xs">
-                <span className="text-muted-foreground">ETA: </span>
-                <span className="text-primary font-bold">{eta.text}</span>
+              <div className="tb-lore-a">
+                <SessionStats total={total} users={users} />
+                <TargetHeadline eta={eta.text} />
               </div>
-              <TargetHeadline />
               <WhyGrid />
             </div>
 
