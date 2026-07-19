@@ -240,8 +240,9 @@ export class Batcher {
         // 502: Postgres may have already durably committed this batch.
         // MANDATORY: discard it for good — never re-queue or resubmit these
         // clicks under a fresh challenge, or an ambiguous-but-landed commit
-        // gets double-credited. The next successful submit's authoritative
-        // user_total_clicks reconciles the optimistic total.
+        // gets double-credited. Reconciliation happens over the per-user SSE
+        // channel (pure-ack: the submit response carries no total), so the
+        // next frame from that stream is what settles the optimistic total.
         this.pending -= req.clickCount
         this.opts.onPendingChange?.(this.pending)
         // Discarding a batch is not progress, so don't stamp progressAt — but

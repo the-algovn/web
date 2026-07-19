@@ -19,6 +19,14 @@ const META: Record<string, Meta> = {
   maxbatch: { emoji: "💥", requirement: "10,000 in one batch" },
   night: { emoji: "🌙", requirement: "03:00–03:59 ICT" },
   lunch: { emoji: "🥪", requirement: "12:00 lunch hour ICT" },
+  deep_thought: { emoji: "🤖", requirement: "cross 42" },
+  irrational: { emoji: "🥧", requirement: "cross 314" },
+  cursed: { emoji: "😈", requirement: "cross 666" },
+  elite: { emoji: "🕹️", requirement: "cross 1,337" },
+  over9000: { emoji: "💪", requirement: "cross 9,000" },
+  chonk: { emoji: "🐱", requirement: "5,000 in one batch" },
+  witching: { emoji: "🧙", requirement: "00:00–00:59 ICT" },
+  dawn: { emoji: "🌅", requirement: "05:00–05:59 ICT" },
 }
 
 const FALLBACK: Meta = { emoji: "🏆", requirement: "" }

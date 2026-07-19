@@ -32,9 +32,11 @@ function QuestRow({ quest }: { quest: QuestProgress }) {
 export function GoalsPanel({
   quests,
   streak,
+  signedIn,
 }: {
   quests: QuestProgress[]
   streak: { current: number; best: number; lastDay: string }
+  signedIn: boolean
 }) {
   const daily = quests.filter((q) => q.kind === "daily")
   const weekly = quests.filter((q) => q.kind === "weekly")
@@ -50,7 +52,9 @@ export function GoalsPanel({
       </div>
 
       {quests.length === 0 ? (
-        <p className="text-muted-foreground font-mono text-xs">loading your goals…</p>
+        <p className="text-muted-foreground font-mono text-xs">
+          {signedIn ? "loading your goals…" : "sign in to track your goals & streak"}
+        </p>
       ) : (
         <>
           {daily.length > 0 && (

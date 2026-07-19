@@ -40,7 +40,7 @@ const streak = { current: 5, best: 12, lastDay: "2026-07-18" }
 
 describe("GoalsPanel", () => {
   it("renders daily and weekly quest titles with progress and reward", () => {
-    render(<GoalsPanel quests={quests} streak={streak} />)
+    render(<GoalsPanel quests={quests} streak={streak} signedIn />)
     expect(screen.getByText("Warm Up")).toBeInTheDocument()
     expect(screen.getByText("Century Club")).toBeInTheDocument()
     expect(screen.getByText("40/100")).toBeInTheDocument()
@@ -48,7 +48,7 @@ describe("GoalsPanel", () => {
   })
 
   it("shows a done quest's completed state", () => {
-    render(<GoalsPanel quests={quests} streak={streak} />)
+    render(<GoalsPanel quests={quests} streak={streak} signedIn />)
     expect(screen.getByText("Streak Keeper")).toBeInTheDocument()
     expect(screen.getByText("✓ complete")).toBeInTheDocument()
     // the not-yet-done quests still read as in progress
@@ -56,14 +56,20 @@ describe("GoalsPanel", () => {
   })
 
   it("renders the current and best streak counts", () => {
-    render(<GoalsPanel quests={quests} streak={streak} />)
+    render(<GoalsPanel quests={quests} streak={streak} signedIn />)
     expect(screen.getByText("5")).toBeInTheDocument()
     expect(screen.getByText("best 12d")).toBeInTheDocument()
   })
 
-  it("shows a quiet loading line when there are no quests yet", () => {
-    render(<GoalsPanel quests={[]} streak={{ current: 0, best: 0, lastDay: "" }} />)
+  it("shows a quiet loading line when signed in with no quests yet", () => {
+    render(<GoalsPanel quests={[]} streak={{ current: 0, best: 0, lastDay: "" }} signedIn />)
     expect(screen.getByText(/loading your goals/i)).toBeInTheDocument()
     expect(screen.queryByText("Warm Up")).not.toBeInTheDocument()
+  })
+
+  it("shows a sign-in prompt instead of a perpetual loading line when signed out", () => {
+    render(<GoalsPanel quests={[]} streak={{ current: 0, best: 0, lastDay: "" }} signedIn={false} />)
+    expect(screen.getByText(/sign in to track your goals/i)).toBeInTheDocument()
+    expect(screen.queryByText(/loading your goals/i)).not.toBeInTheDocument()
   })
 })

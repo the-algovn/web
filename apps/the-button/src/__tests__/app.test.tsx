@@ -41,6 +41,15 @@ it("renders the page heading and the sign-in call to action", async () => {
   ).toBeInTheDocument()
 })
 
+it("hides the HUD streak chip when signed out (zero streak)", async () => {
+  const { container } = render(<App />)
+  await screen.findByRole("button", { name: /sign in to contribute/i })
+  // Scoped to the HUD chips row: GoalsPanel has its own always-visible
+  // streak readout elsewhere on the page, this only asserts on the HUD one.
+  const chips = container.querySelector(".tb-chips")
+  expect(chips?.textContent).not.toContain("🔥")
+})
+
 // Captures the EventSource App wires up internally via LiveCounter so a test
 // can push a raw SSE frame at it, the same way the real anonymous
 // the-button.counter channel would (spec §10).

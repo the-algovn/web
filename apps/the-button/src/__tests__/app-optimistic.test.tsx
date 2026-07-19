@@ -182,6 +182,17 @@ it("submits exactly one click per press regardless of combo (integrity)", async 
   expect(intended).toBeLessThanOrEqual(5)
 })
 
+it("hides the HUD streak chip before any streak data has arrived", async () => {
+  vi.useRealTimers()
+  vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
+  vi.spyOn(api, "getPlayerState").mockResolvedValue({})
+
+  const { container } = render(<App />)
+  await screen.findByRole("button", { name: /contribute/i })
+  const chips = container.querySelector(".tb-chips")
+  expect(chips?.textContent).not.toContain("🔥")
+})
+
 it("updates HUD total, rank, streak and catalog unlocks from a per-user SSE frame", async () => {
   vi.useRealTimers()
   vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
@@ -208,4 +219,31 @@ it("updates HUD total, rank, streak and catalog unlocks from a per-user SSE fram
   expect(bodyText()).toContain("🔥 3d")
   // achievements-grid's unlocked/total counter ticks up from 0 to 1
   expect(bodyText()).toContain("1/12")
+})
+
+it("adds a server-only achievement id via SSE unlock even when it isn't in the static catalog", async () => {
+  vi.useRealTimers()
+  vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
+  vi.spyOn(api, "getPlayerState").mockResolvedValue({})
+
+  render(<App />)
+  await waitFor(() => expect(playerStreamState.instances).toHaveLength(1))
+  const { onFrame } = playerStreamState.instances[0]!
+
+  act(() => {
+    onFrame({
+      total: 9001,
+      allTimeRank: 1,
+      weeklyRank: 1,
+      unlocked: [{ id: "over9000", title: "It's Over 9000!", description: "Your total crossed 9,000." }],
+      questProgress: [],
+      questsDone: [],
+      streak: { current: 1, best: 1, lastDay: "2026-07-19" },
+    })
+  })
+
+  // The static fallback catalog has 12 entries; a server-only id must be
+  // added, not dropped, so the total grows to 13 rather than staying capped.
+  await waitFor(() => expect(bodyText()).toContain("1/13"))
+  expect(screen.getByText("It's Over 9000!")).toBeInTheDocument()
 })

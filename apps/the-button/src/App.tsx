@@ -101,6 +101,16 @@ function Home() {
     total: null,
     pending: 0,
   })
+  // What "you contributed" shows: same floor pattern as `display` above, but
+  // over myTotal + pending. Under pure-ack, `pending` drops to 0 the instant
+  // a submit is acked, while `myTotal` only rises later when the per-user SSE
+  // frame lands — without the floor this dips by the batch size then pops
+  // back up. See lib/display-total.ts.
+  const [myDisplay, setMyDisplay] = useState(0)
+  const [prevMyInputs, setPrevMyInputs] = useState<{ myTotal: number | null; pending: number }>({
+    myTotal: null,
+    pending: 0,
+  })
   const [catalog, setCatalog] = useState<CatalogEntry[]>(() =>
     mergeCatalog(undefined),
   )
@@ -268,12 +278,23 @@ function Home() {
       setQuests(f.questProgress)
       setStreak(f.streak)
       announceRef.current(f.unlocked)
-      setCatalog((prev) =>
-        prev.map((entry) => {
-          const hit = f.unlocked.find((a) => a.id === entry.id)
-          return hit ? { ...entry, unlockedAt: new Date().toISOString() } : entry
-        }),
-      )
+      // A server id may not be in the currently-rendered catalog at all (the
+      // static fallback only has 12 of the ~20 server ids) — add it rather
+      // than dropping the unlock on the floor.
+      setCatalog((prev) => {
+        const now = new Date().toISOString()
+        const byId = new Map(prev.map((entry) => [entry.id, entry]))
+        for (const a of f.unlocked) {
+          const existing = byId.get(a.id)
+          byId.set(
+            a.id,
+            existing
+              ? { ...existing, unlockedAt: now }
+              : { id: a.id, title: a.title, description: a.description, unlockedAt: now },
+          )
+        }
+        return Array.from(byId.values())
+      })
     }
     const stream = new PlayerStream({
       url: env.eventsPlayerUrl,
@@ -319,6 +340,10 @@ function Home() {
     setPrevInputs({ total, pending })
     setDisplay((prev) => mergeDisplayTotal(total, pending, prev ?? 0))
   }
+  if (prevMyInputs.myTotal !== myTotal || prevMyInputs.pending !== pending) {
+    setPrevMyInputs({ myTotal, pending })
+    setMyDisplay((prev) => mergeDisplayTotal(myTotal, pending, prev) ?? prev)
+  }
 
   // One real click per press. Combo only drives cosmetic juice + XP bonus.
   function handleMash() {
@@ -333,7 +358,7 @@ function Home() {
   }
 
   const lvl = levelState(myTotal ?? 0, xpBonus)
-  const myClicks = (myTotal ?? 0) + pending
+  const myClicks = myDisplay
   let toNext: number | null = null
   if (total !== null) {
     const m = nextMilestone(total)
@@ -345,7 +370,12 @@ function Home() {
       <div className="tb-grid-bg" aria-hidden />
       <main className="tb-main relative z-10 mx-auto w-full max-w-6xl p-4 sm:p-6">
         <div className="tb-app" data-tab={tab}>
-          <Hud mode={mode} level={lvl.level} streakDays={streak.current} rank={myRank.allTime ?? null} />
+          <Hud
+            mode={mode}
+            level={lvl.level}
+            streakDays={streak.current > 0 ? streak.current : null}
+            rank={myRank.allTime ?? null}
+          />
 
           <div className="tb-grid">
             {/* LEFT column: the count + play, then session stats and the goal */}
@@ -422,7 +452,7 @@ function Home() {
                 <ActivityFeed items={feed.items} />
               </div>
               <div data-group="goals">
-                <GoalsPanel quests={quests} streak={streak} />
+                <GoalsPanel quests={quests} streak={streak} signedIn={Boolean(token)} />
               </div>
               <div data-group="goals">
                 <AchievementsGrid entries={catalog} />

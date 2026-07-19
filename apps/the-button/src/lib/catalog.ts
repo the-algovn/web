@@ -82,15 +82,25 @@ export const MILESTONE_CATALOG: { threshold: number; title: string }[] = [
   { threshold: 1_000_000_000, title: "The Billion" },
 ]
 
+// `server` is GetPlayerState's ps.achievements: when present and non-empty
+// it is the AUTHORITATIVE full catalog (~20 ids, some outside the static
+// list below) and drives the grid entirely — every server id renders, using
+// server title/description and falling back to the static copy only for ids
+// the two lists happen to share. Absent or empty (signed out, or the fetch
+// failed/hasn't landed) falls back to the static 12-entry offline catalog.
 export function mergeCatalog(server: Achievement[] | undefined): CatalogEntry[] {
-  const byId = new Map((server ?? []).map(a => [a.id, a]))
-  return ACHIEVEMENT_CATALOG.map(entry => {
-    const s = byId.get(entry.id)
+  if (!server || server.length === 0) {
+    return ACHIEVEMENT_CATALOG.map(entry => ({ ...entry }))
+  }
+  const staticById = new Map(ACHIEVEMENT_CATALOG.map(entry => [entry.id, entry]))
+  return server.map(s => {
+    const id = s.id ?? ""
+    const fallback = staticById.get(id)
     return {
-      ...entry,
-      title: s?.title ?? entry.title,
-      description: s?.description ?? entry.description,
-      unlockedAt: s?.unlockedAt,
+      id,
+      title: s.title ?? fallback?.title ?? id,
+      description: s.description ?? fallback?.description ?? "",
+      unlockedAt: s.unlockedAt,
     }
   })
 }
