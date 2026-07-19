@@ -10,6 +10,7 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.4",
     "prettier": "^3.9.5",
     "turbo": "^2.10.4",
     "typescript": "^6.0.3"
