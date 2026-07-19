@@ -56,7 +56,7 @@ export function useRadio(audioRef: RefObject<HTMLAudioElement | null>, deps: Use
     const id = setInterval(() => setNowPlaying(sync.current(clock())), 500)
     setNowPlaying(sync.current(clock()))
     return () => clearInterval(id)
-  }, [deps, sync])
+  }, [deps.playheadClock, sync])
 
   const play = () => {
     const audio = audioRef.current
