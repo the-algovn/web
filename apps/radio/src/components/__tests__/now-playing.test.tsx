@@ -17,7 +17,9 @@ describe("NowPlayingCard", () => {
     expect(screen.queryByText(/Gửi/)).not.toBeInTheDocument()
   })
   it("shows a loading label when null", () => {
-    render(<NowPlayingCard np={null} />)
+    const { container } = render(<NowPlayingCard np={null} />)
     expect(screen.getByText(/Now playing/i)).toBeInTheDocument()
+    expect(screen.queryByText(base.title)).not.toBeInTheDocument()
+    expect(container.querySelector('[data-slot="skeleton"]')).not.toBeNull()
   })
 })
