@@ -115,17 +115,13 @@
   .tb-grid {
     display: grid; gap: 14px; padding-top: 14px;
     grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-    grid-template-areas: "lore lore" "hero side";
+    grid-template-areas: "left right" "why why";
     align-items: start;
   }
-  .tb-area-hero { grid-area: hero; display: flex; flex-direction: column; gap: 16px; }
-  .tb-area-side { grid-area: side; display: flex; flex-direction: column; gap: 14px; }
-  .tb-area-lore {
-    grid-area: lore;
-    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;
-    align-items: start;
-  }
-  .tb-lore-a { display: flex; flex-direction: column; gap: 14px; }
+  .tb-col-left { grid-area: left; display: flex; flex-direction: column; gap: 16px; }
+  .tb-col-right { grid-area: right; display: flex; flex-direction: column; gap: 14px; }
+  .tb-why { grid-area: why; }
+  .tb-area-hero { display: flex; flex-direction: column; gap: 16px; }
 
   .tb-meters { display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; width: 100%; }
   .tb-meter { border: 1px solid var(--border); padding: 12px; text-align: left; }
@@ -162,14 +158,13 @@
 @container (max-width: 720px) {
   /* One screen at a time: a flex column (not a grid) so a single visible group
      sits directly under the HUD instead of being pushed around by stretched
-     empty grid rows. The side/lore wrappers dissolve so their grouped children
+     empty grid rows. The column wrappers dissolve so their grouped children
      become direct, individually-toggled items of the column. */
   .tb-grid {
     display: flex; flex-direction: column; gap: 14px;
     flex: 1; min-height: 0; overflow-y: auto;
   }
-  .tb-area-side { display: contents; }
-  .tb-area-lore { display: flex; flex-direction: column; gap: 14px; }
+  .tb-col-left, .tb-col-right { display: contents; }
   .tb-hud .tb-tag { display: none; }
   .tb-chip-rank { display: none; }
 

@@ -320,70 +320,68 @@ function Home() {
           <Hud mode={mode} level={lvl.level} streakDays={null} rank={myRank.allTime ?? null} />
 
           <div className="tb-grid">
-            {/* STATS — mission/context band across the top */}
-            <div className="tb-area-lore" data-group="stats">
-              <div className="tb-lore-a">
+            {/* LEFT column: the count + play, then session stats and the goal */}
+            <div className="tb-col-left">
+              <section className="tb-area-hero" data-group="play" aria-label="the button">
+                <MilestoneBanner milestone={milestone} />
+                <Counter
+                  total={display}
+                  secondary={
+                    toNext !== null ? (
+                      <div className="hidden shrink-0 text-right font-mono sm:block">
+                        <div className="text-muted-foreground text-[0.65rem] tracking-widest">
+                          TO NEXT
+                        </div>
+                        <div className="text-primary text-xl font-bold tabular-nums sm:text-2xl">
+                          {toNext.toLocaleString("en-US")}
+                        </div>
+                      </div>
+                    ) : undefined
+                  }
+                />
+                <p className="text-muted-foreground font-mono text-xs">
+                  you contributed{" "}
+                  <b className="text-primary tabular-nums" data-testid="your-clicks">
+                    {myClicks.toLocaleString("en-US")}
+                  </b>{" "}
+                  clicks
+                  {stalled && (
+                    <span className="text-muted-foreground ml-2" role="status">
+                      ⚠ retrying
+                    </span>
+                  )}
+                </p>
+                <ProgressBar total={total} />
+                {user ? (
+                  <ClickButton onMash={handleMash} onParticle={emit} />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void signIn()}
+                    className="tb-ghost focus-visible:ring-ring/50 flex w-full items-center justify-center gap-3 px-8 py-6 font-mono text-xl font-bold tracking-widest outline-none focus-visible:ring-[3px]"
+                  >
+                    <span className="text-2xl font-normal" aria-hidden>
+                      ▶
+                    </span>
+                    <span>SIGN IN TO CONTRIBUTE</span>
+                  </button>
+                )}
+                <div className="tb-meters">
+                  <ComboMeter multiplier={combo.multiplier} heat={combo.heat} label={combo.label} />
+                  <CpsMeter cps={cps} history={cpsHistory} />
+                </div>
+                <XpBar level={lvl.level} pct={lvl.pct} xpIntoLevel={lvl.xpIntoLevel} xpForNext={lvl.xpForNext} />
+              </section>
+              <div data-group="stats">
                 <SessionStats total={total} users={users} />
+              </div>
+              <div data-group="stats">
                 <TargetHeadline eta={eta.text} />
               </div>
-              <WhyGrid />
             </div>
 
-            {/* PLAY — left play column */}
-            <section className="tb-area-hero" data-group="play" aria-label="the button">
-              <MilestoneBanner milestone={milestone} />
-              <Counter
-                total={display}
-                secondary={
-                  toNext !== null ? (
-                    <div className="hidden shrink-0 text-right font-mono sm:block">
-                      <div className="text-muted-foreground text-[0.65rem] tracking-widest">
-                        TO NEXT
-                      </div>
-                      <div className="text-primary text-xl font-bold tabular-nums sm:text-2xl">
-                        {toNext.toLocaleString("en-US")}
-                      </div>
-                    </div>
-                  ) : undefined
-                }
-              />
-              <p className="text-muted-foreground font-mono text-xs">
-                you contributed{" "}
-                <b className="text-primary tabular-nums" data-testid="your-clicks">
-                  {myClicks.toLocaleString("en-US")}
-                </b>{" "}
-                clicks
-                {stalled && (
-                  <span className="text-muted-foreground ml-2" role="status">
-                    ⚠ retrying
-                  </span>
-                )}
-              </p>
-              <ProgressBar total={total} />
-              {user ? (
-                <ClickButton onMash={handleMash} onParticle={emit} />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void signIn()}
-                  className="tb-ghost focus-visible:ring-ring/50 flex w-full items-center justify-center gap-3 px-8 py-6 font-mono text-xl font-bold tracking-widest outline-none focus-visible:ring-[3px]"
-                >
-                  <span className="text-2xl font-normal" aria-hidden>
-                    ▶
-                  </span>
-                  <span>SIGN IN TO CONTRIBUTE</span>
-                </button>
-              )}
-              <div className="tb-meters">
-                <ComboMeter multiplier={combo.multiplier} heat={combo.heat} label={combo.label} />
-                <CpsMeter cps={cps} history={cpsHistory} />
-              </div>
-              <XpBar level={lvl.level} pct={lvl.pct} xpIntoLevel={lvl.xpIntoLevel} xpForNext={lvl.xpForNext} />
-            </section>
-
-            {/* SIDE — right column: live social (RANKS) over progression (GOALS),
-                stacked so the column fills the hero's height instead of leaving a void */}
-            <div className="tb-area-side">
+            {/* RIGHT column: leaderboard + activity, then quests + achievements */}
+            <div className="tb-col-right">
               <div data-group="ranks">
                 <Leaderboard
                   allTime={board.allTime}
@@ -403,6 +401,10 @@ function Home() {
               </div>
             </div>
 
+            {/* WHY — full-width row across both columns */}
+            <div className="tb-why" data-group="stats">
+              <WhyGrid />
+            </div>
           </div>
 
           <TabBar active={tab} onChange={setTab} />
