@@ -2,9 +2,20 @@ import { render, screen, act } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import App from "../App"
 import * as api from "../lib/api"
+import type { UserFrame } from "../lib/playerStream"
 
 vi.mock("../lib/use-auth", () => ({
   useAuth: () => ({ user: { profile: { sub: "u1", name: "You" } }, token: "tok" }),
+}))
+
+// This file only cares about the leaderboard SSE channel; the per-user
+// channel is stubbed out so it never issues a real fetch.
+vi.mock("../lib/playerStream", () => ({
+  // A regular function, not an arrow: `new PlayerStream(...)` in App.tsx
+  // requires the mock implementation to be constructible.
+  PlayerStream: vi.fn().mockImplementation(function (_opts: { onFrame: (f: UserFrame) => void }) {
+    return { start: vi.fn(), stop: vi.fn() }
+  }),
 }))
 
 class FakeEventSource {
@@ -26,7 +37,7 @@ beforeEach(() => {
   vi.stubGlobal("EventSource", FakeEventSource)
   vi.spyOn(api, "getLeaderboard").mockResolvedValue({ allTime: [], thisWeek: [] })
   vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
-  vi.spyOn(api, "listAchievements").mockResolvedValue({ catalog: [], milestones: [] })
+  vi.spyOn(api, "getPlayerState").mockResolvedValue({})
   vi.spyOn(api, "getCounter").mockResolvedValue({ total: "0", totalUsers: "0" })
 })
 

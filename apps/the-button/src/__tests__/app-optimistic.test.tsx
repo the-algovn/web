@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import App from "../App"
 import * as api from "../lib/api"
+import type { UserFrame } from "../lib/playerStream"
 
 // Force the signed-in branch so ClickButton renders. The stock app.test.tsx
 // covers the signed-out call to action; mocking auth there would break it,
@@ -14,6 +15,22 @@ const authState = vi.hoisted(() => ({ token: "tok" as string | null }))
 
 vi.mock("../lib/use-auth", () => ({
   useAuth: () => ({ user: { profile: { sub: "u1" } }, token: authState.token }),
+}))
+
+// Captures the PlayerStream App wires up for the authenticated per-user SSE
+// channel so a test can push a fake UserFrame at it directly, instead of
+// asserting on submitClicks response fields (the batcher is pure-ack and no
+// longer carries total/rank/unlocked).
+const playerStreamState = vi.hoisted(() => ({
+  instances: [] as { onFrame: (f: UserFrame) => void }[],
+}))
+vi.mock("../lib/playerStream", () => ({
+  // A regular function, not an arrow: `new PlayerStream(...)` in App.tsx
+  // requires the mock implementation to be constructible.
+  PlayerStream: vi.fn().mockImplementation(function (opts: { onFrame: (f: UserFrame) => void }) {
+    playerStreamState.instances.push(opts)
+    return { start: vi.fn(), stop: vi.fn() }
+  }),
 }))
 
 class FakeEventSource {
@@ -33,6 +50,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   authState.token = "tok"
   FakeEventSource.instances = []
+  playerStreamState.instances = []
   vi.stubGlobal("EventSource", FakeEventSource)
 })
 
@@ -43,12 +61,13 @@ afterEach(() => {
 })
 
 const counterText = () => screen.getByTestId("counter").textContent?.replace(/\s/g, "") ?? ""
+const bodyText = () => document.body.textContent?.replace(/\s+/g, " ") ?? ""
 
 it("credits a click to the global counter before any submit lands", async () => {
   // The challenge never resolves, so the click stays pending for the whole
   // test: nothing but the optimistic path can move the counter here.
   vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
-  vi.spyOn(api, "listAchievements").mockResolvedValue({ catalog: [], milestones: [] })
+  vi.spyOn(api, "getPlayerState").mockResolvedValue({})
 
   render(<App />)
   const es = FakeEventSource.instances[0]!
@@ -67,7 +86,7 @@ it("credits a click to the global counter before any submit lands", async () => 
 
 it("does not let a stale lower frame drag the counter backward", async () => {
   vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
-  vi.spyOn(api, "listAchievements").mockResolvedValue({ catalog: [], milestones: [] })
+  vi.spyOn(api, "getPlayerState").mockResolvedValue({})
 
   render(<App />)
   const es = FakeEventSource.instances[0]!
@@ -90,32 +109,29 @@ it("does not let a stale lower frame drag the counter backward", async () => {
   expect(counterText()).toContain("1,000")
 })
 
-// The seed lands via a promise `.then()` (listAchievements resolving), not
+// The seed lands via a promise `.then()` (getPlayerState resolving), not
 // inside an act()-wrapped event like the counter tests above. Under fake
 // timers that setState commit is scheduled on a task queue advanceTimers does
 // not pump, so the DOM never updates no matter how much virtual time passes.
-// These three tests are purely promise-driven — nothing here needs timer
-// control — so they run on real timers and poll with findByText, which
-// observes the real scheduler.
-it("seeds your clicks from the achievements snapshot before any submit lands", async () => {
+// These tests are purely promise-driven — nothing here needs timer control —
+// so they run on real timers and poll with findByText, which observes the
+// real scheduler.
+it("seeds your clicks from the player-state snapshot before any submit lands", async () => {
   vi.useRealTimers()
   vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
-  vi.spyOn(api, "listAchievements").mockResolvedValue({
-    catalog: [],
-    milestones: [],
-    userTotalClicks: "500",
-  })
+  vi.spyOn(api, "getPlayerState").mockResolvedValue({ totalClicks: "500" })
 
   render(<App />)
   await waitFor(() => expect(screen.getByTestId("your-clicks")).toHaveTextContent("500"))
 })
 
 it("shows zero, not an em dash, for a signed-in user who has never clicked", async () => {
-  // protojson omits zero-valued fields: a user with no clicks sends no
-  // userTotalClicks at all, which looks identical to an anonymous response.
+  // protojson omits zero-valued fields: a user with no clicks gets a
+  // response with no totalClicks at all — playerStateFromSnapshot normalizes
+  // that to 0.
   vi.useRealTimers()
   vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
-  vi.spyOn(api, "listAchievements").mockResolvedValue({ catalog: [], milestones: [] })
+  vi.spyOn(api, "getPlayerState").mockResolvedValue({})
 
   render(<App />)
   await waitFor(() => expect(screen.getByTestId("your-clicks")).toHaveTextContent("0"))
@@ -124,9 +140,9 @@ it("shows zero, not an em dash, for a signed-in user who has never clicked", asy
 it("does not re-seed a stale total when the token is renewed", async () => {
   vi.useRealTimers()
   vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
-  const list = vi
-    .spyOn(api, "listAchievements")
-    .mockResolvedValue({ catalog: [], milestones: [], userTotalClicks: "500" })
+  const getPlayerState = vi
+    .spyOn(api, "getPlayerState")
+    .mockResolvedValue({ totalClicks: "500" })
 
   const { rerender } = render(<App />)
   expect(await screen.findByText("500")).toBeInTheDocument()
@@ -135,19 +151,19 @@ it("does not re-seed a stale total when the token is renewed", async () => {
   // snapshot it fetches is stale relative to clicks that have already landed,
   // so it must not win. Changing the token is what makes this test bite:
   // rerender() alone would not re-run a [token] effect.
-  list.mockResolvedValue({ catalog: [], milestones: [], userTotalClicks: "400" })
+  getPlayerState.mockResolvedValue({ totalClicks: "400" })
   authState.token = "tok-renewed"
   rerender(<App />)
-  // Wait for the renewed token's listAchievements to actually resolve, so the
+  // Wait for the renewed token's getPlayerState to actually resolve, so the
   // assertion proves the seed was ignored — not merely that it hasn't run yet.
-  await waitFor(() => expect(list).toHaveBeenCalledTimes(2))
+  await waitFor(() => expect(getPlayerState).toHaveBeenCalledTimes(2))
   expect(screen.getByTestId("your-clicks")).toHaveTextContent("500") // seeded once
 })
 
 it("submits exactly one click per press regardless of combo (integrity)", async () => {
   vi.useRealTimers()
   const issue = vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
-  vi.spyOn(api, "listAchievements").mockResolvedValue({ catalog: [], milestones: [] })
+  vi.spyOn(api, "getPlayerState").mockResolvedValue({})
   // Seeds the global total to 0 via the one-shot snapshot (no SSE frame in
   // this test), so the optimistic display reflects pending clicks directly.
   vi.spyOn(api, "getCounter").mockResolvedValue({ total: "0", totalUsers: "0" })
@@ -164,4 +180,32 @@ it("submits exactly one click per press regardless of combo (integrity)", async 
   // one challenge, so assert it was asked for at most the real press count).
   const intended = issue.mock.calls.reduce((sum, [n]) => sum + (n as number), 0)
   expect(intended).toBeLessThanOrEqual(5)
+})
+
+it("updates HUD total, rank, streak and catalog unlocks from a per-user SSE frame", async () => {
+  vi.useRealTimers()
+  vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
+  vi.spyOn(api, "getPlayerState").mockResolvedValue({})
+
+  render(<App />)
+  await waitFor(() => expect(playerStreamState.instances).toHaveLength(1))
+  const { onFrame } = playerStreamState.instances[0]!
+
+  act(() => {
+    onFrame({
+      total: 777,
+      allTimeRank: 5,
+      weeklyRank: 12,
+      unlocked: [{ id: "ten", title: "Double Digits", description: "Ten clicks." }],
+      questProgress: [],
+      questsDone: [],
+      streak: { current: 3, best: 9, lastDay: "2026-07-18" },
+    })
+  })
+
+  expect(screen.getByTestId("your-clicks")).toHaveTextContent("777")
+  await waitFor(() => expect(bodyText()).toContain("RANK #5"))
+  expect(bodyText()).toContain("🔥 3d")
+  // achievements-grid's unlocked/total counter ticks up from 0 to 1
+  expect(bodyText()).toContain("1/12")
 })

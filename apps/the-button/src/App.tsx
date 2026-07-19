@@ -20,9 +20,11 @@ import { XpBar } from "./components/xp-bar"
 import {
   getCounter,
   getLeaderboard,
+  getPlayerState,
   issueChallenge,
-  listAchievements,
+  playerStateFromSnapshot,
   submitClicks,
+  type QuestProgress,
 } from "./lib/api"
 import { emptyFeed, pushTotal } from "./lib/activity"
 import { signIn } from "./lib/auth"
@@ -34,9 +36,11 @@ import { comboXpBonus, createCombo, type ComboState } from "./lib/combo"
 import { pruneRecent } from "./lib/cps"
 import { createEtaEstimator, type Eta } from "./lib/eta"
 import { mergeDisplayTotal } from "./lib/display-total"
+import { env } from "./lib/env"
 import { LeaderboardStream, type Row } from "./lib/leaderboardStream"
 import { levelState } from "./lib/level"
 import { LiveCounter, type LiveMode } from "./lib/liveCounter"
+import { PlayerStream, type UserFrame } from "./lib/playerStream"
 import { createWorkerSolver } from "./lib/solverClient"
 import { createUnlockAnnouncer } from "./lib/unlocks"
 import { useAuth } from "./lib/use-auth"
@@ -104,6 +108,13 @@ function Home() {
   const [eta, setEta] = useState<Eta>({ seconds: null, text: "calculating…" })
   const [board, setBoard] = useState<{ allTime: Row[]; thisWeek: Row[] }>({ allTime: [], thisWeek: [] })
   const [myRank, setMyRank] = useState<{ allTime?: number; weekly?: number }>({})
+  // Held for the GOALS tab (Task 5 renders it); not read here.
+  const [, setQuests] = useState<QuestProgress[]>([])
+  const [streak, setStreak] = useState<{ current: number; best: number; lastDay: string }>({
+    current: 0,
+    best: 0,
+    lastDay: "",
+  })
 
   // Cosmetic gamification (never affects submitted clicks).
   const [tab, setTab] = useState<Tab>("play")
@@ -120,33 +131,19 @@ function Home() {
   const comboRef = useRef(createCombo())
   const clickTimesRef = useRef<number[]>([])
   const lastCpsRef = useRef(0)
+  // One announcer for the page's lifetime so a token renewal (which re-runs
+  // the per-user SSE effect below) never re-toasts an already-seen unlock.
+  const announceRef = useRef(createUnlockAnnouncer())
   const { particles, emit, remove } = useParticles()
 
   useEffect(() => {
     const solver = createWorkerSolver()
-    const announce = createUnlockAnnouncer()
     batcherRef.current = new Batcher({
       api: { issueChallenge, submitClicks },
       solver,
       getToken: () => tokenRef.current,
-      onUserTotal: setMyTotal,
-      onRank: (allTime, weekly) => setMyRank({ allTime, weekly }),
       onPendingChange: setPending,
       onStallChange: setStalled,
-      onUnlocked: (unlocked) => {
-        announce(unlocked)
-        setCatalog((prev) =>
-          prev.map((entry) => {
-            const hit = unlocked.find((a) => a.id === entry.id)
-            return hit
-              ? {
-                  ...entry,
-                  unlockedAt: hit.unlockedAt ?? new Date().toISOString(),
-                }
-              : entry
-          }),
-        )
-      },
       onError: (err) => console.error("submit failed", err),
     })
     return () => {
@@ -227,19 +224,24 @@ function Home() {
     }
   }, [])
 
+  // Signed-out users get no player-state seed — just the client fallback
+  // catalog (the initial mergeCatalog(undefined) state) plus getCounter/
+  // getLeaderboard below.
   useEffect(() => {
+    if (!token) return
     let cancelled = false
-    listAchievements(token ?? undefined)
+    getPlayerState(token)
       .then((res) => {
         if (cancelled) return
-        setCatalog(mergeCatalog(res.catalog))
-        // Seed once. protojson omits zero-valued fields, so an authed user
-        // with zero clicks sends no userTotalClicks — indistinguishable on the
-        // wire from an anonymous response, hence the local `if (token)`. And
+        const ps = playerStateFromSnapshot(res)
         // `prev ??` stops a token renewal from re-seeding a snapshot that is
         // now stale relative to submits that have already landed.
-        if (token) setMyTotal((prev) => prev ?? Number(res.userTotalClicks ?? 0))
-        const latest = (res.milestones ?? [])
+        setMyTotal((prev) => prev ?? ps.total)
+        setMyRank({ allTime: ps.allTimeRank, weekly: ps.weeklyRank })
+        setCatalog(mergeCatalog(ps.achievements))
+        setQuests(ps.quests)
+        setStreak(ps.streak)
+        const latest = ps.milestones
           .map((m) => ({
             threshold: Number(m.threshold ?? "0"),
             title: m.title ?? "",
@@ -254,6 +256,33 @@ function Home() {
     return () => {
       cancelled = true
     }
+  }, [token])
+
+  // Per-user live updates: total, ranks, quest progress, streak and new
+  // unlocks all arrive over the authenticated per-user SSE channel (the
+  // batcher itself only reads nextChallenge — see lib/batcher.ts).
+  useEffect(() => {
+    if (!token) return
+    const onFrame = (f: UserFrame) => {
+      setMyTotal(f.total)
+      setMyRank({ allTime: f.allTimeRank, weekly: f.weeklyRank })
+      setQuests(f.questProgress)
+      setStreak(f.streak)
+      announceRef.current(f.unlocked)
+      setCatalog((prev) =>
+        prev.map((entry) => {
+          const hit = f.unlocked.find((a) => a.id === entry.id)
+          return hit ? { ...entry, unlockedAt: new Date().toISOString() } : entry
+        }),
+      )
+    }
+    const stream = new PlayerStream({
+      url: env.eventsPlayerUrl,
+      getToken: () => tokenRef.current,
+      onFrame,
+    })
+    stream.start()
+    return () => stream.stop()
   }, [token])
 
   useEffect(() => {
@@ -317,7 +346,7 @@ function Home() {
       <div className="tb-grid-bg" aria-hidden />
       <main className="tb-main relative z-10 mx-auto w-full max-w-6xl p-4 sm:p-6">
         <div className="tb-app" data-tab={tab}>
-          <Hud mode={mode} level={lvl.level} streakDays={null} rank={myRank.allTime ?? null} />
+          <Hud mode={mode} level={lvl.level} streakDays={streak.current} rank={myRank.allTime ?? null} />
 
           <div className="tb-grid">
             {/* LEFT column: the count + play, then session stats and the goal */}

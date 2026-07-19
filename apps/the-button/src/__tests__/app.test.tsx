@@ -1,7 +1,37 @@
 import { act, render, screen, waitFor } from "@testing-library/react"
-import { afterEach, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import App from "../App"
 import * as api from "../lib/api"
+import type { UserFrame } from "../lib/playerStream"
+
+// The milestone-precedence tests below need a token so the per-user
+// GetPlayerState seed effect runs; every other test in this file stays
+// signed-out (real useAuth resolves to no token in this env anyway — mocking
+// just makes the opt-in explicit and per-test).
+const authState = vi.hoisted(() => ({ token: null as string | null }))
+vi.mock("../lib/use-auth", () => ({
+  useAuth: () => ({ user: null, token: authState.token }),
+}))
+
+// Captures the PlayerStream App wires up for the authenticated per-user SSE
+// channel so a test can push a fake UserFrame at it, the same way
+// FakeEventSource below does for the counter channel.
+const playerStreamState = vi.hoisted(() => ({
+  instances: [] as { onFrame: (f: UserFrame) => void }[],
+}))
+vi.mock("../lib/playerStream", () => ({
+  // A regular function, not an arrow: `new PlayerStream(...)` in App.tsx
+  // requires the mock implementation to be constructible.
+  PlayerStream: vi.fn().mockImplementation(function (opts: { onFrame: (f: UserFrame) => void }) {
+    playerStreamState.instances.push(opts)
+    return { start: vi.fn(), stop: vi.fn() }
+  }),
+}))
+
+beforeEach(() => {
+  authState.token = null
+  playerStreamState.instances = []
+})
 
 it("renders the page heading and the sign-in call to action", async () => {
   render(<App />)
@@ -27,6 +57,7 @@ class FakeEventSource {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 it("renders the milestone banner when one arrives via the SSE stream", async () => {
@@ -46,11 +77,11 @@ it("renders the milestone banner when one arrives via the SSE stream", async () 
   expect(screen.getByRole("status")).toHaveTextContent("1,000 clicks — A Thousand Tiny Rebellions")
 })
 
-it("does not replace a higher milestone from the RPC snapshot with a lower SSE frame", async () => {
+it("does not replace a higher milestone from the player-state snapshot with a lower SSE frame", async () => {
+  authState.token = "tok"
   FakeEventSource.instances = []
   vi.stubGlobal("EventSource", FakeEventSource)
-  vi.spyOn(api, "listAchievements").mockResolvedValueOnce({
-    catalog: [],
+  vi.spyOn(api, "getPlayerState").mockResolvedValueOnce({
     milestones: [{ threshold: "5000", title: "Five Thousand Strong" }],
   })
   render(<App />)
@@ -65,17 +96,17 @@ it("does not replace a higher milestone from the RPC snapshot with a lower SSE f
       }),
     } as MessageEvent)
   })
-  // Wait for the higher milestone from the RPC snapshot to load
+  // Wait for the higher milestone from the player-state snapshot to load
   await waitFor(() => {
     expect(screen.getByRole("status")).toHaveTextContent("5,000 clicks — Five Thousand Strong")
   })
 })
 
-it("replaces a lower milestone from SSE with a higher one from the RPC snapshot", async () => {
+it("replaces a lower milestone from SSE with a higher one from the player-state snapshot", async () => {
+  authState.token = "tok"
   FakeEventSource.instances = []
   vi.stubGlobal("EventSource", FakeEventSource)
-  vi.spyOn(api, "listAchievements").mockResolvedValueOnce({
-    catalog: [],
+  vi.spyOn(api, "getPlayerState").mockResolvedValueOnce({
     milestones: [{ threshold: "5000", title: "Five Thousand Strong" }],
   })
   render(<App />)
@@ -91,7 +122,7 @@ it("replaces a lower milestone from SSE with a higher one from the RPC snapshot"
     } as MessageEvent)
   })
   expect(screen.getByRole("status")).toHaveTextContent("1,000 clicks — A Thousand Tiny Rebellions")
-  // Wait for the higher milestone from the RPC snapshot to replace it
+  // Wait for the higher milestone from the player-state snapshot to replace it
   await waitFor(() => {
     expect(screen.getByRole("status")).toHaveTextContent("5,000 clicks — Five Thousand Strong")
   })
