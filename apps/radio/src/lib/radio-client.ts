@@ -1,3 +1,7 @@
+import { env } from "./env"
+import { MockStudio } from "./mock-studio"
+import { createHttpClient } from "./radio-client.http"
+
 export type ItemKind = "track" | "dj" | "jingle"
 
 export interface NowPlaying {
@@ -66,4 +70,10 @@ export function parseQueue(raw: unknown): QueueItem[] | null {
     if (str(e.thumbnailUrl)) item.thumbnailUrl = str(e.thumbnailUrl)
     return [item] // recipient (if present) is deliberately dropped
   })
+}
+
+export function createClient(): RadioClient {
+  return env.useMock
+    ? new MockStudio()
+    : createHttpClient({ apiBase: env.apiBase, eventsUrl: env.eventsUrl })
 }
