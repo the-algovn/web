@@ -10,4 +10,6 @@ export const env = {
   eventsLeaderboardUrl:
     import.meta.env.VITE_EVENTS_LEADERBOARD_URL ??
     "https://api.algovn.com/events/the-button.leaderboard",
+  eventsPlayerUrl:
+    import.meta.env.VITE_EVENTS_PLAYER_URL ?? "https://api.algovn.com/events/the-button.user",
 }
