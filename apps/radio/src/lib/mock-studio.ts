@@ -46,9 +46,10 @@ export class MockStudio implements RadioClient {
 
   /** Index into SCHEDULE and seconds elapsed within the current item. */
   private position(): { index: number; elapsed: number; itemStartMs: number } {
-    const t = Math.floor((this.now() - EPOCH_ANCHOR) / 1000)
+    const n = this.now()
+    const t = Math.floor((n - EPOCH_ANCHOR) / 1000)
     let rem = ((t % CYCLE_SECONDS) + CYCLE_SECONDS) % CYCLE_SECONDS
-    const cycleStart = this.now() - rem * 1000
+    const cycleStart = EPOCH_ANCHOR + (t - rem) * 1000 // call-independent, integer ms
     let index = 0
     for (; index < SCHEDULE.length; index++) {
       if (rem < SCHEDULE[index]!.durationSeconds) break
@@ -111,8 +112,8 @@ export class MockStudio implements RadioClient {
 
   private ensureTimer(): void {
     if (this.timer) return
+    this.lastIndex = this.position().index
     this.timer = setInterval(() => this.tick(), TICK_MS)
-    this.tick()
   }
 
   private maybeStopTimer(): void {
@@ -135,7 +136,8 @@ export class MockStudio implements RadioClient {
   subscribeNowPlaying(onEvent: (np: NowPlaying) => void, onMode?: (m: ConnMode) => void): () => void {
     onMode?.("live")
     this.npSubs.add(onEvent)
-    this.lastIndex = -1
+    const { index, itemStartMs } = this.position()
+    onEvent(this.nowPlayingAt(index, itemStartMs)) // immediate, per-subscriber
     this.ensureTimer()
     return () => { this.npSubs.delete(onEvent); this.maybeStopTimer() }
   }
@@ -143,7 +145,7 @@ export class MockStudio implements RadioClient {
   subscribeQueue(onEvent: (q: QueueItem[]) => void, onMode?: (m: ConnMode) => void): () => void {
     onMode?.("live")
     this.queueSubs.add(onEvent)
-    this.lastIndex = -1
+    onEvent(this.queueFrom(this.position().index)) // immediate
     this.ensureTimer()
     return () => { this.queueSubs.delete(onEvent); this.maybeStopTimer() }
   }

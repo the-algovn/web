@@ -35,4 +35,39 @@ describe("MockStudio", () => {
     const hist = await s.getHistory()
     expect(hist[0]?.title).toBe(first.title)
   })
+
+  it("keeps startedAt stable across calls within the same item (no sub-second jitter)", async () => {
+    clock = 1_700_000_000_000 + 100_777
+    const s = studio()
+    const a = await s.getNowPlaying()
+    clock += 273
+    const b = await s.getNowPlaying()
+    expect(a.startedAt).toBe(b.startedAt)
+    expect(a.startedAt).toBe(new Date(1_700_000_000_000).toISOString())
+  })
+
+  it("emits the queue synchronously to a subscriber, before any timer advance", () => {
+    const s = studio()
+    const received: unknown[][] = []
+    s.subscribeQueue(q => received.push(q))
+    expect(received.length).toBe(1)
+    expect(received[0]?.length).toBeGreaterThan(0)
+  })
+
+  it("gives a second now-playing subscriber its own immediate emission", async () => {
+    const s = studio()
+    const first = await s.getNowPlaying()
+    const firstSeen: string[] = []
+    s.subscribeNowPlaying(np => firstSeen.push(np.title))
+    const secondSeen: string[] = []
+    s.subscribeNowPlaying(np => secondSeen.push(np.title))
+    expect(secondSeen.at(-1)).toBe(first.title)
+  })
+
+  it("playheadMs returns the injected clock", () => {
+    const s = studio()
+    expect(s.playheadMs()).toBe(clock)
+    clock += 12_345
+    expect(s.playheadMs()).toBe(clock)
+  })
 })
