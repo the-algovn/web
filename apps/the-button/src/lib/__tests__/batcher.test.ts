@@ -31,8 +31,6 @@ function makeDeps() {
     issueChallenge: vi.fn(async (_clicks: number, _token: string) => challenge()),
     submitClicks: vi.fn(
       async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => ({
-        userTotalClicks: "10",
-        unlocked: [],
         nextChallenge: challenge({ challenge: "chal-2" }),
       })
     ),
@@ -60,8 +58,6 @@ function makeDepsWithBench(hashRatePerSecond: number, workFactor: string) {
     issueChallenge: vi.fn(async (_clicks: number, _token: string) => chal),
     submitClicks: vi.fn(
       async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => ({
-        userTotalClicks: "10",
-        unlocked: [],
         nextChallenge: chal,
       })
     ),
@@ -79,9 +75,8 @@ afterEach(() => {
 
 it("issues, solves and submits a single click, then keeps the piggybacked challenge", async () => {
   const { solver, api } = makeDeps()
-  const onUserTotal = vi.fn()
   const onPendingChange = vi.fn()
-  const b = new Batcher({ api, solver, getToken: () => "tok", onUserTotal, onPendingChange })
+  const b = new Batcher({ api, solver, getToken: () => "tok", onPendingChange })
   b.click()
   await vi.advanceTimersByTimeAsync(10)
   expect(api.issueChallenge).toHaveBeenCalledWith(1, "tok")
@@ -90,7 +85,6 @@ it("issues, solves and submits a single click, then keeps the piggybacked challe
     { challenge: "chal-1", nonce: "42", clickCount: 1 },
     "tok"
   )
-  expect(onUserTotal).toHaveBeenCalledWith(10)
   expect(onPendingChange).toHaveBeenLastCalledWith(0)
 
   // second batch reuses next_challenge and waits out min_interval (2s);
@@ -112,8 +106,6 @@ it("honors Retry-After on 429 and resubmits the SAME solved batch", async () => 
   api.submitClicks
     .mockRejectedValueOnce(new ApiError(429, "ResourceExhausted", "slow down", 5))
     .mockResolvedValueOnce({
-      userTotalClicks: "1",
-      unlocked: [],
       nextChallenge: challenge({ challenge: "chal-2" }),
     })
   const b = new Batcher({ api, solver, getToken: () => "tok" })
@@ -138,7 +130,7 @@ it("re-issues and re-solves after a 409 replay", async () => {
     .mockResolvedValueOnce(challenge({ challenge: "chal-1b" }))
   api.submitClicks
     .mockRejectedValueOnce(new ApiError(409, "AlreadyExists", "replay"))
-    .mockResolvedValueOnce({ userTotalClicks: "1", unlocked: [], nextChallenge: undefined })
+    .mockResolvedValueOnce({ nextChallenge: undefined })
   const b = new Batcher({ api, solver, getToken: () => "tok" })
   b.click()
   await vi.advanceTimersByTimeAsync(10)
@@ -157,7 +149,7 @@ it("re-issues after a 400 expired challenge", async () => {
     .mockResolvedValueOnce(challenge({ challenge: "chal-1b" }))
   api.submitClicks
     .mockRejectedValueOnce(new ApiError(400, "FailedPrecondition", "challenge_expired"))
-    .mockResolvedValueOnce({ userTotalClicks: "1", unlocked: [], nextChallenge: undefined })
+    .mockResolvedValueOnce({ nextChallenge: undefined })
   const b = new Batcher({ api, solver, getToken: () => "tok" })
   b.click()
   await vi.advanceTimersByTimeAsync(10)
@@ -325,13 +317,10 @@ it("discards the batch entirely on a 502 outcome-unknown response, never re-queu
   api.submitClicks
     .mockRejectedValueOnce(new ApiError(502, "Unavailable", "upstream unavailable"))
     .mockResolvedValueOnce({
-      userTotalClicks: "99",
-      unlocked: [],
       nextChallenge: challenge({ challenge: "chal-3" }),
     })
   const onPendingChange = vi.fn()
-  const onUserTotal = vi.fn()
-  const b = new Batcher({ api, solver, getToken: () => "tok", onPendingChange, onUserTotal })
+  const b = new Batcher({ api, solver, getToken: () => "tok", onPendingChange })
   b.click()
   b.click()
   await vi.advanceTimersByTimeAsync(10)
@@ -339,7 +328,6 @@ it("discards the batch entirely on a 502 outcome-unknown response, never re-queu
   // the 2-click batch is gone for good: not retried, not carried into pending
   expect(b.pendingCount).toBe(0)
   expect(onPendingChange).toHaveBeenLastCalledWith(0)
-  expect(onUserTotal).not.toHaveBeenCalled() // no fabricated total — wait for the next authoritative response
 
   // a fresh click starts a brand-new batch with a freshly issued challenge —
   // the discarded clicks are never folded back in
@@ -350,7 +338,6 @@ it("discards the batch entirely on a 502 outcome-unknown response, never re-queu
     { challenge: "chal-2", nonce: "42", clickCount: 1 },
     "tok"
   )
-  expect(onUserTotal).toHaveBeenCalledWith(99) // reconciled from the next authoritative total
 })
 
 it("keeps retrying after a token gap instead of stranding pending clicks", async () => {
@@ -379,7 +366,7 @@ it("reports a stall when clicks sit pending for 10s, and clears it when one land
     submitClicks: vi.fn(
       async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => {
         if (down) throw new Error("network down")
-        return { userTotalClicks: "1", unlocked: [], nextChallenge: challenge() }
+        return { nextChallenge: challenge() }
       }
     ),
   }
@@ -435,20 +422,4 @@ it("clears the stall hint immediately when a 502 discards the last pending click
   expect(b.pendingCount).toBe(0)
   expect(onStallChange).toHaveBeenLastCalledWith(false)
   b.dispose()
-})
-
-it("surfaces all-time and weekly ranks from the submit response", async () => {
-  const { solver, api } = makeDeps()
-  api.submitClicks = vi.fn(async () => ({
-    userTotalClicks: "10",
-    unlocked: [],
-    nextChallenge: challenge(),
-    allTimeRank: 3,
-    weeklyRank: 1,
-  }))
-  const onRank = vi.fn()
-  const b = new Batcher({ api, solver, getToken: () => "tok", onRank })
-  b.click()
-  await vi.advanceTimersByTimeAsync(10)
-  expect(onRank).toHaveBeenLastCalledWith(3, 1)
 })
