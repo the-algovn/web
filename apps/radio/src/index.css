@@ -1,0 +1,12 @@
+@import "@algovn/ui/globals.css";
+@source "../../../packages/ui/src";
+
+:root {
+  --radio-amber: #ffb454;
+  --radio-amber-soft: #ffcf8a;
+  --radio-air: #ff5a4d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="radio-"] { animation: none !important; }
+}

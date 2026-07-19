@@ -1,0 +1,10 @@
+// Build-time configuration. Vite inlines import.meta.env at build. Defaults are
+// baked in so a plain `pnpm build` and the Docker image work with no .env file.
+// useMock stays true even in prod until the real algovn.radio.v1 gateway ships.
+export const env = {
+  useMock: import.meta.env.VITE_USE_MOCK !== "false",
+  streamUrl:
+    import.meta.env.VITE_STREAM_URL ?? "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+  apiBase: import.meta.env.VITE_API_BASE ?? "https://api.algovn.com/radio",
+  eventsUrl: import.meta.env.VITE_EVENTS_URL ?? "https://api.algovn.com/events",
+}
