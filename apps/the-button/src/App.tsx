@@ -6,12 +6,12 @@ import { ClickButton } from "./components/click-button"
 import { ComboMeter } from "./components/combo-meter"
 import { Counter } from "./components/counter"
 import { CpsMeter } from "./components/cps-meter"
+import { GoalsPanel } from "./components/goals-panel"
 import { Hud } from "./components/hud"
 import { Leaderboard } from "./components/leaderboard"
 import { MilestoneBanner } from "./components/milestone-banner"
 import { ParticleLayer, useParticles } from "./components/particles"
 import { ProgressBar } from "./components/progress-bar"
-import { Quests } from "./components/quests"
 import { SessionStats } from "./components/session-stats"
 import { TabBar, type Tab } from "./components/tab-bar"
 import { TargetHeadline } from "./components/target-headline"
@@ -108,8 +108,7 @@ function Home() {
   const [eta, setEta] = useState<Eta>({ seconds: null, text: "calculating…" })
   const [board, setBoard] = useState<{ allTime: Row[]; thisWeek: Row[] }>({ allTime: [], thisWeek: [] })
   const [myRank, setMyRank] = useState<{ allTime?: number; weekly?: number }>({})
-  // Held for the GOALS tab (Task 5 renders it); not read here.
-  const [, setQuests] = useState<QuestProgress[]>([])
+  const [quests, setQuests] = useState<QuestProgress[]>([])
   const [streak, setStreak] = useState<{ current: number; best: number; lastDay: string }>({
     current: 0,
     best: 0,
@@ -423,7 +422,7 @@ function Home() {
                 <ActivityFeed items={feed.items} />
               </div>
               <div data-group="goals">
-                <Quests />
+                <GoalsPanel quests={quests} streak={streak} />
               </div>
               <div data-group="goals">
                 <AchievementsGrid entries={catalog} />
