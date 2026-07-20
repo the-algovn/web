@@ -395,9 +395,6 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
   }
   .tb-col-left,
   .tb-col-right {
@@ -410,49 +407,8 @@
     display: none;
   }
 
-  .tb-grid [data-group] {
-    display: none;
-  }
-  .tb-app[data-tab="play"] [data-group="play"],
-  .tb-app[data-tab="ranks"] [data-group="ranks"],
-  .tb-app[data-tab="goals"] [data-group="goals"],
-  .tb-app[data-tab="stats"] [data-group="stats"] {
-    display: flex;
-  }
-
   .tb-meters {
     grid-template-columns: 1fr 1fr;
-  }
-
-  .tb-tabbar {
-    display: flex;
-    flex-shrink: 0;
-    border-top: 1px solid var(--border);
-    background: var(--card);
-  }
-  .tb-tab {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    padding: 10px 4px 12px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-family: var(--font-geist-mono);
-    color: var(--muted-foreground);
-    font-size: 10px;
-    letter-spacing: 0.06em;
-  }
-  .tb-tab-ic {
-    font-size: 17px;
-  }
-  .tb-tab-on {
-    color: var(--primary);
-  }
-  .tb-tab-on .tb-tab-ic {
-    filter: drop-shadow(0 0 6px var(--primary));
   }
 }
 
@@ -465,19 +421,5 @@
     animation: none !important;
     /* biome-ignore lint/complexity/noImportantStyles: reduced-motion kill-switch for transitions set in @layer components and utility classes */
     transition: none !important;
-  }
-}
-
-@media (max-width: 767px) {
-  .tb-main {
-    padding: 0;
-    height: 100dvh;
-    overflow: hidden;
-  }
-  .tb-app {
-    height: 100%;
-  }
-  .tb-main > footer {
-    display: none;
   }
 }

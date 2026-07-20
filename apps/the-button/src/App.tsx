@@ -12,8 +12,6 @@ import { Leaderboard } from "./components/leaderboard"
 import { MilestoneBanner } from "./components/milestone-banner"
 import { ParticleLayer, useParticles } from "./components/particles"
 import { ProgressBar } from "./components/progress-bar"
-import { SessionStats } from "./components/session-stats"
-import { type Tab, TabBar } from "./components/tab-bar"
 import { TargetHeadline } from "./components/target-headline"
 import { WhyGrid } from "./components/why-grid"
 import { XpBar } from "./components/xp-bar"
@@ -149,7 +147,6 @@ function Home() {
   })
 
   // Cosmetic gamification (never affects submitted clicks).
-  const [tab, setTab] = useState<Tab>("play")
   const [combo, setCombo] = useState<ComboState>({
     heat: 0,
     multiplier: 1,
@@ -404,7 +401,7 @@ function Home() {
     <>
       <div className="tb-grid-bg" aria-hidden />
       <main className="tb-main relative z-10 mx-auto w-full max-w-6xl p-4 sm:p-6">
-        <div className="tb-app" data-tab={tab}>
+        <div className="tb-app">
           <Hud
             mode={mode}
             level={lvl.level}
@@ -413,13 +410,10 @@ function Home() {
           />
 
           <div className="tb-grid">
-            {/* LEFT column: the count + play, then session stats and the goal */}
+            {/* LEFT column — the personal story: play, then the goal, then what you
+                can earn. */}
             <div className="tb-col-left">
-              <section
-                className="tb-area-hero"
-                data-group="play"
-                aria-label="the button"
-              >
+              <section className="tb-area-hero" aria-label="the button">
                 <MilestoneBanner milestone={milestone} />
                 <Counter
                   total={display}
@@ -481,46 +475,31 @@ function Home() {
                   xpForNext={lvl.xpForNext}
                 />
               </section>
-              <div data-group="stats">
-                <SessionStats total={total} users={users} />
-              </div>
-              <div data-group="stats">
-                <TargetHeadline total={total} users={users} eta={eta.text} />
-              </div>
+              <TargetHeadline total={total} users={users} eta={eta.text} />
+              <GoalsPanel
+                quests={quests}
+                streak={streak}
+                signedIn={Boolean(token)}
+              />
+              <AchievementsGrid entries={catalog} />
             </div>
 
-            {/* RIGHT column: leaderboard + activity, then quests + achievements */}
+            {/* RIGHT rail — community proof. */}
             <div className="tb-col-right">
-              <div data-group="ranks">
-                <Leaderboard
-                  allTime={board.allTime}
-                  thisWeek={board.thisWeek}
-                  myRank={myRank}
-                  myName={user?.profile?.name ?? null}
-                />
-              </div>
-              <div data-group="ranks">
-                <ActivityFeed items={feed.items} />
-              </div>
-              <div data-group="goals">
-                <GoalsPanel
-                  quests={quests}
-                  streak={streak}
-                  signedIn={Boolean(token)}
-                />
-              </div>
-              <div data-group="goals">
-                <AchievementsGrid entries={catalog} />
-              </div>
+              <Leaderboard
+                allTime={board.allTime}
+                thisWeek={board.thisWeek}
+                myRank={myRank}
+                myName={user?.profile?.name ?? null}
+              />
+              <ActivityFeed items={feed.items} />
             </div>
 
-            {/* WHY — full-width row across both columns */}
-            <div className="tb-why" data-group="stats">
+            {/* WHY — full-width flavor row across both columns. */}
+            <div className="tb-why">
               <WhyGrid />
             </div>
           </div>
-
-          <TabBar active={tab} onChange={setTab} />
         </div>
 
         <footer className="text-muted-foreground mt-6 flex items-center justify-center gap-3 font-mono text-xs">
