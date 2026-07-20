@@ -7,7 +7,7 @@
     "dev": "vite --strictPort",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "biome lint --error-on-warnings .",
     "format": "biome check --write --linter-enabled=false .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
@@ -33,7 +33,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.3",
-    "eslint": "^10.7.0",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3",

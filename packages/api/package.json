@@ -7,13 +7,12 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "lint": "eslint . --max-warnings 0",
+    "lint": "biome lint --error-on-warnings .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
     "@algovn/config": "workspace:*",
-    "eslint": "^10.7.0",
     "jsdom": "^29.1.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"

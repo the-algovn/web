@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "biome lint --error-on-warnings .",
     "format": "biome check --write --linter-enabled=false .",
     "typecheck": "next typegen && tsc --noEmit"
   },
@@ -29,8 +29,6 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^10.7.0",
-    "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
     "typescript": "^6.0.3"
   }
