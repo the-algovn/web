@@ -11,7 +11,7 @@ export function createNowPlayingSync(seed?: NowPlaying): NowPlayingSync {
   const push = (np: NowPlaying) => {
     const at = new Date(np.startedAt).getTime()
     if (Number.isNaN(at)) return
-    if (buf.some(e => e.at === at)) return
+    if (buf.some((e) => e.at === at)) return
     buf.push({ at, np })
     buf.sort((a, b) => a.at - b.at)
   }
@@ -27,7 +27,7 @@ export function createNowPlayingSync(seed?: NowPlaying): NowPlayingSync {
       }
       if (pick) {
         // prune items strictly before the pick to bound memory
-        while (buf.length && buf[0]!.at < pick.at) buf.shift()
+        while (buf[0] && buf[0].at < pick.at) buf.shift()
       }
       return pick?.np ?? null
     },

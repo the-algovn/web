@@ -1,4 +1,10 @@
-export type PlayerState = "idle" | "connecting" | "playing" | "paused" | "stalled" | "error"
+export type PlayerState =
+  | "idle"
+  | "connecting"
+  | "playing"
+  | "paused"
+  | "stalled"
+  | "error"
 
 export interface RadioPlayer {
   play(): Promise<void>
@@ -15,12 +21,23 @@ function stateHub(initial: PlayerState) {
   const subs = new Set<(s: PlayerState) => void>()
   return {
     get: () => state,
-    set: (s: PlayerState) => { state = s; subs.forEach(cb => cb(s)) },
-    on: (cb: (s: PlayerState) => void) => { subs.add(cb); return () => subs.delete(cb) },
+    set: (s: PlayerState) => {
+      state = s
+      subs.forEach((cb) => {
+        cb(s)
+      })
+    },
+    on: (cb: (s: PlayerState) => void) => {
+      subs.add(cb)
+      return () => subs.delete(cb)
+    },
   }
 }
 
-export function createFakePlayer(): RadioPlayer & { emit(s: PlayerState): void; setPdt(ms: number | null): void } {
+export function createFakePlayer(): RadioPlayer & {
+  emit(s: PlayerState): void
+  setPdt(ms: number | null): void
+} {
   const hub = stateHub("idle")
   let pdt: number | null = null
   return {
@@ -32,11 +49,16 @@ export function createFakePlayer(): RadioPlayer & { emit(s: PlayerState): void; 
     currentProgramDateTime: () => pdt,
     destroy: () => {},
     emit: hub.set,
-    setPdt: ms => { pdt = ms },
+    setPdt: (ms) => {
+      pdt = ms
+    },
   }
 }
 
-export function createHlsPlayer(audio: HTMLAudioElement, opts: { streamUrl: string }): RadioPlayer {
+export function createHlsPlayer(
+  audio: HTMLAudioElement,
+  opts: { streamUrl: string },
+): RadioPlayer {
   const hub = stateHub("idle")
   let hls: import("hls.js").default | null = null
   let attached = false
@@ -53,7 +75,10 @@ export function createHlsPlayer(audio: HTMLAudioElement, opts: { streamUrl: stri
       return
     }
     const Hls = (await import("hls.js")).default
-    if (!Hls.isSupported()) { audio.src = opts.streamUrl; return }
+    if (!Hls.isSupported()) {
+      audio.src = opts.streamUrl
+      return
+    }
     hls = new Hls({ enableWorker: true, lowLatencyMode: false })
     hls.on(Hls.Events.ERROR, (_e, data) => {
       if (data.fatal) hub.set("error")
@@ -63,9 +88,17 @@ export function createHlsPlayer(audio: HTMLAudioElement, opts: { streamUrl: stri
   }
 
   return {
-    async play() { hub.set("connecting"); await attach(); await audio.play() },
-    pause() { audio.pause() },
-    setVolume(v) { audio.volume = Math.max(0, Math.min(1, v)) },
+    async play() {
+      hub.set("connecting")
+      await attach()
+      await audio.play()
+    },
+    pause() {
+      audio.pause()
+    },
+    setVolume(v) {
+      audio.volume = Math.max(0, Math.min(1, v))
+    },
     getState: hub.get,
     onState: hub.on,
     currentProgramDateTime() {
@@ -73,13 +106,18 @@ export function createHlsPlayer(audio: HTMLAudioElement, opts: { streamUrl: stri
       const level = hls?.currentLevel ?? -1
       const details = level >= 0 ? hls?.levels?.[level]?.details : undefined
       const frag = details?.fragments?.find(
-        f => audio.currentTime >= f.start && audio.currentTime < f.start + f.duration,
+        (f) =>
+          audio.currentTime >= f.start &&
+          audio.currentTime < f.start + f.duration,
       )
       if (frag && typeof frag.programDateTime === "number") {
         return frag.programDateTime + (audio.currentTime - frag.start) * 1000
       }
       return null
     },
-    destroy() { hls?.destroy(); hls = null },
+    destroy() {
+      hls?.destroy()
+      hls = null
+    },
   }
 }

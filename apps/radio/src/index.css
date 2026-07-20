@@ -8,8 +8,21 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [class*="radio-"] { animation: none !important; }
+  [class*="radio-"] {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion kill switch must beat any radio-* animation rule regardless of specificity or source order */
+    animation: none !important;
+  }
 }
 
-@keyframes radio-pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.55 } }
-.radio-pulse { animation: radio-pulse 2s ease-in-out infinite }
+@keyframes radio-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.radio-pulse {
+  animation: radio-pulse 2s ease-in-out infinite;
+}
