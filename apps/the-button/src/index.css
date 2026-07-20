@@ -267,7 +267,7 @@
     gap: 14px;
     padding-top: 14px;
     grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-    grid-template-areas: "left right" "why why";
+    grid-template-areas: "why why" "left right";
     align-items: start;
   }
   .tb-col-left {
@@ -284,6 +284,7 @@
   }
   .tb-why {
     grid-area: why;
+    padding-bottom: 14px;
   }
   .tb-area-hero {
     display: flex;

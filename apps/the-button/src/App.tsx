@@ -419,6 +419,11 @@ function Home() {
           />
 
           <div className="tb-grid">
+            {/* WHY — full-width flavor row across both columns. */}
+            <div className="tb-why">
+              <WhyGrid />
+            </div>
+
             {/* LEFT column — the personal story: play, then the goal, then what you
                 can earn. */}
             <div className="tb-col-left">
@@ -502,11 +507,6 @@ function Home() {
                 myName={user?.profile?.name ?? null}
               />
               <ActivityFeed items={feed.items} />
-            </div>
-
-            {/* WHY — full-width flavor row across both columns. */}
-            <div className="tb-why">
-              <WhyGrid />
             </div>
           </div>
         </div>
