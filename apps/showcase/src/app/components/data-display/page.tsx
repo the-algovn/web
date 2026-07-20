@@ -1,24 +1,74 @@
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@algovn/ui/accordion"
 import { AspectRatio } from "@algovn/ui/aspect-ratio"
 import { Avatar, AvatarFallback, AvatarImage } from "@algovn/ui/avatar"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@algovn/ui/accordion"
 import { Badge } from "@algovn/ui/badge"
 import { Button } from "@algovn/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@algovn/ui/card"
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@algovn/ui/carousel"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@algovn/ui/collapsible"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@algovn/ui/card"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@algovn/ui/carousel"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@algovn/ui/collapsible"
 import { PageHeader } from "@algovn/ui/page-header"
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@algovn/ui/resizable"
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@algovn/ui/resizable"
 import { ScrollArea } from "@algovn/ui/scroll-area"
 import { Separator } from "@algovn/ui/separator"
 import { Skeleton } from "@algovn/ui/skeleton"
-import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@algovn/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@algovn/ui/table"
 import { Demo } from "@/components/demo"
 
 const invoices = [
-  { invoice: "INV001", status: "Paid", method: "Credit Card", amount: "$250.00" },
+  {
+    invoice: "INV001",
+    status: "Paid",
+    method: "Credit Card",
+    amount: "$250.00",
+  },
   { invoice: "INV002", status: "Pending", method: "PayPal", amount: "$150.00" },
-  { invoice: "INV003", status: "Unpaid", method: "Bank Transfer", amount: "$350.00" },
-  { invoice: "INV004", status: "Paid", method: "Credit Card", amount: "$450.00" },
+  {
+    invoice: "INV003",
+    status: "Unpaid",
+    method: "Bank Transfer",
+    amount: "$350.00",
+  },
+  {
+    invoice: "INV004",
+    status: "Paid",
+    method: "Credit Card",
+    amount: "$450.00",
+  },
 ]
 
 const tags = Array.from({ length: 20 }, (_, i) => `Tag ${i + 1}`)
@@ -26,15 +76,22 @@ const tags = Array.from({ length: 20 }, (_, i) => `Tag ${i + 1}`)
 export default function DataDisplayPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <PageHeader title="Data Display" description="Cards, tables and content containers." />
+      <PageHeader
+        title="Data Display"
+        description="Cards, tables and content containers."
+      />
       <Demo title="Card">
         <Card className="w-full max-w-sm">
           <CardHeader>
             <CardTitle>Create project</CardTitle>
-            <CardDescription>Deploy your new project in one click.</CardDescription>
+            <CardDescription>
+              Deploy your new project in one click.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-sm">Choose a template to get started quickly.</p>
+            <p className="text-muted-foreground text-sm">
+              Choose a template to get started quickly.
+            </p>
           </CardContent>
           <CardFooter className="gap-2">
             <Button variant="outline">Cancel</Button>
@@ -90,22 +147,30 @@ export default function DataDisplayPage() {
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="item-1">
             <AccordionTrigger>Is it accessible?</AccordionTrigger>
-            <AccordionContent>Yes. It adheres to the WAI-ARIA design pattern.</AccordionContent>
+            <AccordionContent>
+              Yes. It adheres to the WAI-ARIA design pattern.
+            </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-2">
             <AccordionTrigger>Is it styled?</AccordionTrigger>
-            <AccordionContent>Yes. It comes with default styles that match the theme.</AccordionContent>
+            <AccordionContent>
+              Yes. It comes with default styles that match the theme.
+            </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-3">
             <AccordionTrigger>Is it animated?</AccordionTrigger>
-            <AccordionContent>Yes. It&apos;s animated by default, but you can disable it.</AccordionContent>
+            <AccordionContent>
+              Yes. It&apos;s animated by default, but you can disable it.
+            </AccordionContent>
           </AccordionItem>
         </Accordion>
       </Demo>
       <Demo title="Collapsible">
         <Collapsible className="w-full max-w-sm space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">3 people starred this repository</p>
+            <p className="text-sm font-semibold">
+              3 people starred this repository
+            </p>
             <CollapsibleTrigger asChild>
               <Button variant="outline" size="sm">
                 Toggle
@@ -156,11 +221,11 @@ export default function DataDisplayPage() {
       <Demo title="Carousel">
         <Carousel className="w-full max-w-xs">
           <CarouselContent>
-            {Array.from({ length: 5 }, (_, i) => (
-              <CarouselItem key={i}>
+            {Array.from({ length: 5 }, (_, i) => i + 1).map((slide) => (
+              <CarouselItem key={slide}>
                 <Card>
                   <CardContent className="flex aspect-square items-center justify-center p-6">
-                    <span className="text-4xl font-semibold">{i + 1}</span>
+                    <span className="text-4xl font-semibold">{slide}</span>
                   </CardContent>
                 </Card>
               </CarouselItem>
@@ -180,7 +245,10 @@ export default function DataDisplayPage() {
         </div>
       </Demo>
       <Demo title="Resizable">
-        <ResizablePanelGroup orientation="horizontal" className="h-[200px] w-full rounded-lg border">
+        <ResizablePanelGroup
+          orientation="horizontal"
+          className="h-[200px] w-full rounded-lg border"
+        >
           <ResizablePanel defaultSize={50}>
             <div className="flex h-full items-center justify-center p-6">
               <span className="font-semibold">One</span>
