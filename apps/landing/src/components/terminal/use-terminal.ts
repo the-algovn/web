@@ -1,12 +1,15 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
 import { useTheme } from "next-themes"
-import { runCommand, type CommandCtx, type Session } from "./commands"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { type CommandCtx, runCommand, type Session } from "./commands"
 import { complete } from "./completion"
 import { createFilesystem } from "./filesystem"
 
-export type TermLine = { kind: "input" | "output"; text: string }
+export type TermLine = { id: number; kind: "input" | "output"; text: string }
+
+let lineId = 0
+const nextLineId = () => ++lineId
 
 const MAX_BUFFER = 200
 const STAGGER_MS = 70
@@ -56,7 +59,8 @@ export function useTerminal() {
 
   const submit = useCallback(
     async (raw: string) => {
-      setLines((prev) => [...prev, { kind: "input", text: raw }])
+      const inputLine: TermLine = { id: nextLineId(), kind: "input", text: raw }
+      setLines((prev) => [...prev, inputLine])
       if (raw.trim()) historyRef.current.push(raw)
       histIdxRef.current = historyRef.current.length
       setBuffer("")
@@ -64,7 +68,8 @@ export function useTerminal() {
       const ctx: CommandCtx = {
         fs: fsRef.current,
         session: sessionRef.current,
-        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)")
+          .matches,
         fetchText: async (url) => {
           const res = await fetch(url)
           if (!res.ok) throw new Error(`${res.status}`)
@@ -72,7 +77,11 @@ export function useTerminal() {
         },
         setTheme: (target) => {
           const next =
-            target === "toggle" ? (themeRef.current === "dark" ? "light" : "dark") : target
+            target === "toggle"
+              ? themeRef.current === "dark"
+                ? "light"
+                : "dark"
+              : target
           setTheme(next)
           return next
         },
@@ -99,7 +108,11 @@ export function useTerminal() {
           reset()
           return
         }
-        const out: TermLine[] = result.lines.map((text) => ({ kind: "output", text }))
+        const out: TermLine[] = result.lines.map((text) => ({
+          id: nextLineId(),
+          kind: "output",
+          text,
+        }))
         if (result.stagger) {
           for (const line of out) {
             if (gen !== genRef.current) return
@@ -132,12 +145,24 @@ export function useTerminal() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return
-      if (t && t.closest("a, button, [role='button']")) return
+      if (
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.isContentEditable)
+      )
+        return
+      if (t?.closest("a, button, [role='button']")) return
 
       if (matrixRef.current) {
         if (e.ctrlKey || e.metaKey || e.altKey) return
-        if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") return
+        if (
+          e.key === "Shift" ||
+          e.key === "Control" ||
+          e.key === "Alt" ||
+          e.key === "Meta"
+        )
+          return
         e.preventDefault()
         setMatrixOn(false)
         return
@@ -148,7 +173,12 @@ export function useTerminal() {
         if (window.getSelection()?.toString()) return
         if (!activeRef.current) return
         e.preventDefault()
-        setLines((prev) => [...prev, { kind: "input", text: `${bufferRef.current}^C` }])
+        const line: TermLine = {
+          id: nextLineId(),
+          kind: "input",
+          text: `${bufferRef.current}^C`,
+        }
+        setLines((prev) => [...prev, line])
         setBuffer("")
         return
       }
@@ -219,7 +249,12 @@ export function useTerminal() {
         if (window.getSelection()?.toString()) return
         if (!activeRef.current) return
         e.preventDefault()
-        setLines((prev) => [...prev, { kind: "input", text: `${bufferRef.current}^C` }])
+        const line: TermLine = {
+          id: nextLineId(),
+          kind: "input",
+          text: `${bufferRef.current}^C`,
+        }
+        setLines((prev) => [...prev, line])
         setBuffer("")
         return
       }
@@ -248,8 +283,20 @@ export function useTerminal() {
     },
   }
 
-  const focusCursor = useCallback(() => inputRef.current?.focus({ preventScroll: true }), [])
+  const focusCursor = useCallback(
+    () => inputRef.current?.focus({ preventScroll: true }),
+    [],
+  )
   const stopMatrix = useCallback(() => setMatrixOn(false), [])
 
-  return { active, lines, buffer, busy, matrixOn, focusCursor, stopMatrix, hiddenInputProps }
+  return {
+    active,
+    lines,
+    buffer,
+    busy,
+    matrixOn,
+    focusCursor,
+    stopMatrix,
+    hiddenInputProps,
+  }
 }
