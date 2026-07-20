@@ -1,11 +1,14 @@
-import { render, screen, act } from "@testing-library/react"
+import { act, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import App from "../App"
 import * as api from "../lib/api"
 import type { UserFrame } from "../lib/playerStream"
 
 vi.mock("../lib/use-auth", () => ({
-  useAuth: () => ({ user: { profile: { sub: "u1", name: "You" } }, token: "tok" }),
+  useAuth: () => ({
+    user: { profile: { sub: "u1", name: "You" } },
+    token: "tok",
+  }),
 }))
 
 // This file only cares about the leaderboard SSE channel; the per-user
@@ -13,9 +16,12 @@ vi.mock("../lib/use-auth", () => ({
 vi.mock("../lib/playerStream", () => ({
   // A regular function, not an arrow: `new PlayerStream(...)` in App.tsx
   // requires the mock implementation to be constructible.
-  PlayerStream: vi.fn().mockImplementation(function (_opts: { onFrame: (f: UserFrame) => void }) {
-    return { start: vi.fn(), stop: vi.fn() }
-  }),
+  PlayerStream: vi
+    .fn()
+    // biome-ignore lint/complexity/useArrowFunction: vitest 4 only makes `new PlayerStream(...)` constructible when the implementation is a `function` or class
+    .mockImplementation(function (_opts: { onFrame: (f: UserFrame) => void }) {
+      return { start: vi.fn(), stop: vi.fn() }
+    }),
 }))
 
 class FakeEventSource {
@@ -35,7 +41,10 @@ beforeEach(() => {
   vi.useRealTimers()
   FakeEventSource.instances = []
   vi.stubGlobal("EventSource", FakeEventSource)
-  vi.spyOn(api, "getLeaderboard").mockResolvedValue({ allTime: [], thisWeek: [] })
+  vi.spyOn(api, "getLeaderboard").mockResolvedValue({
+    allTime: [],
+    thisWeek: [],
+  })
   vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
   vi.spyOn(api, "getPlayerState").mockResolvedValue({})
   vi.spyOn(api, "getCounter").mockResolvedValue({ total: "0", totalUsers: "0" })
@@ -48,7 +57,9 @@ afterEach(() => {
 
 it("renders a leaderboard row from a leaderboard SSE frame", async () => {
   render(<App />)
-  const lb = FakeEventSource.instances.find((e) => e.url.includes("leaderboard"))!
+  const lb = FakeEventSource.instances.find((e) =>
+    e.url.includes("leaderboard"),
+  )!
   expect(lb).toBeTruthy()
   act(() => {
     lb.onmessage?.({

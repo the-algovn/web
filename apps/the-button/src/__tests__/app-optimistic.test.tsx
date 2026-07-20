@@ -27,10 +27,13 @@ const playerStreamState = vi.hoisted(() => ({
 vi.mock("../lib/playerStream", () => ({
   // A regular function, not an arrow: `new PlayerStream(...)` in App.tsx
   // requires the mock implementation to be constructible.
-  PlayerStream: vi.fn().mockImplementation(function (opts: { onFrame: (f: UserFrame) => void }) {
-    playerStreamState.instances.push(opts)
-    return { start: vi.fn(), stop: vi.fn() }
-  }),
+  PlayerStream: vi
+    .fn()
+    // biome-ignore lint/complexity/useArrowFunction: vitest 4 only makes `new PlayerStream(...)` constructible when the implementation is a `function` or class
+    .mockImplementation(function (opts: { onFrame: (f: UserFrame) => void }) {
+      playerStreamState.instances.push(opts)
+      return { start: vi.fn(), stop: vi.fn() }
+    }),
 }))
 
 class FakeEventSource {
@@ -60,7 +63,8 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-const counterText = () => screen.getByTestId("counter").textContent?.replace(/\s/g, "") ?? ""
+const counterText = () =>
+  screen.getByTestId("counter").textContent?.replace(/\s/g, "") ?? ""
 const bodyText = () => document.body.textContent?.replace(/\s+/g, " ") ?? ""
 
 it("credits a click to the global counter before any submit lands", async () => {
@@ -122,7 +126,9 @@ it("seeds your clicks from the player-state snapshot before any submit lands", a
   vi.spyOn(api, "getPlayerState").mockResolvedValue({ totalClicks: "500" })
 
   render(<App />)
-  await waitFor(() => expect(screen.getByTestId("your-clicks")).toHaveTextContent("500"))
+  await waitFor(() =>
+    expect(screen.getByTestId("your-clicks")).toHaveTextContent("500"),
+  )
 })
 
 it("shows zero, not an em dash, for a signed-in user who has never clicked", async () => {
@@ -134,7 +140,9 @@ it("shows zero, not an em dash, for a signed-in user who has never clicked", asy
   vi.spyOn(api, "getPlayerState").mockResolvedValue({})
 
   render(<App />)
-  await waitFor(() => expect(screen.getByTestId("your-clicks")).toHaveTextContent("0"))
+  await waitFor(() =>
+    expect(screen.getByTestId("your-clicks")).toHaveTextContent("0"),
+  )
 })
 
 it("does not re-seed a stale total when the token is renewed", async () => {
@@ -162,7 +170,9 @@ it("does not re-seed a stale total when the token is renewed", async () => {
 
 it("submits exactly one click per press regardless of combo (integrity)", async () => {
   vi.useRealTimers()
-  const issue = vi.spyOn(api, "issueChallenge").mockReturnValue(new Promise(() => {}))
+  const issue = vi
+    .spyOn(api, "issueChallenge")
+    .mockReturnValue(new Promise(() => {}))
   vi.spyOn(api, "getPlayerState").mockResolvedValue({})
   // Seeds the global total to 0 via the one-shot snapshot (no SSE frame in
   // this test), so the optimistic display reflects pending clicks directly.
@@ -207,7 +217,9 @@ it("updates HUD total, rank, streak and catalog unlocks from a per-user SSE fram
       total: 777,
       allTimeRank: 5,
       weeklyRank: 12,
-      unlocked: [{ id: "ten", title: "Double Digits", description: "Ten clicks." }],
+      unlocked: [
+        { id: "ten", title: "Double Digits", description: "Ten clicks." },
+      ],
       questProgress: [],
       questsDone: [],
       streak: { current: 3, best: 9, lastDay: "2026-07-18" },
@@ -235,7 +247,13 @@ it("adds a server-only achievement id via SSE unlock even when it isn't in the s
       total: 9001,
       allTimeRank: 1,
       weeklyRank: 1,
-      unlocked: [{ id: "over9000", title: "It's Over 9000!", description: "Your total crossed 9,000." }],
+      unlocked: [
+        {
+          id: "over9000",
+          title: "It's Over 9000!",
+          description: "Your total crossed 9,000.",
+        },
+      ],
       questProgress: [],
       questsDone: [],
       streak: { current: 1, best: 1, lastDay: "2026-07-19" },

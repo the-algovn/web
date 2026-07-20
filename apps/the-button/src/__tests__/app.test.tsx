@@ -22,10 +22,13 @@ const playerStreamState = vi.hoisted(() => ({
 vi.mock("../lib/playerStream", () => ({
   // A regular function, not an arrow: `new PlayerStream(...)` in App.tsx
   // requires the mock implementation to be constructible.
-  PlayerStream: vi.fn().mockImplementation(function (opts: { onFrame: (f: UserFrame) => void }) {
-    playerStreamState.instances.push(opts)
-    return { start: vi.fn(), stop: vi.fn() }
-  }),
+  PlayerStream: vi
+    .fn()
+    // biome-ignore lint/complexity/useArrowFunction: vitest 4 only makes `new PlayerStream(...)` constructible when the implementation is a `function` or class
+    .mockImplementation(function (opts: { onFrame: (f: UserFrame) => void }) {
+      playerStreamState.instances.push(opts)
+      return { start: vi.fn(), stop: vi.fn() }
+    }),
 }))
 
 beforeEach(() => {
@@ -35,9 +38,11 @@ beforeEach(() => {
 
 it("renders the page heading and the sign-in call to action", async () => {
   render(<App />)
-  expect(screen.getByRole("heading", { name: "THE BUTTON." })).toBeInTheDocument()
   expect(
-    await screen.findByRole("button", { name: /sign in to contribute/i })
+    screen.getByRole("heading", { name: "THE BUTTON." }),
+  ).toBeInTheDocument()
+  expect(
+    await screen.findByRole("button", { name: /sign in to contribute/i }),
   ).toBeInTheDocument()
 })
 
@@ -83,7 +88,9 @@ it("renders the milestone banner when one arrives via the SSE stream", async () 
       }),
     } as MessageEvent)
   })
-  expect(screen.getByRole("status")).toHaveTextContent("1,000 clicks — A Thousand Tiny Rebellions")
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "1,000 clicks — A Thousand Tiny Rebellions",
+  )
 })
 
 it("does not replace a higher milestone from the player-state snapshot with a lower SSE frame", async () => {
@@ -107,7 +114,9 @@ it("does not replace a higher milestone from the player-state snapshot with a lo
   })
   // Wait for the higher milestone from the player-state snapshot to load
   await waitFor(() => {
-    expect(screen.getByRole("status")).toHaveTextContent("5,000 clicks — Five Thousand Strong")
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "5,000 clicks — Five Thousand Strong",
+    )
   })
 })
 
@@ -130,10 +139,14 @@ it("replaces a lower milestone from SSE with a higher one from the player-state 
       }),
     } as MessageEvent)
   })
-  expect(screen.getByRole("status")).toHaveTextContent("1,000 clicks — A Thousand Tiny Rebellions")
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "1,000 clicks — A Thousand Tiny Rebellions",
+  )
   // Wait for the higher milestone from the player-state snapshot to replace it
   await waitFor(() => {
-    expect(screen.getByRole("status")).toHaveTextContent("5,000 clicks — Five Thousand Strong")
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "5,000 clicks — Five Thousand Strong",
+    )
   })
 })
 
@@ -144,7 +157,11 @@ it("renders the contributor count from an SSE counter frame", async () => {
   const es = FakeEventSource.instances[0]!
   act(() => {
     es.onmessage?.({
-      data: JSON.stringify({ type: "counter", total: 1_204_882, users: 84_201 }),
+      data: JSON.stringify({
+        type: "counter",
+        total: 1_204_882,
+        users: 84_201,
+      }),
     } as MessageEvent)
   })
   expect(await screen.findByText("84,201")).toBeInTheDocument()

@@ -16,10 +16,13 @@ const playerStreamState = vi.hoisted(() => ({
   instances: [] as { onFrame: (f: UserFrame) => void }[],
 }))
 vi.mock("../lib/playerStream", () => ({
-  PlayerStream: vi.fn().mockImplementation(function (opts: { onFrame: (f: UserFrame) => void }) {
-    playerStreamState.instances.push(opts)
-    return { start: vi.fn(), stop: vi.fn() }
-  }),
+  PlayerStream: vi
+    .fn()
+    // biome-ignore lint/complexity/useArrowFunction: vitest 4 only makes `new PlayerStream(...)` constructible when the implementation is a `function` or class
+    .mockImplementation(function (opts: { onFrame: (f: UserFrame) => void }) {
+      playerStreamState.instances.push(opts)
+      return { start: vi.fn(), stop: vi.fn() }
+    }),
 }))
 
 // Captures the options App hands the real Batcher so a test can drive
@@ -30,10 +33,15 @@ const batcherState = vi.hoisted(() => ({
   instances: [] as { onPendingChange?: (n: number) => void }[],
 }))
 vi.mock("../lib/batcher", () => ({
-  Batcher: vi.fn().mockImplementation(function (opts: { onPendingChange?: (n: number) => void }) {
-    batcherState.instances.push(opts)
-    return { click: vi.fn(), dispose: vi.fn(), pendingCount: 0 }
-  }),
+  Batcher: vi
+    .fn()
+    // biome-ignore lint/complexity/useArrowFunction: vitest 4 only makes `new Batcher(...)` constructible when the implementation is a `function` or class
+    .mockImplementation(function (opts: {
+      onPendingChange?: (n: number) => void
+    }) {
+      batcherState.instances.push(opts)
+      return { click: vi.fn(), dispose: vi.fn(), pendingCount: 0 }
+    }),
 }))
 
 class FakeEventSource {
@@ -64,7 +72,9 @@ it("never lets the personal counter dip when a batch acks before the per-user SS
   vi.spyOn(api, "getPlayerState").mockResolvedValue({ totalClicks: "1000" })
 
   render(<App />)
-  await waitFor(() => expect(screen.getByTestId("your-clicks")).toHaveTextContent("1,000"))
+  await waitFor(() =>
+    expect(screen.getByTestId("your-clicks")).toHaveTextContent("1,000"),
+  )
   const { onPendingChange } = batcherState.instances[0]!
 
   // 50 clicks accumulate as pending on top of the seeded total.
