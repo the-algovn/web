@@ -5,6 +5,7 @@ import {
   House,
   ListMusic,
   MessageSquareQuote,
+  RadioTower,
   SlidersHorizontal,
 } from "lucide-react"
 import { BrainPlayground } from "./brain-playground"
@@ -13,6 +14,7 @@ import { Home } from "./home"
 import { Ingest } from "./ingest"
 import { Library } from "./library"
 import { MiniRender } from "./mini-render"
+import { Radio } from "./radio"
 import type { ConsoleModule } from "./types"
 import { VoiceAudition } from "./voice-audition"
 
@@ -24,6 +26,14 @@ export const registry: ConsoleModule[] = [
     icon: House,
     requiredRole: null,
     component: Home,
+  },
+  {
+    id: "radio",
+    title: "Radio",
+    group: "Radio",
+    icon: RadioTower,
+    requiredRole: "admin",
+    component: Radio,
   },
   {
     id: "voice-audition",
