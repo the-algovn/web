@@ -56,6 +56,7 @@ class FakeEventSource {
 }
 
 beforeEach(() => {
+  localStorage.setItem("tb:intro:v1", "done")
   authState.token = "tok"
   playerStreamState.instances = []
   batcherState.instances = []

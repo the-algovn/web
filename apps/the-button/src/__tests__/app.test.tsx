@@ -1,4 +1,5 @@
 import { act, render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import App from "../App"
 import * as api from "../lib/api"
@@ -32,6 +33,7 @@ vi.mock("../lib/playerStream", () => ({
 }))
 
 beforeEach(() => {
+  localStorage.setItem("tb:intro:v1", "done")
   authState.token = null
   playerStreamState.instances = []
 })
@@ -165,4 +167,28 @@ it("renders the contributor count from an SSE counter frame", async () => {
     } as MessageEvent)
   })
   expect(await screen.findByText("84,201")).toBeInTheDocument()
+})
+
+it("shows the intro slideshow on a first visit and sets the flag on skip", async () => {
+  localStorage.removeItem("tb:intro:v1")
+  render(<App />)
+  expect(screen.getByRole("dialog", { name: "intro" })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: "skip ›" }))
+  expect(
+    screen.queryByRole("dialog", { name: "intro" }),
+  ).not.toBeInTheDocument()
+  expect(localStorage.getItem("tb:intro:v1")).toBe("done")
+})
+
+it("does not show the intro on a revisit", () => {
+  render(<App />)
+  expect(
+    screen.queryByRole("dialog", { name: "intro" }),
+  ).not.toBeInTheDocument()
+})
+
+it("reopens the intro from the footer replay link", async () => {
+  render(<App />)
+  await userEvent.click(screen.getByRole("button", { name: "replay intro" }))
+  expect(screen.getByRole("dialog", { name: "intro" })).toBeInTheDocument()
 })

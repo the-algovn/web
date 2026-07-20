@@ -50,6 +50,7 @@ class FakeEventSource {
 // Fake timers (same convention as counter.test.tsx) make the 600ms rAF tween
 // deterministic instead of racing wall-clock time.
 beforeEach(() => {
+  localStorage.setItem("tb:intro:v1", "done")
   vi.useFakeTimers()
   authState.token = "tok"
   FakeEventSource.instances = []

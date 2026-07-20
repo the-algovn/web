@@ -8,6 +8,7 @@ import { Counter } from "./components/counter"
 import { CpsMeter } from "./components/cps-meter"
 import { GoalsPanel } from "./components/goals-panel"
 import { Hud } from "./components/hud"
+import { IntroSlides } from "./components/intro-slides"
 import { Leaderboard } from "./components/leaderboard"
 import { MilestoneBanner } from "./components/milestone-banner"
 import { ParticleLayer, useParticles } from "./components/particles"
@@ -34,6 +35,7 @@ import { pruneRecent } from "./lib/cps"
 import { mergeDisplayTotal } from "./lib/display-total"
 import { env } from "./lib/env"
 import { createEtaEstimator, type Eta } from "./lib/eta"
+import { introSeen, markIntroSeen } from "./lib/intro-store"
 import { LeaderboardStream, type Row } from "./lib/leaderboardStream"
 import { levelState } from "./lib/level"
 import { LiveCounter, type LiveMode } from "./lib/liveCounter"
@@ -158,6 +160,13 @@ function Home() {
   const [cps, setCps] = useState(0)
   const [cpsHistory, setCpsHistory] = useState<number[]>([])
   const [feed, setFeed] = useState(emptyFeed)
+
+  // First-visit walkthrough. `?bench` runs skip it so measurements are never
+  // disturbed; replay from the footer reopens it without touching the flag.
+  const [introOpen, setIntroOpen] = useState(
+    () =>
+      !introSeen() && !new URLSearchParams(window.location.search).has("bench"),
+  )
 
   const batcherRef = useRef<Batcher | null>(null)
   const etaRef = useRef(createEtaEstimator())
@@ -506,7 +515,28 @@ function Home() {
           <span>made with questionable decisions</span>
           <span className="opacity-30">•</span>
           <span>the button</span>
+          <span className="opacity-30">•</span>
+          <button
+            type="button"
+            onClick={() => setIntroOpen(true)}
+            className="hover:text-primary underline-offset-2 transition-colors hover:underline"
+          >
+            replay intro
+          </button>
         </footer>
+        {introOpen && (
+          <IntroSlides
+            total={display}
+            etaText={eta.text}
+            topNames={board.allTime.slice(0, 3).map((r) => r.name)}
+            questCount={quests.length}
+            achievementCount={catalog.length}
+            onDone={() => {
+              markIntroSeen()
+              setIntroOpen(false)
+            }}
+          />
+        )}
         <ParticleLayer particles={particles} onDone={remove} />
       </main>
     </>

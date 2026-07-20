@@ -38,6 +38,7 @@ class FakeEventSource {
 }
 
 beforeEach(() => {
+  localStorage.setItem("tb:intro:v1", "done")
   vi.useRealTimers()
   FakeEventSource.instances = []
   vi.stubGlobal("EventSource", FakeEventSource)
