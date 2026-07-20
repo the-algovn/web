@@ -40,7 +40,10 @@ import { Demo } from "@/components/demo"
 export default function NavigationPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <PageHeader title="Navigation" description="Tabs, breadcrumbs, pagination and menus." />
+      <PageHeader
+        title="Navigation"
+        description="Tabs, breadcrumbs, pagination and menus."
+      />
       <Demo title="Tabs">
         <Tabs defaultValue="account" className="w-full">
           <TabsList>
@@ -48,9 +51,13 @@ export default function NavigationPage() {
             <TabsTrigger value="password">Password</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
-          <TabsContent value="account">Make changes to your account here.</TabsContent>
+          <TabsContent value="account">
+            Make changes to your account here.
+          </TabsContent>
           <TabsContent value="password">Change your password here.</TabsContent>
-          <TabsContent value="settings">Manage your notification settings here.</TabsContent>
+          <TabsContent value="settings">
+            Manage your notification settings here.
+          </TabsContent>
         </Tabs>
       </Demo>
       <Demo title="Breadcrumb">
@@ -138,13 +145,19 @@ export default function NavigationPage() {
               <NavigationMenuContent>
                 <ul className="grid w-48 gap-1">
                   <li>
-                    <NavigationMenuLink href="/components/overlays">Overlays</NavigationMenuLink>
+                    <NavigationMenuLink href="/components/overlays">
+                      Overlays
+                    </NavigationMenuLink>
                   </li>
                   <li>
-                    <NavigationMenuLink href="/components/navigation">Navigation</NavigationMenuLink>
+                    <NavigationMenuLink href="/components/navigation">
+                      Navigation
+                    </NavigationMenuLink>
                   </li>
                   <li>
-                    <NavigationMenuLink href="/components/data-display">Data Display</NavigationMenuLink>
+                    <NavigationMenuLink href="/components/data-display">
+                      Data Display
+                    </NavigationMenuLink>
                   </li>
                 </ul>
               </NavigationMenuContent>

@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest"
-import { parseLeaderboardEvent, LeaderboardStream, type LeaderboardFrame } from "../leaderboardStream"
+import {
+  type LeaderboardFrame,
+  LeaderboardStream,
+  parseLeaderboardEvent,
+} from "../leaderboardStream"
 
 describe("parseLeaderboardEvent", () => {
   it("parses a leaderboard frame", () => {
@@ -16,7 +20,9 @@ describe("parseLeaderboardEvent", () => {
   })
 
   it("rejects a non-leaderboard frame", () => {
-    expect(parseLeaderboardEvent(JSON.stringify({ type: "counter", total: 5 }))).toBeNull()
+    expect(
+      parseLeaderboardEvent(JSON.stringify({ type: "counter", total: 5 })),
+    ).toBeNull()
   })
 
   it("rejects malformed json", () => {
@@ -40,7 +46,11 @@ describe("LeaderboardStream", () => {
     // start() synchronously calls createEventSource and assigns fake.onmessage
     s.start()
     fake.onmessage?.({
-      data: JSON.stringify({ type: "leaderboard", allTime: [{ rank: 1, name: "a", clicks: 9 }], thisWeek: [] }),
+      data: JSON.stringify({
+        type: "leaderboard",
+        allTime: [{ rank: 1, name: "a", clicks: 9 }],
+        thisWeek: [],
+      }),
     } as MessageEvent)
     expect(frames).toHaveLength(1)
     expect(frames[0]!.allTime[0]!.name).toBe("a")

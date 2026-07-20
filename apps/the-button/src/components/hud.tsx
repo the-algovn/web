@@ -22,10 +22,15 @@ export function Hud({
     <header className="tb-hud">
       <div className="tb-brand">
         <h1 className="tb-logo">THE BUTTON.</h1>
-        <span className="tb-tag">{"// one button · one goal · millions of humans"}</span>
+        <span className="tb-tag">
+          {"// one button · one goal · millions of humans"}
+        </span>
       </div>
       <div className="tb-chips">
-        <span className={"tb-chip " + (live ? "tb-chip-live" : "tb-chip-off")} aria-live="polite">
+        <span
+          className={`tb-chip ${live ? "tb-chip-live" : "tb-chip-off"}`}
+          aria-live="polite"
+        >
           <i className="tb-dot" aria-hidden />
           {MODE_TEXT[mode]}
         </span>

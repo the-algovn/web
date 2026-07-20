@@ -1,8 +1,8 @@
+import { ThemeProvider } from "@algovn/ui/theme-provider"
+import { ThemeToggle } from "@algovn/ui/theme-toggle"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it } from "vitest"
-import { ThemeProvider } from "@algovn/ui/theme-provider"
-import { ThemeToggle } from "@algovn/ui/theme-toggle"
 
 afterEach(() => {
   window.localStorage.clear()
@@ -14,7 +14,7 @@ it("defaults to dark and toggles to light and back", async () => {
   render(
     <ThemeProvider>
       <ThemeToggle />
-    </ThemeProvider>
+    </ThemeProvider>,
   )
   await waitFor(() => expect(document.documentElement).toHaveClass("dark"))
 

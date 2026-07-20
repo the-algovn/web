@@ -46,7 +46,10 @@ export interface SubmitClicksResponse {
   nextChallenge?: IssueChallengeResponse
 }
 
-export type QuestKind = "QUEST_KIND_DAILY" | "QUEST_KIND_WEEKLY" | "QUEST_KIND_UNSPECIFIED"
+export type QuestKind =
+  | "QUEST_KIND_DAILY"
+  | "QUEST_KIND_WEEKLY"
+  | "QUEST_KIND_UNSPECIFIED"
 
 export interface Quest {
   id: string
@@ -97,7 +100,9 @@ export interface PlayerState {
   streak: { current: number; best: number; lastDay: string }
 }
 
-export function playerStateFromSnapshot(s: GetPlayerStateResponse): PlayerState {
+export function playerStateFromSnapshot(
+  s: GetPlayerStateResponse,
+): PlayerState {
   return {
     total: Number(s.totalClicks ?? 0),
     allTimeRank: s.allTimeRank ?? 0,
@@ -143,7 +148,9 @@ export const isRateLimited = (err: unknown): err is ApiError =>
 export const isReplay = (err: unknown): err is ApiError =>
   err instanceof ApiError && err.status === 409
 export const isExpiredChallenge = (err: unknown): err is ApiError =>
-  err instanceof ApiError && err.status === 400 && err.code === "FailedPrecondition"
+  err instanceof ApiError &&
+  err.status === 400 &&
+  err.code === "FailedPrecondition"
 // The gateway maps codes.Unavailable (Redis/Postgres unreachable) to 502. In
 // that case Postgres may have durably committed the batch already — the
 // outcome is UNKNOWN. The batcher (T15) MUST discard, never retry or re-queue
@@ -157,7 +164,12 @@ export const getPlayerState = (token: string) =>
   request<GetPlayerStateResponse>("GET", "/player-state", undefined, token)
 
 export const issueChallenge = (intendedClicks: number, token: string) =>
-  request<IssueChallengeResponse>("POST", "/challenge", { intendedClicks }, token)
+  request<IssueChallengeResponse>(
+    "POST",
+    "/challenge",
+    { intendedClicks },
+    token,
+  )
 
 export const submitClicks = (req: SubmitClicksRequest, token: string) =>
   request<SubmitClicksResponse>("POST", "/clicks", req, token)

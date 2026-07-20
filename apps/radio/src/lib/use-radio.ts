@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react"
-import { createNowPlayingSync } from "./nowplaying-sync"
+import { type RefObject, useEffect, useMemo, useRef, useState } from "react"
 import { startHeartbeat } from "./heartbeat"
+import { createNowPlayingSync } from "./nowplaying-sync"
+import type { PlayerState, RadioPlayer } from "./player"
+import type {
+  ConnMode,
+  HistoryItem,
+  NowPlaying,
+  QueueItem,
+  RadioClient,
+} from "./radio-client"
 import { deriveStationState, type StationStatus } from "./station-state"
-import type { RadioPlayer, PlayerState } from "./player"
-import type { ConnMode, HistoryItem, NowPlaying, QueueItem, RadioClient } from "./radio-client"
 
 export interface RadioState {
   status: StationStatus
@@ -23,7 +29,10 @@ export interface UseRadioDeps {
   playheadClock?: () => number
 }
 
-export function useRadio(audioRef: RefObject<HTMLAudioElement | null>, deps: UseRadioDeps): RadioState {
+export function useRadio(
+  audioRef: RefObject<HTMLAudioElement | null>,
+  deps: UseRadioDeps,
+): RadioState {
   const { client } = deps
   const [sync] = useState(() => createNowPlayingSync())
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null)
@@ -37,22 +46,34 @@ export function useRadio(audioRef: RefObject<HTMLAudioElement | null>, deps: Use
   // Initial reads + subscriptions + heartbeat.
   useEffect(() => {
     let alive = true
-    void client.getNowPlaying().then(np => { if (alive) { sync.ingest(np); setListeners(np.listeners) } })
-    void client.getQueue().then(q => alive && setQueue(q))
-    void client.getHistory().then(h => alive && setHistory(h))
-    const unNp = client.subscribeNowPlaying(np => {
+    void client.getNowPlaying().then((np) => {
+      if (alive) {
+        sync.ingest(np)
+        setListeners(np.listeners)
+      }
+    })
+    void client.getQueue().then((q) => alive && setQueue(q))
+    void client.getHistory().then((h) => alive && setHistory(h))
+    const unNp = client.subscribeNowPlaying((np) => {
       sync.ingest(np)
       setListeners(np.listeners)
-      void client.getHistory().then(h => alive && setHistory(h))
+      void client.getHistory().then((h) => alive && setHistory(h))
     }, setMode)
     const unQ = client.subscribeQueue(setQueue)
     const stopHb = startHeartbeat(client)
-    return () => { alive = false; unNp(); unQ(); stopHb() }
+    return () => {
+      alive = false
+      unNp()
+      unQ()
+      stopHb()
+    }
   }, [client, sync])
 
   // Ear-sync loop: pick the audible now-playing off the playhead clock.
   useEffect(() => {
-    const clock = deps.playheadClock ?? (() => playerRef.current?.currentProgramDateTime() ?? Date.now())
+    const clock =
+      deps.playheadClock ??
+      (() => playerRef.current?.currentProgramDateTime() ?? Date.now())
     const id = setInterval(() => setNowPlaying(sync.current(clock())), 500)
     setNowPlaying(sync.current(clock()))
     return () => clearInterval(id)
@@ -78,5 +99,15 @@ export function useRadio(audioRef: RefObject<HTMLAudioElement | null>, deps: Use
     [mode, playerState, nowPlaying],
   )
 
-  return { status, nowPlaying, queue, history, listeners, playerState, play, pause, setVolume }
+  return {
+    status,
+    nowPlaying,
+    queue,
+    history,
+    listeners,
+    playerState,
+    play,
+    pause,
+    setVolume,
+  }
 }

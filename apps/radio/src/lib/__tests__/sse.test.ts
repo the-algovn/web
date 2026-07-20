@@ -7,19 +7,33 @@ class FakeEventSource {
   onmessage: ((e: MessageEvent) => void) | null = null
   onerror: (() => void) | null = null
   closed = false
-  constructor(public url: string) { FakeEventSource.instances.push(this) }
-  close() { this.closed = true }
+  constructor(public url: string) {
+    FakeEventSource.instances.push(this)
+  }
+  close() {
+    this.closed = true
+  }
 }
 
-beforeEach(() => { FakeEventSource.instances = []; vi.useFakeTimers() })
+beforeEach(() => {
+  FakeEventSource.instances = []
+  vi.useFakeTimers()
+})
 afterEach(() => vi.useRealTimers())
 
 const channel = (over = {}) =>
   createSseChannel<{ n: number }>({
     url: "https://x/events/radio.nowplaying",
-    parse: d => { try { return JSON.parse(d) } catch { return null } },
+    parse: (d) => {
+      try {
+        return JSON.parse(d)
+      } catch {
+        return null
+      }
+    },
     onEvent: () => {},
-    createEventSource: url => new FakeEventSource(url) as unknown as EventSource,
+    createEventSource: (url) =>
+      new FakeEventSource(url) as unknown as EventSource,
     random: () => 0,
     ...over,
   })

@@ -5,7 +5,7 @@ describe("createFakePlayer", () => {
   it("reports state transitions to subscribers", () => {
     const p = createFakePlayer()
     const seen: string[] = []
-    p.onState(s => seen.push(s))
+    p.onState((s) => seen.push(s))
     p.emit("connecting")
     p.emit("playing")
     expect(seen).toEqual(["connecting", "playing"])

@@ -5,7 +5,9 @@ import { Hud } from "../hud"
 describe("Hud", () => {
   it("renders the brand as the page heading and the level", () => {
     render(<Hud mode="live" level={7} streakDays={null} rank={null} />)
-    expect(screen.getByRole("heading", { name: "THE BUTTON." })).toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", { name: "THE BUTTON." }),
+    ).toBeInTheDocument()
     expect(screen.getByText("LVL")).toBeInTheDocument()
     expect(screen.getByText("7")).toBeInTheDocument()
   })

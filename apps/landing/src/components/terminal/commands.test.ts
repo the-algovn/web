@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
+import {
+  COMMAND_NAMES,
+  type CommandCtx,
+  FORTUNES,
+  runCommand,
+} from "./commands"
 import { createFilesystem } from "./filesystem"
-import { runCommand, type CommandCtx, FORTUNES, COMMAND_NAMES } from "./commands"
 
 function makeCtx(overrides: Partial<CommandCtx> = {}): CommandCtx {
   return {
@@ -18,7 +23,9 @@ function makeCtx(overrides: Partial<CommandCtx> = {}): CommandCtx {
 
 describe("unix basics", () => {
   it("whoami", async () => {
-    expect((await runCommand("whoami", makeCtx())).lines).toEqual(["duc le — software engineer"])
+    expect((await runCommand("whoami", makeCtx())).lines).toEqual([
+      "duc le — software engineer",
+    ])
   })
 
   it("pwd", async () => {
@@ -38,7 +45,9 @@ describe("unix basics", () => {
   })
 
   it("ls projects/ lists app entries", async () => {
-    expect((await runCommand("ls projects/", makeCtx())).lines).toEqual(["the-button"])
+    expect((await runCommand("ls projects/", makeCtx())).lines).toEqual([
+      "the-button",
+    ])
   })
 
   it("ls of a missing path errors", async () => {
@@ -85,7 +94,9 @@ describe("unix basics", () => {
   })
 
   it("echo prints its arguments", async () => {
-    expect((await runCommand("echo hello world", makeCtx())).lines).toEqual(["hello world"])
+    expect((await runCommand("echo hello world", makeCtx())).lines).toEqual([
+      "hello world",
+    ])
   })
 
   it("date prints a non-empty line", async () => {
@@ -95,17 +106,30 @@ describe("unix basics", () => {
   })
 
   it("clear signals the hook", async () => {
-    expect(await runCommand("clear", makeCtx())).toEqual({ lines: [], clear: true })
+    expect(await runCommand("clear", makeCtx())).toEqual({
+      lines: [],
+      clear: true,
+    })
   })
 
   it("cd is a joke", async () => {
-    expect((await runCommand("cd projects", makeCtx())).lines).toEqual(["you're already home."])
+    expect((await runCommand("cd projects", makeCtx())).lines).toEqual([
+      "you're already home.",
+    ])
   })
 
   it("help lists playground commands but never decrypt", async () => {
     const { lines } = await runCommand("help", makeCtx())
     const text = lines.join("\n")
-    for (const name of ["whoami", "ls", "cat", "matrix", "crt", "theme", "cowsay"]) {
+    for (const name of [
+      "whoami",
+      "ls",
+      "cat",
+      "matrix",
+      "crt",
+      "theme",
+      "cowsay",
+    ]) {
       expect(text).toContain(name)
     }
     expect(text).not.toContain("decrypt")
@@ -113,8 +137,12 @@ describe("unix basics", () => {
 
   it("unknown command hints at help exactly once", async () => {
     const ctx = makeCtx()
-    expect((await runCommand("vim", ctx)).lines).toEqual(["command not found: vim (try 'help')"])
-    expect((await runCommand("emacs", ctx)).lines).toEqual(["command not found: emacs"])
+    expect((await runCommand("vim", ctx)).lines).toEqual([
+      "command not found: vim (try 'help')",
+    ])
+    expect((await runCommand("emacs", ctx)).lines).toEqual([
+      "command not found: emacs",
+    ])
   })
 
   it("blank input produces no output", async () => {
@@ -130,7 +158,9 @@ describe("joke pack", () => {
   })
 
   it("sudo make me a sandwich complies", async () => {
-    expect((await runCommand("sudo make me a sandwich", makeCtx())).lines).toEqual(["Okay."])
+    expect(
+      (await runCommand("sudo make me a sandwich", makeCtx())).lines,
+    ).toEqual(["Okay."])
   })
 
   it("rm -rf / melts down, staggered, and triggers the glitch", async () => {
@@ -146,7 +176,10 @@ describe("joke pack", () => {
 
   it("rm -rf / skips the glitch under reduced motion", async () => {
     let glitched = false
-    const ctx = makeCtx({ reducedMotion: true, triggerGlitch: () => (glitched = true) })
+    const ctx = makeCtx({
+      reducedMotion: true,
+      triggerGlitch: () => (glitched = true),
+    })
     await runCommand("rm -rf /", ctx)
     expect(glitched).toBe(false)
   })
@@ -174,8 +207,12 @@ describe("joke pack", () => {
   })
 
   it("exit and logout are futile", async () => {
-    expect((await runCommand("exit", makeCtx())).lines).toEqual(["there is no escape."])
-    expect((await runCommand("logout", makeCtx())).lines).toEqual(["there is no escape."])
+    expect((await runCommand("exit", makeCtx())).lines).toEqual([
+      "there is no escape.",
+    ])
+    expect((await runCommand("logout", makeCtx())).lines).toEqual([
+      "there is no escape.",
+    ])
   })
 })
 
@@ -191,16 +228,23 @@ describe("effect commands", () => {
 
   it("matrix respects reduced motion", async () => {
     let started = false
-    const ctx = makeCtx({ reducedMotion: true, startMatrix: () => (started = true) })
-    expect((await runCommand("matrix", ctx)).lines).toEqual(["motion is reduced — no rain today."])
+    const ctx = makeCtx({
+      reducedMotion: true,
+      startMatrix: () => (started = true),
+    })
+    expect((await runCommand("matrix", ctx)).lines).toEqual([
+      "motion is reduced — no rain today.",
+    ])
     expect(started).toBe(false)
   })
 
   it("crt reports the toggled state", async () => {
-    expect((await runCommand("crt", makeCtx({ toggleCrt: () => true }))).lines).toEqual(["crt: on"])
-    expect((await runCommand("crt", makeCtx({ toggleCrt: () => false }))).lines).toEqual([
-      "crt: off",
-    ])
+    expect(
+      (await runCommand("crt", makeCtx({ toggleCrt: () => true }))).lines,
+    ).toEqual(["crt: on"])
+    expect(
+      (await runCommand("crt", makeCtx({ toggleCrt: () => false }))).lines,
+    ).toEqual(["crt: off"])
   })
 
   it("theme flips and reports", async () => {
@@ -212,12 +256,16 @@ describe("effect commands", () => {
       },
     })
     expect((await runCommand("theme", ctx)).lines).toEqual(["theme: light"])
-    expect((await runCommand("theme light", ctx)).lines).toEqual(["theme: light"])
+    expect((await runCommand("theme light", ctx)).lines).toEqual([
+      "theme: light",
+    ])
     expect(calls).toEqual(["toggle", "light"])
   })
 
   it("theme rejects nonsense", async () => {
-    expect((await runCommand("theme neon", makeCtx())).lines).toEqual(["usage: theme [light|dark]"])
+    expect((await runCommand("theme neon", makeCtx())).lines).toEqual([
+      "usage: theme [light|dark]",
+    ])
   })
 })
 
@@ -238,9 +286,9 @@ describe("the trail", () => {
   })
 
   it("wrong target is not encrypted", async () => {
-    expect((await runCommand("decrypt README.md 42", makeCtx())).lines).toEqual([
-      "decrypt: README.md: not encrypted",
-    ])
+    expect((await runCommand("decrypt README.md 42", makeCtx())).lines).toEqual(
+      ["decrypt: README.md: not encrypted"],
+    )
   })
 
   it("bare decrypt shows usage", async () => {

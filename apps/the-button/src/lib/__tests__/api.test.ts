@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest"
 import {
-  ApiError,
+  type ApiError,
   type GetPlayerStateResponse,
   getPlayerState,
   isExpiredChallenge,
@@ -13,10 +13,17 @@ import {
   submitClicks,
 } from "../api"
 
-function mockFetch(status: number, body: unknown, headers: Record<string, string> = {}) {
+function mockFetch(
+  status: number,
+  body: unknown,
+  headers: Record<string, string> = {},
+) {
   const payload = typeof body === "string" ? body : JSON.stringify(body)
   const fetchMock = vi.fn().mockResolvedValue(
-    new Response(payload, { status, headers: { "Content-Type": "application/json", ...headers } })
+    new Response(payload, {
+      status,
+      headers: { "Content-Type": "application/json", ...headers },
+    }),
   )
   vi.stubGlobal("fetch", fetchMock)
   return fetchMock
@@ -31,12 +38,16 @@ it("binds the client to env.apiBase, which carries the product prefix", async ()
   await request<{ total?: string }>("GET", "/counter")
   expect(fetchMock).toHaveBeenCalledWith(
     "https://api.algovn.com/the-button/counter",
-    expect.anything()
+    expect.anything(),
   )
 })
 
 it("maps 429 with Retry-After to a rate-limited ApiError", async () => {
-  mockFetch(429, { code: "ResourceExhausted", message: "slow down" }, { "Retry-After": "5" })
+  mockFetch(
+    429,
+    { code: "ResourceExhausted", message: "slow down" },
+    { "Retry-After": "5" },
+  )
   const err = await request("POST", "/clicks", {}).catch((e: unknown) => e)
   expect(isRateLimited(err)).toBe(true)
   expect((err as ApiError).retryAfterSeconds).toBe(5)
@@ -78,7 +89,7 @@ it("submitClicks reads only nextChallenge from a pure-ack response", async () =>
   mockFetch(200, { nextChallenge: { challenge: "c2", workFactor: "1" } })
   const res: SubmitClicksResponse = await submitClicks(
     { challenge: "c1", nonce: "n1", clickCount: 3 },
-    "tok"
+    "tok",
   )
   expect(res).toEqual({ nextChallenge: { challenge: "c2", workFactor: "1" } })
   expect(Object.keys(res)).toEqual(["nextChallenge"])
@@ -89,7 +100,9 @@ it("getPlayerState hits GET /player-state with a Bearer token and parses the sna
     totalClicks: "42",
     allTimeRank: 3,
     weeklyRank: 1,
-    achievements: [{ id: "ten", title: "Ten", unlockedAt: "2026-07-18T00:00:00Z" }],
+    achievements: [
+      { id: "ten", title: "Ten", unlockedAt: "2026-07-18T00:00:00Z" },
+    ],
     milestones: [{ threshold: "100", title: "Century" }],
     quests: [
       {
@@ -109,7 +122,9 @@ it("getPlayerState hits GET /player-state with a Bearer token and parses the sna
   const res = await getPlayerState("tok")
   expect(fetchMock).toHaveBeenCalledWith(
     "https://api.algovn.com/the-button/player-state",
-    expect.objectContaining({ headers: expect.objectContaining({ Authorization: "Bearer tok" }) })
+    expect.objectContaining({
+      headers: expect.objectContaining({ Authorization: "Bearer tok" }),
+    }),
   )
   expect(res).toEqual(snapshot)
 })
@@ -119,7 +134,9 @@ it("playerStateFromSnapshot normalizes protojson decimal strings/enums into numb
     totalClicks: "42",
     allTimeRank: 3,
     weeklyRank: 1,
-    achievements: [{ id: "ten", title: "Ten", unlockedAt: "2026-07-18T00:00:00Z" }],
+    achievements: [
+      { id: "ten", title: "Ten", unlockedAt: "2026-07-18T00:00:00Z" },
+    ],
     milestones: [{ threshold: "100", title: "Century" }],
     quests: [
       {

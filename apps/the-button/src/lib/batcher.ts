@@ -5,19 +5,25 @@
 // (server-side SETNX throttle would 429 it otherwise); the response's
 // next_challenge keeps the pipeline full.
 import {
+  type IssueChallengeResponse,
   isExpiredChallenge,
   isOutcomeUnknown,
   isRateLimited,
   isReplay,
-  type IssueChallengeResponse,
   type SubmitClicksRequest,
   type SubmitClicksResponse,
 } from "./api"
 import type { Solver, WorkerSolver } from "./solverClient"
 
 export interface BatcherApi {
-  issueChallenge(intendedClicks: number, token: string): Promise<IssueChallengeResponse>
-  submitClicks(req: SubmitClicksRequest, token: string): Promise<SubmitClicksResponse>
+  issueChallenge(
+    intendedClicks: number,
+    token: string,
+  ): Promise<IssueChallengeResponse>
+  submitClicks(
+    req: SubmitClicksRequest,
+    token: string,
+  ): Promise<SubmitClicksResponse>
 }
 
 export interface BatcherOptions {
@@ -54,7 +60,8 @@ const TARGET_SOLVE_SECONDS = 1.5 // keeps the button responsive; leftover clicks
 const HASH_RATE_BENCH_MS = 200 // short: must not block the first click on a long benchmark
 const DEFAULT_HASH_RATE = 150_000 // conservative fallback if the bench fails or hasn't run yet
 
-const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 export class Batcher {
   private pending = 0
@@ -167,7 +174,10 @@ export class Batcher {
       const cap = Math.min(this.pending, active.maxBatch ?? DEFAULT_MAX_BATCH)
       const workFactor = Number(active.workFactor ?? DEFAULT_WORK_FACTOR)
       const hashBudget = this.hashRate * TARGET_SOLVE_SECONDS
-      const count = Math.min(Math.max(Math.floor(hashBudget / workFactor), 1), cap)
+      const count = Math.min(
+        Math.max(Math.floor(hashBudget / workFactor), 1),
+        cap,
+      )
       // Overlap the solve with whatever remains of the min-interval wait, so
       // the submit fires at max(min_interval, solve_time) rather than their
       // sum: the click_count baked into `solved` is frozen at this count —
@@ -182,9 +192,13 @@ export class Batcher {
         remaining > 0 ? sleep(remaining) : Promise.resolve(),
       ])
       await this.submit(
-        { challenge: active.challenge ?? "", nonce: solved.nonce, clickCount: count },
+        {
+          challenge: active.challenge ?? "",
+          nonce: solved.nonce,
+          clickCount: count,
+        },
         token,
-        1
+        1,
       )
     } catch (err) {
       this.opts.onError?.(err)
@@ -207,7 +221,7 @@ export class Batcher {
     if (typeof solver.bench !== "function") return
     void solver
       .bench(HASH_RATE_BENCH_MS)
-      .then(rate => {
+      .then((rate) => {
         this.hashRate = rate
       })
       .catch(() => {
@@ -215,7 +229,11 @@ export class Batcher {
       })
   }
 
-  private async submit(req: SubmitClicksRequest, token: string, attempt: number): Promise<void> {
+  private async submit(
+    req: SubmitClicksRequest,
+    token: string,
+    attempt: number,
+  ): Promise<void> {
     try {
       const res = await this.opts.api.submitClicks(req, token)
       this.lastSubmitAt = Date.now()

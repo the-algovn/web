@@ -1,8 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import * as React from "react"
-import { Search } from "lucide-react"
 import type { AppShellNavGroup } from "@algovn/ui/app-shell"
 import { Button } from "@algovn/ui/button"
 import {
@@ -13,8 +10,15 @@ import {
   CommandItem,
   CommandList,
 } from "@algovn/ui/command"
+import { Search } from "lucide-react"
+import { useRouter } from "next/navigation"
+import * as React from "react"
 
-export function CommandMenu({ navigation }: { navigation: AppShellNavGroup[] }) {
+export function CommandMenu({
+  navigation,
+}: {
+  navigation: AppShellNavGroup[]
+}) {
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
 
@@ -40,7 +44,9 @@ export function CommandMenu({ navigation }: { navigation: AppShellNavGroup[] }) 
         <span className="flex items-center gap-2">
           <Search className="size-3.5" /> Search…
         </span>
-        <kbd className="bg-muted pointer-events-none rounded px-1.5 font-mono text-[10px]">⌘K</kbd>
+        <kbd className="bg-muted pointer-events-none rounded px-1.5 font-mono text-[10px]">
+          ⌘K
+        </kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput placeholder="Go to page…" />

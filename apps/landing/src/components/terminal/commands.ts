@@ -1,6 +1,10 @@
-import { resolvePath, type VFS, VAULT_BLOB } from "./filesystem"
+import { resolvePath, VAULT_BLOB, type VFS } from "./filesystem"
 
-export type CommandResult = { lines: string[]; clear?: boolean; stagger?: boolean }
+export type CommandResult = {
+  lines: string[]
+  clear?: boolean
+  stagger?: boolean
+}
 
 export type Session = { planSeen: boolean; unknownHinted: boolean }
 
@@ -15,7 +19,10 @@ export type CommandCtx = {
   triggerGlitch: () => void
 }
 
-type Handler = (args: string[], ctx: CommandCtx) => CommandResult | Promise<CommandResult>
+type Handler = (
+  args: string[],
+  ctx: CommandCtx,
+) => CommandResult | Promise<CommandResult>
 
 export function rot13(s: string): string {
   return s.replace(/[a-z]/gi, (c) => {
@@ -58,8 +65,12 @@ function cowsay(args: string[]): CommandResult {
 function rm(args: string[], ctx: CommandCtx): CommandResult {
   const flags = args.filter((a) => a.startsWith("-")).join("")
   const target = args.find((a) => !a.startsWith("-"))
-  const nuking = flags.includes("r") && flags.includes("f") && (target === "/" || target === "/*")
-  if (!nuking) return { lines: [`rm: cannot remove '${target ?? ""}': Permission denied`] }
+  const nuking =
+    flags.includes("r") &&
+    flags.includes("f") &&
+    (target === "/" || target === "/*")
+  if (!nuking)
+    return { lines: [`rm: cannot remove '${target ?? ""}': Permission denied`] }
   if (!ctx.reducedMotion) ctx.triggerGlitch()
   return {
     stagger: true,
@@ -88,7 +99,9 @@ function ls(args: string[], ctx: CommandCtx): CommandResult {
   const flags = args.filter((a) => a.startsWith("-")).join("")
   const all = flags.includes("a")
   const path = args.find((a) => !a.startsWith("-"))
-  const node = path ? resolvePath(ctx.fs, path) : ({ kind: "dir", children: ctx.fs } as const)
+  const node = path
+    ? resolvePath(ctx.fs, path)
+    : ({ kind: "dir", children: ctx.fs } as const)
   if (!node) return { lines: [`ls: ${path}: No such file or directory`] }
   if (node.kind !== "dir") return { lines: [path as string] }
   const names = Object.entries(node.children)
@@ -127,14 +140,21 @@ const REGISTRY: Record<string, Handler> = {
   sudo: (args) =>
     args.join(" ") === "make me a sandwich"
       ? { lines: ["Okay."] }
-      : { lines: ["duc is not in the sudoers file. This incident will be reported."] },
+      : {
+          lines: [
+            "duc is not in the sudoers file. This incident will be reported.",
+          ],
+        },
   rm,
   cowsay: (args) => cowsay(args),
-  fortune: () => ({ lines: [FORTUNES[Math.floor(Math.random() * FORTUNES.length)]] }),
+  fortune: () => ({
+    lines: [FORTUNES[Math.floor(Math.random() * FORTUNES.length)]],
+  }),
   exit: () => ({ lines: ["there is no escape."] }),
   logout: () => ({ lines: ["there is no escape."] }),
   matrix: (_args, ctx) => {
-    if (ctx.reducedMotion) return { lines: ["motion is reduced — no rain today."] }
+    if (ctx.reducedMotion)
+      return { lines: ["motion is reduced — no rain today."] }
     ctx.startMatrix()
     return { lines: ["follow the white rabbit… (press any key to wake up)"] }
   },
@@ -143,7 +163,11 @@ const REGISTRY: Record<string, Handler> = {
     const target = args[0]
     if (target && target !== "light" && target !== "dark")
       return { lines: ["usage: theme [light|dark]"] }
-    return { lines: [`theme: ${ctx.setTheme((target ?? "toggle") as "light" | "dark" | "toggle")}`] }
+    return {
+      lines: [
+        `theme: ${ctx.setTheme((target ?? "toggle") as "light" | "dark" | "toggle")}`,
+      ],
+    }
   },
   decrypt: (args) => {
     const [target, key] = args
@@ -151,7 +175,9 @@ const REGISTRY: Record<string, Handler> = {
     if (target.replace(/^\.\//, "") !== ".vault")
       return { lines: [`decrypt: ${target}: not encrypted`] }
     if (key !== "42")
-      return { lines: ["decryption failed. think bigger. or smaller. or… deeper."] }
+      return {
+        lines: ["decryption failed. think bigger. or smaller. or… deeper."],
+      }
     return {
       lines: [
         "┌────────────────────────────────┐",
@@ -168,9 +194,14 @@ const REGISTRY: Record<string, Handler> = {
 }
 
 /** Every runnable command except decrypt — used by help-adjacent tooling and tab completion. */
-export const COMMAND_NAMES = Object.keys(REGISTRY).filter((name) => name !== "decrypt")
+export const COMMAND_NAMES = Object.keys(REGISTRY).filter(
+  (name) => name !== "decrypt",
+)
 
-export async function runCommand(input: string, ctx: CommandCtx): Promise<CommandResult> {
+export async function runCommand(
+  input: string,
+  ctx: CommandCtx,
+): Promise<CommandResult> {
   const trimmed = input.trim()
   if (!trimmed) return { lines: [] }
   const [name, ...args] = trimmed.split(/\s+/)

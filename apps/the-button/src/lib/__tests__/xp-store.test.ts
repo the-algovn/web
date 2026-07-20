@@ -9,13 +9,17 @@ function fakeStorage(): Storage {
     removeItem: (k) => void m.delete(k),
     clear: () => m.clear(),
     key: (i) => [...m.keys()][i] ?? null,
-    get length() { return m.size },
+    get length() {
+      return m.size
+    },
   } as Storage
 }
 
 describe("xp-store", () => {
   let s: Storage
-  beforeEach(() => { s = fakeStorage() })
+  beforeEach(() => {
+    s = fakeStorage()
+  })
 
   it("returns 0 when nothing is stored", () => {
     expect(loadComboBonus(s)).toBe(0)

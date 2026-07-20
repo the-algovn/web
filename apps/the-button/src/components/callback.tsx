@@ -11,7 +11,10 @@ export function Callback({ onDone }: { onDone: () => void }) {
       {error ? (
         <>
           <p className="text-destructive text-sm">sign-in failed: {error}</p>
-          <a className="text-primary text-sm underline underline-offset-4" href="/the-button/">
+          <a
+            className="text-primary text-sm underline underline-offset-4"
+            href="/the-button/"
+          >
             back to the button
           </a>
         </>

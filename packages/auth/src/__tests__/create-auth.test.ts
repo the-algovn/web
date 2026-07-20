@@ -1,5 +1,5 @@
-import { afterEach, expect, it, vi } from "vitest"
 import { User } from "oidc-client-ts"
+import { afterEach, expect, it, vi } from "vitest"
 import { createAuth } from "../index"
 
 const config = {
@@ -17,8 +17,12 @@ it("builds PKCE settings from the injected origin, authority and basePath", () =
   const { userManager } = createAuth(config)
   expect(userManager.settings.authority).toBe("https://id.algovn.com")
   expect(userManager.settings.client_id).toBe("client-123")
-  expect(userManager.settings.redirect_uri).toBe("https://algovn.com/the-button/callback")
-  expect(userManager.settings.post_logout_redirect_uri).toBe("https://algovn.com/the-button/")
+  expect(userManager.settings.redirect_uri).toBe(
+    "https://algovn.com/the-button/callback",
+  )
+  expect(userManager.settings.post_logout_redirect_uri).toBe(
+    "https://algovn.com/the-button/",
+  )
   expect(userManager.settings.response_type).toBe("code")
 })
 
@@ -34,13 +38,18 @@ it("appends offline_access to an explicit scope without altering it", () => {
     scope: "openid profile urn:zitadel:iam:org:projects:roles",
   })
   expect(userManager.settings.scope).toBe(
-    "openid profile urn:zitadel:iam:org:projects:roles offline_access"
+    "openid profile urn:zitadel:iam:org:projects:roles offline_access",
   )
-  expect(userManager.settings.redirect_uri).toBe("https://algovn.com/console/callback")
+  expect(userManager.settings.redirect_uri).toBe(
+    "https://algovn.com/console/callback",
+  )
 })
 
 it("does not duplicate offline_access when the caller already asked for it", () => {
-  const { userManager } = createAuth({ ...config, scope: "openid profile offline_access" })
+  const { userManager } = createAuth({
+    ...config,
+    scope: "openid profile offline_access",
+  })
   expect(userManager.settings.scope).toBe("openid profile offline_access")
 })
 
@@ -55,7 +64,9 @@ it("falls back to the window origin when none is injected", () => {
     clientId: "client-123",
     basePath: "/console",
   })
-  expect(userManager.settings.redirect_uri).toBe(`${window.location.origin}/console/callback`)
+  expect(userManager.settings.redirect_uri).toBe(
+    `${window.location.origin}/console/callback`,
+  )
 })
 
 it("keeps the session across a reload — a fresh manager still finds the stored user", async () => {
@@ -65,8 +76,14 @@ it("keeps the session across a reload — a fresh manager still finds the stored
     new User({
       access_token: "tok",
       token_type: "Bearer",
-      profile: { sub: "user-1", iss: "https://id.algovn.com", aud: "app", exp: 0, iat: 0 },
-    })
+      profile: {
+        sub: "user-1",
+        iss: "https://id.algovn.com",
+        aud: "app",
+        exp: 0,
+        iat: 0,
+      },
+    }),
   )
   // A reload is a brand-new UserManager over the same web storage. This is the
   // behaviour the whole change exists for, so assert it end-to-end rather than
@@ -78,12 +95,16 @@ it("keeps the session across a reload — a fresh manager still finds the stored
 
 it("signs the user out when the access token expires and renewal fails", async () => {
   const { userManager } = createAuth(config)
-  vi.spyOn(userManager, "signinSilent").mockRejectedValue(new Error("no session"))
+  vi.spyOn(userManager, "signinSilent").mockRejectedValue(
+    new Error("no session"),
+  )
   const removeUser = vi.spyOn(userManager, "removeUser").mockResolvedValue()
   // The expiry wiring is only reachable through oidc-client-ts's internals:
   // addAccessTokenExpired registers on events._expiredTimer, a Timer extending
   // Event, so raise() runs the handlers. Verified against 3.5.0.
-  const events = userManager.events as unknown as { _expiredTimer: { raise: () => Promise<void> } }
+  const events = userManager.events as unknown as {
+    _expiredTimer: { raise: () => Promise<void> }
+  }
   await events._expiredTimer.raise()
   expect(removeUser).toHaveBeenCalledTimes(1)
 })
@@ -103,8 +124,14 @@ it("reaches the refresh-token grant when an already-expired user with a refresh 
       refresh_token: "OLD-refresh-token",
       token_type: "Bearer",
       expires_at: Math.floor(Date.now() / 1000) - 60, // already expired
-      profile: { sub: "user-1", iss: "https://id.algovn.com", aud: "app", exp: 0, iat: 0 },
-    })
+      profile: {
+        sub: "user-1",
+        iss: "https://id.algovn.com",
+        aud: "app",
+        exp: 0,
+        iat: 0,
+      },
+    }),
   )
 
   // Nothing is mocked but the network: the assertion below is that the
@@ -113,39 +140,46 @@ it("reaches the refresh-token grant when an already-expired user with a refresh 
   const requests: { url: string; body: string }[] = []
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-      const url = String(input)
-      requests.push({ url, body: init?.body ? String(init.body) : "" })
-      if (url.endsWith("/.well-known/openid-configuration")) {
-        return new Response(
-          JSON.stringify({
-            issuer: config.authority,
-            authorization_endpoint: `${config.authority}/oauth/v2/authorize`,
-            token_endpoint: `${config.authority}/oauth/v2/token`,
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        )
-      }
-      if (url.endsWith("/oauth/v2/token")) {
-        return new Response(
-          JSON.stringify({
-            access_token: "NEW-access-token",
-            refresh_token: "NEW-rotated-refresh-token",
-            token_type: "Bearer",
-            expires_in: 3600,
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        )
-      }
-      throw new Error(`unexpected fetch to ${url}`)
-    })
+    vi.fn(
+      async (
+        input: RequestInfo | URL,
+        init?: RequestInit,
+      ): Promise<Response> => {
+        const url = String(input)
+        requests.push({ url, body: init?.body ? String(init.body) : "" })
+        if (url.endsWith("/.well-known/openid-configuration")) {
+          return new Response(
+            JSON.stringify({
+              issuer: config.authority,
+              authorization_endpoint: `${config.authority}/oauth/v2/authorize`,
+              token_endpoint: `${config.authority}/oauth/v2/token`,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          )
+        }
+        if (url.endsWith("/oauth/v2/token")) {
+          return new Response(
+            JSON.stringify({
+              access_token: "NEW-access-token",
+              refresh_token: "NEW-rotated-refresh-token",
+              token_type: "Bearer",
+              expires_in: 3600,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          )
+        }
+        throw new Error(`unexpected fetch to ${url}`)
+      },
+    ),
   )
 
   const second = createAuth(authConfig)
   // The expiry wiring is only reachable through oidc-client-ts's internals:
   // addAccessTokenExpired registers on events._expiredTimer, a Timer extending
   // Event, so raise() runs the handlers. Verified against 3.5.0.
-  const events = second.userManager.events as unknown as { _expiredTimer: { raise: () => Promise<void> } }
+  const events = second.userManager.events as unknown as {
+    _expiredTimer: { raise: () => Promise<void> }
+  }
   await events._expiredTimer.raise()
 
   const tokenRequest = requests.find((r) => r.url.endsWith("/oauth/v2/token"))
@@ -160,8 +194,12 @@ it("reaches the refresh-token grant when an already-expired user with a refresh 
 
 it("signIn triggers the manager's signinRedirect", async () => {
   const { userManager, signIn } = createAuth(config)
-  const signinRedirect = vi.spyOn(userManager, "signinRedirect").mockResolvedValue()
-  const signoutRedirect = vi.spyOn(userManager, "signoutRedirect").mockResolvedValue()
+  const signinRedirect = vi
+    .spyOn(userManager, "signinRedirect")
+    .mockResolvedValue()
+  const signoutRedirect = vi
+    .spyOn(userManager, "signoutRedirect")
+    .mockResolvedValue()
   await signIn()
   expect(signinRedirect).toHaveBeenCalledTimes(1)
   expect(signoutRedirect).not.toHaveBeenCalled()
@@ -169,8 +207,12 @@ it("signIn triggers the manager's signinRedirect", async () => {
 
 it("signOut triggers the manager's signoutRedirect", async () => {
   const { userManager, signOut } = createAuth(config)
-  const signinRedirect = vi.spyOn(userManager, "signinRedirect").mockResolvedValue()
-  const signoutRedirect = vi.spyOn(userManager, "signoutRedirect").mockResolvedValue()
+  const signinRedirect = vi
+    .spyOn(userManager, "signinRedirect")
+    .mockResolvedValue()
+  const signoutRedirect = vi
+    .spyOn(userManager, "signoutRedirect")
+    .mockResolvedValue()
   await signOut()
   expect(signoutRedirect).toHaveBeenCalledTimes(1)
   expect(signinRedirect).not.toHaveBeenCalled()
@@ -181,7 +223,13 @@ it("completeSignIn returns the user from signinCallback", async () => {
   const user = new User({
     access_token: "tok",
     token_type: "Bearer",
-    profile: { sub: "user-1", iss: "https://id.algovn.com", aud: "app", exp: 0, iat: 0 },
+    profile: {
+      sub: "user-1",
+      iss: "https://id.algovn.com",
+      aud: "app",
+      exp: 0,
+      iat: 0,
+    },
   })
   vi.spyOn(userManager, "signinCallback").mockResolvedValue(user)
   await expect(completeSignIn()).resolves.toBe(user)
@@ -190,5 +238,7 @@ it("completeSignIn returns the user from signinCallback", async () => {
 it("completeSignIn throws when signinCallback returns no user", async () => {
   const { userManager, completeSignIn } = createAuth(config)
   vi.spyOn(userManager, "signinCallback").mockResolvedValue(undefined)
-  await expect(completeSignIn()).rejects.toThrow("no user returned from the sign-in callback")
+  await expect(completeSignIn()).rejects.toThrow(
+    "no user returned from the sign-in callback",
+  )
 })

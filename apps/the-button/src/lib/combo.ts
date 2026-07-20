@@ -36,7 +36,9 @@ export function comboXpBonus(multiplier: number): number {
   return Math.max(0, Math.round((multiplier - 1) * COMBO_XP_SCALE))
 }
 
-export function createCombo(opts: { heatPerPress?: number; decayPerMs?: number } = {}): Combo {
+export function createCombo(
+  opts: { heatPerPress?: number; decayPerMs?: number } = {},
+): Combo {
   const heatPerPress = opts.heatPerPress ?? HEAT_PER_PRESS
   const decayPerMs = opts.decayPerMs ?? DECAY_PER_MS
   let heat = 0
@@ -57,7 +59,11 @@ export function createCombo(opts: { heatPerPress?: number; decayPerMs?: number }
   }
 
   function snapshot(): ComboState {
-    return { heat, multiplier: multiplierForHeat(heat), label: labelForHeat(heat) }
+    return {
+      heat,
+      multiplier: multiplierForHeat(heat),
+      label: labelForHeat(heat),
+    }
   }
 
   return {

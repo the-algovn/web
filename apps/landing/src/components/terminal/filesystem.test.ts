@@ -6,7 +6,12 @@ describe("createFilesystem", () => {
 
   it("has the visible entries in spec order", () => {
     const visible = Object.keys(fs).filter((n) => !n.startsWith("."))
-    expect(visible).toEqual(["projects", "README.md", "contact.txt", "finders.txt"])
+    expect(visible).toEqual([
+      "projects",
+      "README.md",
+      "contact.txt",
+      "finders.txt",
+    ])
   })
 
   it("hides .plan and .vault behind dot names", () => {
@@ -15,7 +20,7 @@ describe("createFilesystem", () => {
   })
 
   it("mirrors config/apps inside projects/", () => {
-    const projects = fs["projects"]
+    const projects = fs.projects
     if (projects.kind !== "dir") throw new Error("projects is not a dir")
     expect(Object.keys(projects.children)).toContain("the-button")
   })

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
-import { GoalsPanel } from "../goals-panel"
 import type { QuestProgress } from "../../lib/api"
+import { GoalsPanel } from "../goals-panel"
 
 const quests: QuestProgress[] = [
   {
@@ -62,13 +62,25 @@ describe("GoalsPanel", () => {
   })
 
   it("shows a quiet loading line when signed in with no quests yet", () => {
-    render(<GoalsPanel quests={[]} streak={{ current: 0, best: 0, lastDay: "" }} signedIn />)
+    render(
+      <GoalsPanel
+        quests={[]}
+        streak={{ current: 0, best: 0, lastDay: "" }}
+        signedIn
+      />,
+    )
     expect(screen.getByText(/loading your goals/i)).toBeInTheDocument()
     expect(screen.queryByText("Warm Up")).not.toBeInTheDocument()
   })
 
   it("shows a sign-in prompt instead of a perpetual loading line when signed out", () => {
-    render(<GoalsPanel quests={[]} streak={{ current: 0, best: 0, lastDay: "" }} signedIn={false} />)
+    render(
+      <GoalsPanel
+        quests={[]}
+        streak={{ current: 0, best: 0, lastDay: "" }}
+        signedIn={false}
+      />,
+    )
     expect(screen.getByText(/sign in to track your goals/i)).toBeInTheDocument()
     expect(screen.queryByText(/loading your goals/i)).not.toBeInTheDocument()
   })

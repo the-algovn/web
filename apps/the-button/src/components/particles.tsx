@@ -6,7 +6,13 @@ export interface Particle {
   y: number
 }
 
-const PARTICLE_SHADES = ["#00ff88", "#00cc6a", "#00994d", "#00663a", "#00331a"] as const
+const PARTICLE_SHADES = [
+  "#00ff88",
+  "#00cc6a",
+  "#00994d",
+  "#00663a",
+  "#00331a",
+] as const
 
 function prefersReducedMotion(): boolean {
   return (
@@ -22,10 +28,10 @@ export function useParticles() {
   const emit = useCallback((x: number, y: number) => {
     if (prefersReducedMotion()) return
     const id = nextId.current++
-    setParticles(prev => [...prev, { id, x, y }])
+    setParticles((prev) => [...prev, { id, x, y }])
   }, [])
   const remove = useCallback((id: number) => {
-    setParticles(prev => prev.filter(p => p.id !== id))
+    setParticles((prev) => prev.filter((p) => p.id !== id))
   }, [])
   return { particles, emit, remove }
 }
@@ -39,7 +45,7 @@ export function ParticleLayer({
 }) {
   return (
     <div className="pointer-events-none fixed inset-0 z-50" aria-hidden>
-      {particles.map(p => (
+      {particles.map((p) => (
         <span
           key={p.id}
           onAnimationEnd={() => onDone(p.id)}

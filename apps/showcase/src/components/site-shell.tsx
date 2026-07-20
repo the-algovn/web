@@ -1,5 +1,7 @@
 "use client"
 
+import { AppShell, type AppShellNavGroup } from "@algovn/ui/app-shell"
+import { ThemeToggle } from "@algovn/ui/theme-toggle"
 import {
   BarChart3,
   FileInput,
@@ -12,19 +14,25 @@ import {
   PanelTop,
   Table,
 } from "lucide-react"
-import { AppShell, type AppShellNavGroup } from "@algovn/ui/app-shell"
-import { ThemeToggle } from "@algovn/ui/theme-toggle"
 
 const navigation: AppShellNavGroup[] = [
   { label: "Overview", items: [{ title: "Home", href: "/", icon: Home }] },
   {
     label: "Components",
     items: [
-      { title: "Buttons", href: "/components/buttons", icon: MousePointerClick },
+      {
+        title: "Buttons",
+        href: "/components/buttons",
+        icon: MousePointerClick,
+      },
       { title: "Inputs", href: "/components/inputs", icon: FileInput },
       { title: "Overlays", href: "/components/overlays", icon: PanelTop },
       { title: "Navigation", href: "/components/navigation", icon: Navigation },
-      { title: "Data Display", href: "/components/data-display", icon: LayoutList },
+      {
+        title: "Data Display",
+        href: "/components/data-display",
+        icon: LayoutList,
+      },
       { title: "Feedback", href: "/components/feedback", icon: MessageSquare },
       { title: "Composites", href: "/components/composites", icon: Layers },
     ],
@@ -42,7 +50,11 @@ const navigation: AppShellNavGroup[] = [
 export function SiteShell({ children }: { children: React.ReactNode }) {
   return (
     <AppShell
-      brand={<span className="font-mono text-sm font-semibold tracking-tight">algovn/ui</span>}
+      brand={
+        <span className="font-mono text-sm font-semibold tracking-tight">
+          algovn/ui
+        </span>
+      }
       navigation={navigation}
       headerRight={<ThemeToggle />}
     >

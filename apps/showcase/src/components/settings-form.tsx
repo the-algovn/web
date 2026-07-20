@@ -1,11 +1,13 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm, useWatch } from "react-hook-form"
-import { toast } from "sonner"
-import { z } from "zod"
 import { Button } from "@algovn/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@algovn/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@algovn/ui/card"
 import {
   Form,
   FormControl,
@@ -25,6 +27,10 @@ import {
 } from "@algovn/ui/select"
 import { Switch } from "@algovn/ui/switch"
 import { Textarea } from "@algovn/ui/textarea"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm, useWatch } from "react-hook-form"
+import { toast } from "sonner"
+import { z } from "zod"
 
 const TIMEZONES = [
   { value: "utc", label: "UTC" },
@@ -115,7 +121,9 @@ export function SettingsForm() {
                   <FormControl>
                     <Textarea placeholder="Tell us about yourself" {...field} />
                   </FormControl>
-                  <FormDescription>{160 - bio.length} characters remaining</FormDescription>
+                  <FormDescription>
+                    {160 - bio.length} characters remaining
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -127,10 +135,15 @@ export function SettingsForm() {
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
                     <FormLabel className="!mt-0">Email alerts</FormLabel>
-                    <FormDescription>Get notified about account activity.</FormDescription>
+                    <FormDescription>
+                      Get notified about account activity.
+                    </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}

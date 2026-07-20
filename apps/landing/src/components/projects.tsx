@@ -1,7 +1,13 @@
-import Link from "next/link"
 import { Badge } from "@algovn/ui/badge"
-import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "@algovn/ui/card"
-import { apps, type AppTile } from "@/config/apps"
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@algovn/ui/card"
+import Link from "next/link"
+import { type AppTile, apps } from "@/config/apps"
 
 function ProjectCard({ app }: { app: AppTile }) {
   return (
@@ -11,7 +17,10 @@ function ProjectCard({ app }: { app: AppTile }) {
         <CardDescription>{app.description}</CardDescription>
         {app.status === "soon" && (
           <CardAction>
-            <Badge variant="outline" className="rounded-none tracking-widest uppercase">
+            <Badge
+              variant="outline"
+              className="rounded-none tracking-widest uppercase"
+            >
               soon
             </Badge>
           </CardAction>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
+import type { Session } from "./commands"
 import { complete } from "./completion"
 import { createFilesystem } from "./filesystem"
-import type { Session } from "./commands"
 
 const fs = createFilesystem()
 const fresh = (): Session => ({ planSeen: false, unknownHinted: false })
@@ -40,7 +40,9 @@ describe("file completion", () => {
 
   it("completes directories with a trailing slash and descends", () => {
     expect(complete("ls proj", fs, fresh())).toBe("ls projects/")
-    expect(complete("cat projects/the", fs, fresh())).toBe("cat projects/the-button")
+    expect(complete("cat projects/the", fs, fresh())).toBe(
+      "cat projects/the-button",
+    )
   })
 
   it("completes dotfiles only once the dot is typed", () => {

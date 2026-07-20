@@ -65,12 +65,14 @@ export const ACHIEVEMENT_CATALOG: CatalogEntry[] = [
   {
     id: "night",
     title: "3am Rebellion",
-    description: "A batch between 03:00 and 03:59 in Ho Chi Minh City. Go to sleep. After one more.",
+    description:
+      "A batch between 03:00 and 03:59 in Ho Chi Minh City. Go to sleep. After one more.",
   },
   {
     id: "lunch",
     title: "Lunch Break Rebel",
-    description: "A batch during the 12:00 lunch hour, Ho Chi Minh time. Productivity is a construct.",
+    description:
+      "A batch during the 12:00 lunch hour, Ho Chi Minh time. Productivity is a construct.",
   },
 ]
 
@@ -88,12 +90,16 @@ export const MILESTONE_CATALOG: { threshold: number; title: string }[] = [
 // server title/description and falling back to the static copy only for ids
 // the two lists happen to share. Absent or empty (signed out, or the fetch
 // failed/hasn't landed) falls back to the static 12-entry offline catalog.
-export function mergeCatalog(server: Achievement[] | undefined): CatalogEntry[] {
+export function mergeCatalog(
+  server: Achievement[] | undefined,
+): CatalogEntry[] {
   if (!server || server.length === 0) {
-    return ACHIEVEMENT_CATALOG.map(entry => ({ ...entry }))
+    return ACHIEVEMENT_CATALOG.map((entry) => ({ ...entry }))
   }
-  const staticById = new Map(ACHIEVEMENT_CATALOG.map(entry => [entry.id, entry]))
-  return server.map(s => {
+  const staticById = new Map(
+    ACHIEVEMENT_CATALOG.map((entry) => [entry.id, entry]),
+  )
+  return server.map((s) => {
     const id = s.id ?? ""
     const fallback = staticById.get(id)
     return {

@@ -1,14 +1,14 @@
 "use client"
 
-import * as React from "react"
-import { CircleAlert, CircleCheck } from "lucide-react"
-import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@algovn/ui/alert"
 import { Button } from "@algovn/ui/button"
 import { PageHeader } from "@algovn/ui/page-header"
 import { Progress } from "@algovn/ui/progress"
 import { Skeleton } from "@algovn/ui/skeleton"
 import { Spinner } from "@algovn/ui/spinner"
+import { CircleAlert, CircleCheck } from "lucide-react"
+import * as React from "react"
+import { toast } from "sonner"
 import { Demo } from "@/components/demo"
 
 function fakePromise() {
@@ -31,17 +31,24 @@ function AnimatedProgressDemo() {
 export default function FeedbackPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <PageHeader title="Feedback" description="Alerts, toasts, progress and loading states." />
+      <PageHeader
+        title="Feedback"
+        description="Alerts, toasts, progress and loading states."
+      />
       <Demo title="Alert" className="flex-col items-stretch">
         <Alert>
           <CircleCheck />
           <AlertTitle>Success! Your changes have been saved</AlertTitle>
-          <AlertDescription>This is an alert with icon, title and description.</AlertDescription>
+          <AlertDescription>
+            This is an alert with icon, title and description.
+          </AlertDescription>
         </Alert>
         <Alert variant="destructive">
           <CircleAlert />
           <AlertTitle>Unable to process your payment</AlertTitle>
-          <AlertDescription>Please verify your billing information and try again.</AlertDescription>
+          <AlertDescription>
+            Please verify your billing information and try again.
+          </AlertDescription>
         </Alert>
       </Demo>
       <Demo title="Toast (sonner)">

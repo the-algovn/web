@@ -3,7 +3,11 @@ import { createNowPlayingSync } from "../nowplaying-sync"
 import type { NowPlaying } from "../radio-client"
 
 const at = (title: string, startedAt: string): NowPlaying => ({
-  kind: "track", title, startedAt, durationSeconds: 100, listeners: 5,
+  kind: "track",
+  title,
+  startedAt,
+  durationSeconds: 100,
+  listeners: 5,
 })
 const ms = (s: string) => new Date(s).getTime()
 

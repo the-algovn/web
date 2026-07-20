@@ -16,10 +16,16 @@ describe("ProgressBar", () => {
     render(<ProgressBar total={1_204_882} />)
     expect(screen.getByText("PROGRESS")).toBeInTheDocument()
     expect(screen.getByText("12.0%")).toBeInTheDocument()
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "12")
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "12",
+    )
   })
   it("renders an empty bar when the total is unknown", () => {
     render(<ProgressBar total={null} />)
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0")
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    )
   })
 })

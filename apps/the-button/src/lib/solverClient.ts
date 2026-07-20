@@ -23,7 +23,9 @@ export interface WorkerSolver extends Solver {
 }
 
 export function createWorkerSolver(): WorkerSolver {
-  const worker = new Worker(new URL("../worker/solver.ts", import.meta.url), { type: "module" })
+  const worker = new Worker(new URL("../worker/solver.ts", import.meta.url), {
+    type: "module",
+  })
   let nextJobId = 1
   const pending = new Map<
     number,
@@ -48,10 +50,18 @@ export function createWorkerSolver(): WorkerSolver {
 
   return {
     async solve(input: SolveInput): Promise<SolverResult> {
-      return (await request({ type: "solve", jobId: nextJobId++, ...input })) as SolverResult
+      return (await request({
+        type: "solve",
+        jobId: nextJobId++,
+        ...input,
+      })) as SolverResult
     },
     async bench(durationMs: number): Promise<number> {
-      const msg = (await request({ type: "bench", jobId: nextJobId++, durationMs })) as BenchResult
+      const msg = (await request({
+        type: "bench",
+        jobId: nextJobId++,
+        durationMs,
+      })) as BenchResult
       return msg.hashesPerSecond
     },
     terminate(): void {

@@ -7,7 +7,13 @@ const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: "stats", icon: "📊", label: "STATS" },
 ]
 
-export function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
+export function TabBar({
+  active,
+  onChange,
+}: {
+  active: Tab
+  onChange: (t: Tab) => void
+}) {
   return (
     <nav className="tb-tabbar" aria-label="sections">
       {TABS.map((t) => (
@@ -16,7 +22,7 @@ export function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) =
           type="button"
           aria-current={active === t.id}
           onClick={() => onChange(t.id)}
-          className={"tb-tab " + (active === t.id ? "tb-tab-on" : "")}
+          className={`tb-tab ${active === t.id ? "tb-tab-on" : ""}`}
         >
           <span className="tb-tab-ic" aria-hidden>
             {t.icon}

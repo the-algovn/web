@@ -1,16 +1,26 @@
 import type { QuestProgress } from "../lib/api"
 
 function QuestRow({ quest }: { quest: QuestProgress }) {
-  const pct = quest.target > 0 ? Math.min(100, (quest.progress / quest.target) * 100) : 0
+  const pct =
+    quest.target > 0 ? Math.min(100, (quest.progress / quest.target) * 100) : 0
   return (
-    <li className={"tb-box tb-card flex flex-col gap-2 p-4 text-left " + (quest.done ? "tb-achieved" : "")}>
+    <li
+      className={
+        "tb-box tb-card flex flex-col gap-2 p-4 text-left " +
+        (quest.done ? "tb-achieved" : "")
+      }
+    >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-primary font-bold tracking-wide">{quest.title}</span>
+        <span className="text-primary font-bold tracking-wide">
+          {quest.title}
+        </span>
         <span className="text-muted-foreground font-mono text-xs tabular-nums">
           {quest.progress}/{quest.target}
         </span>
       </div>
-      <p className="text-foreground text-sm leading-snug italic">{quest.description}</p>
+      <p className="text-foreground text-sm leading-snug italic">
+        {quest.description}
+      </p>
       <div className="bg-border h-1 w-full overflow-hidden">
         <div
           role="progressbar"
@@ -44,7 +54,9 @@ export function GoalsPanel({
   return (
     <section aria-label="streak and quests" className="tb-box p-4 text-left">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-muted-foreground font-mono text-sm">{"// streak & quests"}</h2>
+        <h2 className="text-muted-foreground font-mono text-sm">
+          {"// streak & quests"}
+        </h2>
         <span className="tb-chip tb-chip-streak">
           🔥 <b>{streak.current}</b>d
           <span className="text-muted-foreground">best {streak.best}d</span>
@@ -53,13 +65,17 @@ export function GoalsPanel({
 
       {quests.length === 0 ? (
         <p className="text-muted-foreground font-mono text-xs">
-          {signedIn ? "loading your goals…" : "sign in to track your goals & streak"}
+          {signedIn
+            ? "loading your goals…"
+            : "sign in to track your goals & streak"}
         </p>
       ) : (
         <>
           {daily.length > 0 && (
             <div className="mb-4">
-              <h3 className="text-muted-foreground mb-2 font-mono text-xs tracking-wider uppercase">daily</h3>
+              <h3 className="text-muted-foreground mb-2 font-mono text-xs tracking-wider uppercase">
+                daily
+              </h3>
               <ul className="flex flex-col gap-3">
                 {daily.map((quest) => (
                   <QuestRow key={quest.id} quest={quest} />
@@ -69,7 +85,9 @@ export function GoalsPanel({
           )}
           {weekly.length > 0 && (
             <div>
-              <h3 className="text-muted-foreground mb-2 font-mono text-xs tracking-wider uppercase">weekly</h3>
+              <h3 className="text-muted-foreground mb-2 font-mono text-xs tracking-wider uppercase">
+                weekly
+              </h3>
               <ul className="flex flex-col gap-3">
                 {weekly.map((quest) => (
                   <QuestRow key={quest.id} quest={quest} />

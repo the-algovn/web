@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { comboXpBonus, createCombo, labelForHeat, multiplierForHeat } from "../combo"
+import {
+  comboXpBonus,
+  createCombo,
+  labelForHeat,
+  multiplierForHeat,
+} from "../combo"
 
 describe("combo heat model", () => {
   it("maps heat 0..100 to multiplier x1..x5", () => {
@@ -34,8 +39,8 @@ describe("createCombo", () => {
 
   it("decays toward idle over time", () => {
     const c = createCombo({ heatPerPress: 100, decayPerMs: 0.1 })
-    c.press(0)                 // heat 100
-    const s = c.tick(500)      // 500ms * 0.1 = 50 decay
+    c.press(0) // heat 100
+    const s = c.tick(500) // 500ms * 0.1 = 50 decay
     expect(s.heat).toBeCloseTo(50, 5)
     const idle = c.tick(100_000)
     expect(idle.heat).toBe(0)

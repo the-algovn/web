@@ -6,10 +6,13 @@ export const env = {
   // the-button-web public client in the-thing project (Zitadel).
   oidcClientId: import.meta.env.VITE_OIDC_CLIENT_ID ?? "381980626372329841",
   apiBase: import.meta.env.VITE_API_BASE ?? "https://api.algovn.com/the-button",
-  eventsUrl: import.meta.env.VITE_EVENTS_URL ?? "https://api.algovn.com/events/the-button.counter",
+  eventsUrl:
+    import.meta.env.VITE_EVENTS_URL ??
+    "https://api.algovn.com/events/the-button.counter",
   eventsLeaderboardUrl:
     import.meta.env.VITE_EVENTS_LEADERBOARD_URL ??
     "https://api.algovn.com/events/the-button.leaderboard",
   eventsPlayerUrl:
-    import.meta.env.VITE_EVENTS_PLAYER_URL ?? "https://api.algovn.com/events/the-button.user",
+    import.meta.env.VITE_EVENTS_PLAYER_URL ??
+    "https://api.algovn.com/events/the-button.user",
 }

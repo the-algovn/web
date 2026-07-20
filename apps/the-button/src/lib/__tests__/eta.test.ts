@@ -3,7 +3,12 @@ import { createEtaEstimator, formatEta } from "../eta"
 
 function clock(start = 0) {
   let t = start
-  return { now: () => t, advance: (ms: number) => { t += ms } }
+  return {
+    now: () => t,
+    advance: (ms: number) => {
+      t += ms
+    },
+  }
 }
 
 describe("createEtaEstimator", () => {
@@ -16,7 +21,11 @@ describe("createEtaEstimator", () => {
 
   it("projects time-to-target from a steady rate", () => {
     const c = clock()
-    const est = createEtaEstimator({ target: 1_000_000, tauMs: 1_000, now: c.now })
+    const est = createEtaEstimator({
+      target: 1_000_000,
+      tauMs: 1_000,
+      now: c.now,
+    })
     est.sample(0)
     c.advance(1_000)
     est.sample(1_000) // 1,000 clicks in 1s => 1,000/s

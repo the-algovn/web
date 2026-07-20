@@ -1,9 +1,8 @@
 "use client"
 
-import * as React from "react"
-import { Progress as ProgressPrimitive } from "radix-ui"
-
 import { cn } from "@algovn/ui/lib/utils"
+import { Progress as ProgressPrimitive } from "radix-ui"
+import type * as React from "react"
 
 function Progress({
   className,
@@ -15,7 +14,7 @@ function Progress({
       data-slot="progress"
       className={cn(
         "relative h-2 w-full overflow-hidden rounded-full bg-primary/20",
-        className
+        className,
       )}
       {...props}
     >

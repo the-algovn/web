@@ -12,6 +12,9 @@ describe("ComboMeter", () => {
   it("sizes the heat bar and exposes a heat band for styling", () => {
     render(<ComboMeter multiplier={5} heat={100} label="on fire" />)
     expect(screen.getByTestId("combo-heat")).toHaveStyle({ width: "100%" })
-    expect(screen.getByTestId("combo-value")).toHaveAttribute("data-heat", "hot")
+    expect(screen.getByTestId("combo-value")).toHaveAttribute(
+      "data-heat",
+      "hot",
+    )
   })
 })

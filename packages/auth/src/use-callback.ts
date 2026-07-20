@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react"
 // remount the app and lose whatever in-flight state it holds.
 export function useSignInCallback(
   complete: () => Promise<unknown>,
-  onDone: () => void
+  onDone: () => void,
 ): { error: string | null } {
   const [error, setError] = useState<string | null>(null)
   const started = useRef(false)
@@ -14,7 +14,9 @@ export function useSignInCallback(
     started.current = true
     complete()
       .then(() => onDone())
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err: unknown) =>
+        setError(err instanceof Error ? err.message : String(err)),
+      )
   }, [complete, onDone])
   return { error }
 }

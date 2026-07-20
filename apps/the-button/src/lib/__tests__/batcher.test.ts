@@ -8,7 +8,9 @@ import {
 import { Batcher } from "../batcher"
 import type { Solver } from "../solverClient"
 
-const challenge = (over: Partial<IssueChallengeResponse> = {}): IssueChallengeResponse => ({
+const challenge = (
+  over: Partial<IssueChallengeResponse> = {},
+): IssueChallengeResponse => ({
   challenge: "chal-1",
   workFactor: "16384",
   minIntervalSeconds: 2,
@@ -28,11 +30,16 @@ function makeDeps() {
     })),
   }
   const api = {
-    issueChallenge: vi.fn(async (_clicks: number, _token: string) => challenge()),
+    issueChallenge: vi.fn(async (_clicks: number, _token: string) =>
+      challenge(),
+    ),
     submitClicks: vi.fn(
-      async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => ({
+      async (
+        _req: SubmitClicksRequest,
+        _token: string,
+      ): Promise<SubmitClicksResponse> => ({
         nextChallenge: challenge({ challenge: "chal-2" }),
-      })
+      }),
     ),
   }
   return { solver, api }
@@ -57,9 +64,12 @@ function makeDepsWithBench(hashRatePerSecond: number, workFactor: string) {
   const api = {
     issueChallenge: vi.fn(async (_clicks: number, _token: string) => chal),
     submitClicks: vi.fn(
-      async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => ({
+      async (
+        _req: SubmitClicksRequest,
+        _token: string,
+      ): Promise<SubmitClicksResponse> => ({
         nextChallenge: chal,
-      })
+      }),
     ),
   }
   return { solver, api }
@@ -80,10 +90,14 @@ it("issues, solves and submits a single click, then keeps the piggybacked challe
   b.click()
   await vi.advanceTimersByTimeAsync(10)
   expect(api.issueChallenge).toHaveBeenCalledWith(1, "tok")
-  expect(solver.solve).toHaveBeenCalledWith({ challenge: "chal-1", clickCount: 1, workFactor: "16384" })
+  expect(solver.solve).toHaveBeenCalledWith({
+    challenge: "chal-1",
+    clickCount: 1,
+    workFactor: "16384",
+  })
   expect(api.submitClicks).toHaveBeenCalledWith(
     { challenge: "chal-1", nonce: "42", clickCount: 1 },
-    "tok"
+    "tok",
   )
   expect(onPendingChange).toHaveBeenLastCalledWith(0)
 
@@ -97,14 +111,16 @@ it("issues, solves and submits a single click, then keeps the piggybacked challe
   expect(api.issueChallenge).toHaveBeenCalledTimes(1) // no re-issue
   expect(api.submitClicks).toHaveBeenLastCalledWith(
     { challenge: "chal-2", nonce: "42", clickCount: 2 },
-    "tok"
+    "tok",
   )
 })
 
 it("honors Retry-After on 429 and resubmits the SAME solved batch", async () => {
   const { solver, api } = makeDeps()
   api.submitClicks
-    .mockRejectedValueOnce(new ApiError(429, "ResourceExhausted", "slow down", 5))
+    .mockRejectedValueOnce(
+      new ApiError(429, "ResourceExhausted", "slow down", 5),
+    )
     .mockResolvedValueOnce({
       nextChallenge: challenge({ challenge: "chal-2" }),
     })
@@ -138,7 +154,7 @@ it("re-issues and re-solves after a 409 replay", async () => {
   expect(solver.solve).toHaveBeenCalledTimes(2)
   expect(api.submitClicks).toHaveBeenLastCalledWith(
     { challenge: "chal-1b", nonce: "42", clickCount: 1 },
-    "tok"
+    "tok",
   )
 })
 
@@ -148,7 +164,9 @@ it("re-issues after a 400 expired challenge", async () => {
     .mockResolvedValueOnce(challenge())
     .mockResolvedValueOnce(challenge({ challenge: "chal-1b" }))
   api.submitClicks
-    .mockRejectedValueOnce(new ApiError(400, "FailedPrecondition", "challenge_expired"))
+    .mockRejectedValueOnce(
+      new ApiError(400, "FailedPrecondition", "challenge_expired"),
+    )
     .mockResolvedValueOnce({ nextChallenge: undefined })
   const b = new Batcher({ api, solver, getToken: () => "tok" })
   b.click()
@@ -247,10 +265,17 @@ it("never sizes a batch below 1 click, even under an absurd work_factor", async 
 it("overlaps the proof-of-work solve with the min-interval wait instead of adding them", async () => {
   const { api } = makeDeps()
   const solve: Solver["solve"] = () =>
-    new Promise(resolve => {
+    new Promise((resolve) => {
       setTimeout(
-        () => resolve({ type: "result", jobId: 1, nonce: "42", hashes: 1, elapsedMs: 300 }),
-        300
+        () =>
+          resolve({
+            type: "result",
+            jobId: 1,
+            nonce: "42",
+            hashes: 1,
+            elapsedMs: 300,
+          }),
+        300,
       )
     })
   const solver: Solver = { solve: vi.fn(solve) }
@@ -274,10 +299,17 @@ it("overlaps the proof-of-work solve with the min-interval wait instead of addin
 it("does not fold clicks that arrive during an in-flight solve into that batch", async () => {
   const { api } = makeDeps()
   const solve: Solver["solve"] = () =>
-    new Promise(resolve => {
+    new Promise((resolve) => {
       setTimeout(
-        () => resolve({ type: "result", jobId: 1, nonce: "42", hashes: 1, elapsedMs: 300 }),
-        300
+        () =>
+          resolve({
+            type: "result",
+            jobId: 1,
+            nonce: "42",
+            hashes: 1,
+            elapsedMs: 300,
+          }),
+        300,
       )
     })
   const solver: Solver = { solve: vi.fn(solve) }
@@ -315,7 +347,9 @@ it("discards the batch entirely on a 502 outcome-unknown response, never re-queu
     .mockResolvedValueOnce(challenge())
     .mockResolvedValueOnce(challenge({ challenge: "chal-2" }))
   api.submitClicks
-    .mockRejectedValueOnce(new ApiError(502, "Unavailable", "upstream unavailable"))
+    .mockRejectedValueOnce(
+      new ApiError(502, "Unavailable", "upstream unavailable"),
+    )
     .mockResolvedValueOnce({
       nextChallenge: challenge({ challenge: "chal-3" }),
     })
@@ -336,7 +370,7 @@ it("discards the batch entirely on a 502 outcome-unknown response, never re-queu
   expect(api.issueChallenge).toHaveBeenCalledTimes(2)
   expect(api.submitClicks).toHaveBeenLastCalledWith(
     { challenge: "chal-2", nonce: "42", clickCount: 1 },
-    "tok"
+    "tok",
   )
 })
 
@@ -362,16 +396,27 @@ it("reports a stall when clicks sit pending for 10s, and clears it when one land
   const { solver } = makeDeps()
   let down = true
   const api = {
-    issueChallenge: vi.fn(async (_clicks: number, _token: string) => challenge()),
+    issueChallenge: vi.fn(async (_clicks: number, _token: string) =>
+      challenge(),
+    ),
     submitClicks: vi.fn(
-      async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => {
+      async (
+        _req: SubmitClicksRequest,
+        _token: string,
+      ): Promise<SubmitClicksResponse> => {
         if (down) throw new Error("network down")
         return { nextChallenge: challenge() }
-      }
+      },
     ),
   }
   const onStallChange = vi.fn()
-  const b = new Batcher({ api, solver, getToken: () => "tok", onStallChange, onError: () => {} })
+  const b = new Batcher({
+    api,
+    solver,
+    getToken: () => "tok",
+    onStallChange,
+    onError: () => {},
+  })
 
   b.click()
   await vi.advanceTimersByTimeAsync(9_000)
@@ -401,14 +446,28 @@ it("clears the stall hint immediately when a 502 discards the last pending click
   const { solver } = makeDeps()
   let mode: "fail" | "502" = "fail"
   const api = {
-    issueChallenge: vi.fn(async (_clicks: number, _token: string) => challenge()),
-    submitClicks: vi.fn(async (_req: SubmitClicksRequest, _token: string): Promise<SubmitClicksResponse> => {
-      if (mode === "502") throw new ApiError(502, "Unavailable", "upstream unavailable")
-      throw new Error("network down")
-    }),
+    issueChallenge: vi.fn(async (_clicks: number, _token: string) =>
+      challenge(),
+    ),
+    submitClicks: vi.fn(
+      async (
+        _req: SubmitClicksRequest,
+        _token: string,
+      ): Promise<SubmitClicksResponse> => {
+        if (mode === "502")
+          throw new ApiError(502, "Unavailable", "upstream unavailable")
+        throw new Error("network down")
+      },
+    ),
   }
   const onStallChange = vi.fn()
-  const b = new Batcher({ api, solver, getToken: () => "tok", onStallChange, onError: () => {} })
+  const b = new Batcher({
+    api,
+    solver,
+    getToken: () => "tok",
+    onStallChange,
+    onError: () => {},
+  })
 
   // generic failures keep the click pending; after 10s the stall hint shows
   b.click()

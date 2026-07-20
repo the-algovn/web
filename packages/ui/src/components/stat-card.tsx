@@ -1,6 +1,6 @@
-import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react"
 import { Card, CardContent } from "@algovn/ui/card"
 import { cn } from "@algovn/ui/lib/utils"
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react"
 
 export interface StatCardProps {
   title: string
@@ -23,7 +23,14 @@ const deltaIcons = {
   flat: Minus,
 } as const
 
-export function StatCard({ title, value, delta, description, icon, className }: StatCardProps) {
+export function StatCard({
+  title,
+  value,
+  delta,
+  description,
+  icon,
+  className,
+}: StatCardProps) {
   const DeltaIcon = delta ? deltaIcons[delta.direction] : null
   return (
     <Card className={className}>
@@ -33,15 +40,24 @@ export function StatCard({ title, value, delta, description, icon, className }: 
           {icon ? <span className="[&>svg]:size-4">{icon}</span> : null}
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-2xl font-semibold tabular-nums tracking-tight">{value}</span>
+          <span className="font-mono text-2xl font-semibold tabular-nums tracking-tight">
+            {value}
+          </span>
           {delta && DeltaIcon ? (
-            <span className={cn("flex items-center gap-0.5 text-sm font-medium", deltaStyles[delta.direction])}>
+            <span
+              className={cn(
+                "flex items-center gap-0.5 text-sm font-medium",
+                deltaStyles[delta.direction],
+              )}
+            >
               <DeltaIcon className="size-3.5" />
               {delta.value}
             </span>
           ) : null}
         </div>
-        {description ? <p className="text-muted-foreground text-xs">{description}</p> : null}
+        {description ? (
+          <p className="text-muted-foreground text-xs">{description}</p>
+        ) : null}
       </CardContent>
     </Card>
   )

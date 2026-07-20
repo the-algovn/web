@@ -11,16 +11,25 @@ export interface SseChannelOptions<T> {
   onEvent: (value: T) => void
   onModeChange?: (mode: SseMode) => void
   createEventSource?: (url: string) => EventSource
-  poll?: { fetch: () => Promise<T>; baseMs?: number; jitterMs?: number; failuresBeforePolling?: number }
+  poll?: {
+    fetch: () => Promise<T>
+    baseMs?: number
+    jitterMs?: number
+    failuresBeforePolling?: number
+  }
   random?: () => number
 }
 
 const RECONNECT_CAP_START_MS = 5_000
 const RECONNECT_CAP_MAX_MS = 60_000
 
-export function createSseChannel<T>(opts: SseChannelOptions<T>): { start(): void; stop(): void } {
+export function createSseChannel<T>(opts: SseChannelOptions<T>): {
+  start(): void
+  stop(): void
+} {
   const random = opts.random ?? Math.random
-  const create = opts.createEventSource ?? ((url: string) => new EventSource(url))
+  const create =
+    opts.createEventSource ?? ((url: string) => new EventSource(url))
   const failuresBeforePolling = opts.poll?.failuresBeforePolling ?? 3
   const pollBase = opts.poll?.baseMs ?? 10_000
   const pollJitter = opts.poll?.jitterMs ?? 3_000
@@ -34,10 +43,16 @@ export function createSseChannel<T>(opts: SseChannelOptions<T>): { start(): void
 
   function stopPolling() {
     polling = false
-    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null }
+    if (pollTimer) {
+      clearTimeout(pollTimer)
+      pollTimer = null
+    }
   }
   function disconnect() {
-    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer)
+      reconnectTimer = null
+    }
     stopPolling()
     es?.close()
     es = null
@@ -49,9 +64,13 @@ export function createSseChannel<T>(opts: SseChannelOptions<T>): { start(): void
         const v = await opts.poll.fetch()
         if (!polling || stopped) return
         opts.onEvent(v)
-      } catch { /* best effort */ }
+      } catch {
+        /* best effort */
+      }
       const delay = pollBase + (random() * 2 - 1) * pollJitter
-      await new Promise<void>(res => { pollTimer = setTimeout(res, delay) })
+      await new Promise<void>((res) => {
+        pollTimer = setTimeout(res, delay)
+      })
       pollTimer = null
     }
   }
@@ -62,14 +81,24 @@ export function createSseChannel<T>(opts: SseChannelOptions<T>): { start(): void
     void pollLoop()
   }
   function scheduleReconnect() {
-    const cap = Math.min(RECONNECT_CAP_START_MS * 2 ** (failures - 1), RECONNECT_CAP_MAX_MS)
-    reconnectTimer = setTimeout(() => { reconnectTimer = null; connect() }, random() * cap)
+    const cap = Math.min(
+      RECONNECT_CAP_START_MS * 2 ** (failures - 1),
+      RECONNECT_CAP_MAX_MS,
+    )
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null
+      connect()
+    }, random() * cap)
   }
   function connect() {
     const next = create(opts.url)
     es = next
     opts.onModeChange?.(polling ? "polling" : "connecting")
-    next.onopen = () => { failures = 0; stopPolling(); opts.onModeChange?.("live") }
+    next.onopen = () => {
+      failures = 0
+      stopPolling()
+      opts.onModeChange?.("live")
+    }
     next.onmessage = (e: MessageEvent) => {
       const v = opts.parse(String(e.data))
       if (v !== null) opts.onEvent(v)
@@ -87,7 +116,10 @@ export function createSseChannel<T>(opts: SseChannelOptions<T>): { start(): void
   function onVisibility() {
     if (stopped) return
     if (document.visibilityState === "hidden") disconnect()
-    else if (!es && !reconnectTimer) { failures = 0; connect() }
+    else if (!es && !reconnectTimer) {
+      failures = 0
+      connect()
+    }
   }
 
   return {

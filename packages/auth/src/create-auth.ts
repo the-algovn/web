@@ -1,4 +1,4 @@
-import { UserManager, WebStorageStateStore, type User } from "oidc-client-ts"
+import { type User, UserManager, WebStorageStateStore } from "oidc-client-ts"
 import type { AuthConfig } from "./config"
 
 export interface AuthClient {
@@ -12,7 +12,9 @@ const OFFLINE_ACCESS = "offline_access"
 
 // The package owns the mechanism scope; apps declare only identity scopes.
 const withOfflineAccess = (scope: string): string =>
-  scope.split(/\s+/).includes(OFFLINE_ACCESS) ? scope : `${scope} ${OFFLINE_ACCESS}`
+  scope.split(/\s+/).includes(OFFLINE_ACCESS)
+    ? scope
+    : `${scope} ${OFFLINE_ACCESS}`
 
 // Tokens live in shared localStorage, so every open tab arms its own renewal
 // off the same expires_at and can call signinSilent() in the same instant.
@@ -20,7 +22,7 @@ const withOfflineAccess = (scope: string): string =>
 // already-rotated token and can trip the IdP's reuse detection, signing every
 // tab out. Web Locks serialise that across tabs; jsdom (this package's test
 // environment) has no navigator.locks, hence the feature-detect fallback.
-const withRenewLock = <T,>(fn: () => Promise<T>): Promise<T> =>
+const withRenewLock = <T>(fn: () => Promise<T>): Promise<T> =>
   navigator.locks ? navigator.locks.request("algovn-auth-renew", fn) : fn()
 
 // Web Locks are non-reentrant: withRenewLock must be applied exactly once per

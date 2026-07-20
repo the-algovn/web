@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
-import { AchievementsGrid } from "../achievements-grid"
 import type { CatalogEntry } from "../../lib/catalog"
+import { AchievementsGrid } from "../achievements-grid"
 
 describe("AchievementsGrid", () => {
   it("counts against the entries it was given, not a hardcoded 12", () => {
@@ -19,7 +19,11 @@ describe("AchievementsGrid", () => {
 
   it("renders a server-only achievement id that has no static-catalog counterpart", () => {
     const entries: CatalogEntry[] = [
-      { id: "mvh", title: "Minimum Viable Human", description: "You clicked the button." },
+      {
+        id: "mvh",
+        title: "Minimum Viable Human",
+        description: "You clicked the button.",
+      },
       {
         id: "over9000",
         title: "It's Over 9000!",

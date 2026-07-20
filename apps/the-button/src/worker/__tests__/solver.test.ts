@@ -10,11 +10,11 @@ it("decodes base64url without padding", () => {
 it("computes the smooth full target 2^256/(workFactor*count) big-endian", () => {
   // 2^256 / 2^248 = 2^8 = 256 -> bytes ...00 01 00
   const target = computeTarget(1n << 248n, 1)
-  expect(Array.from(target.slice(0, 30)).every(b => b === 0)).toBe(true)
+  expect(Array.from(target.slice(0, 30)).every((b) => b === 0)).toBe(true)
   expect(target[30]).toBe(1)
   expect(target[31]).toBe(0)
   // degenerate divisor: everything qualifies
-  expect(Array.from(computeTarget(1n, 1)).every(b => b === 0xff)).toBe(true)
+  expect(Array.from(computeTarget(1n, 1)).every((b) => b === 0xff)).toBe(true)
 })
 
 it("compares digests as 256-bit big-endian integers", () => {

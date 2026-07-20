@@ -15,7 +15,9 @@ export function MatrixRain({ onDismiss }: { onDismiss: () => void }) {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
     const color =
-      getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() || "#00ff88"
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--primary")
+        .trim() || "#00ff88"
     let columns: number[] = []
     const resize = () => {
       canvas.width = window.innerWidth
@@ -39,7 +41,8 @@ export function MatrixRain({ onDismiss }: { onDismiss: () => void }) {
       columns.forEach((y, i) => {
         const glyph = GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
         ctx.fillText(glyph, i * FONT_SIZE, y * FONT_SIZE)
-        columns[i] = y * FONT_SIZE > canvas.height && Math.random() > 0.975 ? 0 : y + 1
+        columns[i] =
+          y * FONT_SIZE > canvas.height && Math.random() > 0.975 ? 0 : y + 1
       })
     }
     raf = requestAnimationFrame(draw)
@@ -50,6 +53,11 @@ export function MatrixRain({ onDismiss }: { onDismiss: () => void }) {
   }, [])
 
   return (
-    <canvas ref={canvasRef} aria-hidden onClick={onDismiss} className="fixed inset-0 z-50" />
+    <canvas
+      ref={canvasRef}
+      aria-hidden
+      onClick={onDismiss}
+      className="fixed inset-0 z-50"
+    />
   )
 }

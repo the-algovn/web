@@ -3,7 +3,7 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly retryAfterSeconds?: number
+    readonly retryAfterSeconds?: number,
   ) {
     super(message)
     this.name = "ApiError"

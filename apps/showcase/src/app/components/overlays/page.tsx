@@ -1,6 +1,5 @@
 "use client"
 
-import { Info } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,17 +52,45 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@algovn/ui/dropdown-menu"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@algovn/ui/hover-card"
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@algovn/ui/hover-card"
 import { PageHeader } from "@algovn/ui/page-header"
-import { Popover, PopoverContent, PopoverDescription, PopoverTitle, PopoverTrigger } from "@algovn/ui/popover"
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@algovn/ui/sheet"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@algovn/ui/tooltip"
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@algovn/ui/popover"
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@algovn/ui/sheet"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@algovn/ui/tooltip"
+import { Info } from "lucide-react"
 import { Demo } from "@/components/demo"
 
 export default function OverlaysPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <PageHeader title="Overlays" description="Dialogs, sheets, menus and floating panels." />
+      <PageHeader
+        title="Overlays"
+        description="Dialogs, sheets, menus and floating panels."
+      />
       <Demo title="Dialog">
         <Dialog>
           <DialogTrigger asChild>
@@ -72,7 +99,10 @@ export default function OverlaysPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit profile</DialogTitle>
-              <DialogDescription>Make changes to your profile here. Click save when you&apos;re done.</DialogDescription>
+              <DialogDescription>
+                Make changes to your profile here. Click save when you&apos;re
+                done.
+              </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <DialogClose asChild>
@@ -92,13 +122,15 @@ export default function OverlaysPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your account and remove your data from
-                our servers.
+                This action cannot be undone. This will permanently delete your
+                account and remove your data from our servers.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction variant="destructive">Delete</AlertDialogAction>
+              <AlertDialogAction variant="destructive">
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -111,7 +143,10 @@ export default function OverlaysPage() {
           <SheetContent side="right">
             <SheetHeader>
               <SheetTitle>Edit profile</SheetTitle>
-              <SheetDescription>Make changes to your profile here. Click save when you&apos;re done.</SheetDescription>
+              <SheetDescription>
+                Make changes to your profile here. Click save when you&apos;re
+                done.
+              </SheetDescription>
             </SheetHeader>
             <SheetFooter>
               <SheetClose asChild>
@@ -130,7 +165,9 @@ export default function OverlaysPage() {
           <DrawerContent>
             <DrawerHeader>
               <DrawerTitle>Move goal</DrawerTitle>
-              <DrawerDescription>Set your daily activity goal.</DrawerDescription>
+              <DrawerDescription>
+                Set your daily activity goal.
+              </DrawerDescription>
             </DrawerHeader>
             <DrawerFooter>
               <Button>Submit</Button>
@@ -148,7 +185,9 @@ export default function OverlaysPage() {
           </PopoverTrigger>
           <PopoverContent>
             <PopoverTitle>Dimensions</PopoverTitle>
-            <PopoverDescription>Set the dimensions for the layer.</PopoverDescription>
+            <PopoverDescription>
+              Set the dimensions for the layer.
+            </PopoverDescription>
           </PopoverContent>
         </Popover>
       </Demo>
@@ -156,7 +195,11 @@ export default function OverlaysPage() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="icon" variant="outline" aria-label="More information">
+              <Button
+                size="icon"
+                variant="outline"
+                aria-label="More information"
+              >
                 <Info />
               </Button>
             </TooltipTrigger>
@@ -178,7 +221,9 @@ export default function OverlaysPage() {
           </HoverCardTrigger>
           <HoverCardContent>
             <p className="text-sm font-semibold">@the-algovn</p>
-            <p className="text-muted-foreground text-sm">Personal SaaS cluster and open-source design system.</p>
+            <p className="text-muted-foreground text-sm">
+              Personal SaaS cluster and open-source design system.
+            </p>
           </HoverCardContent>
         </HoverCard>
       </Demo>
@@ -192,7 +237,9 @@ export default function OverlaysPage() {
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Billing</DropdownMenuItem>
-            <DropdownMenuCheckboxItem checked>Show status bar</DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked>
+              Show status bar
+            </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>

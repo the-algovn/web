@@ -1,5 +1,14 @@
 "use client"
 
+import { Card, CardContent, CardHeader, CardTitle } from "@algovn/ui/card"
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@algovn/ui/chart"
 import {
   Area,
   AreaChart,
@@ -14,15 +23,6 @@ import {
   RadialBarChart,
   XAxis,
 } from "recharts"
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@algovn/ui/chart"
-import { Card, CardContent, CardHeader, CardTitle } from "@algovn/ui/card"
 
 const monthly = [
   { month: "Jan", pnl: 1860, volume: 800 },
@@ -55,7 +55,13 @@ const strategyConfig = {
   other: { label: "Other", color: "var(--chart-5)" },
 } satisfies ChartConfig
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartCard({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) {
   return (
     <Card>
       <CardHeader>
@@ -72,10 +78,27 @@ export function LineDemo() {
       <ChartContainer config={seriesConfig} className="h-64 w-full">
         <LineChart data={monthly} margin={{ left: 12, right: 12 }}>
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+          <XAxis
+            dataKey="month"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+          />
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Line dataKey="pnl" type="monotone" stroke="var(--color-pnl)" strokeWidth={2} dot={false} />
-          <Line dataKey="volume" type="monotone" stroke="var(--color-volume)" strokeWidth={2} dot={false} />
+          <Line
+            dataKey="pnl"
+            type="monotone"
+            stroke="var(--color-pnl)"
+            strokeWidth={2}
+            dot={false}
+          />
+          <Line
+            dataKey="volume"
+            type="monotone"
+            stroke="var(--color-volume)"
+            strokeWidth={2}
+            dot={false}
+          />
         </LineChart>
       </ChartContainer>
     </ChartCard>
@@ -88,9 +111,20 @@ export function AreaDemo() {
       <ChartContainer config={seriesConfig} className="h-64 w-full">
         <AreaChart data={monthly} margin={{ left: 12, right: 12 }}>
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+          <XAxis
+            dataKey="month"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+          />
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Area dataKey="pnl" type="natural" fill="var(--color-pnl)" fillOpacity={0.3} stroke="var(--color-pnl)" />
+          <Area
+            dataKey="pnl"
+            type="natural"
+            fill="var(--color-pnl)"
+            fillOpacity={0.3}
+            stroke="var(--color-pnl)"
+          />
         </AreaChart>
       </ChartContainer>
     </ChartCard>
@@ -103,7 +137,12 @@ export function BarDemo() {
       <ChartContainer config={seriesConfig} className="h-64 w-full">
         <BarChart data={monthly}>
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+          <XAxis
+            dataKey="month"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+          />
           <ChartTooltip content={<ChartTooltipContent />} />
           <ChartLegend content={<ChartLegendContent />} />
           <Bar dataKey="pnl" fill="var(--color-pnl)" radius={4} />
@@ -117,10 +156,18 @@ export function BarDemo() {
 export function PieDemo() {
   return (
     <ChartCard title="Donut">
-      <ChartContainer config={strategyConfig} className="mx-auto h-64 w-full max-w-64">
+      <ChartContainer
+        config={strategyConfig}
+        className="mx-auto h-64 w-full max-w-64"
+      >
         <PieChart>
           <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-          <Pie data={strategies} dataKey="share" nameKey="name" innerRadius={60} />
+          <Pie
+            data={strategies}
+            dataKey="share"
+            nameKey="name"
+            innerRadius={60}
+          />
           <ChartLegend content={<ChartLegendContent nameKey="name" />} />
         </PieChart>
       </ChartContainer>
@@ -131,7 +178,10 @@ export function PieDemo() {
 export function RadialDemo() {
   return (
     <ChartCard title="Radial">
-      <ChartContainer config={strategyConfig} className="mx-auto h-64 w-full max-w-64">
+      <ChartContainer
+        config={strategyConfig}
+        className="mx-auto h-64 w-full max-w-64"
+      >
         <RadialBarChart data={strategies} innerRadius={30} outerRadius={110}>
           <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
           <RadialBar dataKey="share" background />

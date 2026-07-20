@@ -1,9 +1,5 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import * as React from "react"
-import type { LucideIcon } from "lucide-react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -29,6 +25,10 @@ import {
   SidebarTrigger,
 } from "@algovn/ui/sidebar"
 import { Toaster } from "@algovn/ui/sonner"
+import type { LucideIcon } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import * as React from "react"
 
 export interface AppShellNavItem {
   title: string
@@ -52,7 +52,12 @@ function toTitle(segment: string) {
   return segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-export function AppShell({ brand, navigation, headerRight, children }: AppShellProps) {
+export function AppShell({
+  brand,
+  navigation,
+  headerRight,
+  children,
+}: AppShellProps) {
   const pathname = usePathname()
   const segments = pathname.split("/").filter(Boolean)
 
@@ -63,12 +68,17 @@ export function AppShell({ brand, navigation, headerRight, children }: AppShellP
         <SidebarContent>
           {navigation.map((group, i) => (
             <SidebarGroup key={group.label ?? i}>
-              {group.label ? <SidebarGroupLabel>{group.label}</SidebarGroupLabel> : null}
+              {group.label ? (
+                <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              ) : null}
               <SidebarGroupContent>
                 <SidebarMenu>
                   {group.items.map((item) => (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild isActive={pathname === item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === item.href}
+                      >
                         <Link href={item.href}>
                           {item.icon ? <item.icon /> : null}
                           <span>{item.title}</span>

@@ -16,7 +16,10 @@ export function loadComboBonus(storage: Storage = localStorage): number {
   }
 }
 
-export function addComboBonus(delta: number, storage: Storage = localStorage): number {
+export function addComboBonus(
+  delta: number,
+  storage: Storage = localStorage,
+): number {
   const add = Math.max(0, Math.floor(delta))
   const next = Math.min(MAX_COMBO_BONUS, loadComboBonus(storage) + add)
   try {

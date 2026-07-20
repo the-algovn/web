@@ -1,12 +1,13 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2 } from "lucide-react"
-import { useForm } from "react-hook-form"
-import { toast } from "sonner"
-import { z } from "zod"
 import { Button } from "@algovn/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@algovn/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@algovn/ui/card"
 import { Checkbox } from "@algovn/ui/checkbox"
 import {
   Form,
@@ -17,6 +18,11 @@ import {
   FormMessage,
 } from "@algovn/ui/form"
 import { Input } from "@algovn/ui/input"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Loader2 } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { z } from "zod"
 
 const loginSchema = z.object({
   email: z.email("Enter a valid email"),
@@ -79,14 +85,23 @@ export function LoginForm() {
               render={({ field }) => (
                 <FormItem className="flex items-center gap-2">
                   <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                   <FormLabel className="!mt-0">Remember me</FormLabel>
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : null}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? (
+                <Loader2 className="animate-spin" />
+              ) : null}
               Sign in
             </Button>
           </form>

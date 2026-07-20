@@ -21,12 +21,17 @@ function parseRows(v: unknown): Row[] {
   const out: Row[] = []
   for (const r of v) {
     if (
-      r && typeof r === "object" &&
+      r &&
+      typeof r === "object" &&
       typeof (r as Row).rank === "number" &&
       typeof (r as Row).name === "string" &&
       typeof (r as Row).clicks === "number"
     ) {
-      out.push({ rank: (r as Row).rank, name: (r as Row).name, clicks: (r as Row).clicks })
+      out.push({
+        rank: (r as Row).rank,
+        name: (r as Row).name,
+        clicks: (r as Row).clicks,
+      })
     }
   }
   return out
@@ -36,7 +41,10 @@ export function parseLeaderboardEvent(data: string): LeaderboardFrame | null {
   try {
     const raw = JSON.parse(data) as Record<string, unknown>
     if (raw.type !== "leaderboard") return null
-    return { allTime: parseRows(raw.allTime), thisWeek: parseRows(raw.thisWeek) }
+    return {
+      allTime: parseRows(raw.allTime),
+      thisWeek: parseRows(raw.thisWeek),
+    }
   } catch {
     return null
   }
@@ -83,7 +91,8 @@ export class LeaderboardStream {
   }
 
   private connect(): void {
-    const create = this.opts.createEventSource ?? ((url: string) => new EventSource(url))
+    const create =
+      this.opts.createEventSource ?? ((url: string) => new EventSource(url))
     const es = create(this.opts.eventsUrl ?? env.eventsLeaderboardUrl)
     this.es = es
     es.onopen = () => {

@@ -1,23 +1,41 @@
 "use client"
 
-import * as React from "react"
-import { format } from "date-fns"
-import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
 import { Button } from "@algovn/ui/button"
 import { Calendar } from "@algovn/ui/calendar"
 import { Checkbox } from "@algovn/ui/checkbox"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@algovn/ui/command"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@algovn/ui/command"
 import { Input } from "@algovn/ui/input"
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@algovn/ui/input-otp"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@algovn/ui/input-otp"
 import { Label } from "@algovn/ui/label"
 import { cn } from "@algovn/ui/lib/utils"
 import { PageHeader } from "@algovn/ui/page-header"
 import { Popover, PopoverContent, PopoverTrigger } from "@algovn/ui/popover"
 import { RadioGroup, RadioGroupItem } from "@algovn/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@algovn/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@algovn/ui/select"
 import { Slider } from "@algovn/ui/slider"
 import { Switch } from "@algovn/ui/switch"
 import { Textarea } from "@algovn/ui/textarea"
+import { format } from "date-fns"
+import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
+import * as React from "react"
 import { Demo } from "@/components/demo"
 
 const frameworks = [
@@ -36,7 +54,10 @@ function DatePickerDemo() {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={cn("w-56 justify-start text-left font-normal", !date && "text-muted-foreground")}
+          className={cn(
+            "w-56 justify-start text-left font-normal",
+            !date && "text-muted-foreground",
+          )}
         >
           <CalendarIcon />
           {date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -56,8 +77,15 @@ function ComboboxDemo() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className="w-56 justify-between">
-          {value ? frameworks.find((framework) => framework.value === value)?.label : "Select framework..."}
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-56 justify-between"
+        >
+          {value
+            ? frameworks.find((framework) => framework.value === value)?.label
+            : "Select framework..."}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -76,7 +104,11 @@ function ComboboxDemo() {
                     setOpen(false)
                   }}
                 >
-                  <Check className={cn(value === framework.value ? "opacity-100" : "opacity-0")} />
+                  <Check
+                    className={cn(
+                      value === framework.value ? "opacity-100" : "opacity-0",
+                    )}
+                  />
                   {framework.label}
                 </CommandItem>
               ))}
@@ -91,7 +123,10 @@ function ComboboxDemo() {
 export default function InputsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <PageHeader title="Inputs" description="Text, select, date and combobox controls." />
+      <PageHeader
+        title="Inputs"
+        description="Text, select, date and combobox controls."
+      />
       <Demo title="Input">
         <Input className="w-56" />
         <Input className="w-56" placeholder="Email address" />

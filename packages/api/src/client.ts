@@ -9,11 +9,21 @@ export interface ApiClientConfig {
 }
 
 export interface ApiClient {
-  request: <T>(verb: string, path: string, body?: unknown, token?: string) => Promise<T>
+  request: <T>(
+    verb: string,
+    path: string,
+    body?: unknown,
+    token?: string,
+  ) => Promise<T>
 }
 
 export function createApiClient({ baseUrl }: ApiClientConfig): ApiClient {
-  async function request<T>(verb: string, path: string, body?: unknown, token?: string): Promise<T> {
+  async function request<T>(
+    verb: string,
+    path: string,
+    body?: unknown,
+    token?: string,
+  ): Promise<T> {
     const headers: Record<string, string> = {}
     if (token) headers.Authorization = `Bearer ${token}`
     const init: RequestInit = { method: verb, headers }

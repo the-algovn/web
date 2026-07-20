@@ -25,7 +25,11 @@ export function ComboMeter({
         ×{multiplier.toFixed(1)}
       </div>
       <div className="tb-heat">
-        <i data-testid="combo-heat" data-heat={band} style={{ width: `${heat}%` }} />
+        <i
+          data-testid="combo-heat"
+          data-heat={band}
+          style={{ width: `${heat}%` }}
+        />
       </div>
     </div>
   )

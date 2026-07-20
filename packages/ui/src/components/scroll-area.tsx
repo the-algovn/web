@@ -1,9 +1,8 @@
 "use client"
 
-import * as React from "react"
-import { ScrollArea as ScrollAreaPrimitive } from "radix-ui"
-
 import { cn } from "@algovn/ui/lib/utils"
+import { ScrollArea as ScrollAreaPrimitive } from "radix-ui"
+import type * as React from "react"
 
 function ScrollArea({
   className,
@@ -43,7 +42,7 @@ function ScrollBar({
           "h-full w-2.5 border-l border-l-transparent",
         orientation === "horizontal" &&
           "h-2.5 flex-col border-t border-t-transparent",
-        className
+        className,
       )}
       {...props}
     >

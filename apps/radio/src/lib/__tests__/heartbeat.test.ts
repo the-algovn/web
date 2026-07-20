@@ -6,7 +6,10 @@ afterEach(() => vi.useRealTimers())
 describe("sessionId", () => {
   it("persists a stable id in the store", () => {
     const map = new Map<string, string>()
-    const store = { getItem: (k: string) => map.get(k) ?? null, setItem: (k: string, v: string) => void map.set(k, v) }
+    const store = {
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: (k: string, v: string) => void map.set(k, v),
+    }
     let n = 0
     const a = sessionId(store, () => `uuid-${n++}`)
     const b = sessionId(store, () => `uuid-${n++}`)

@@ -1,8 +1,7 @@
-import * as React from "react"
+import { cn } from "@algovn/ui/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
-
-import { cn } from "@algovn/ui/lib/utils"
+import type * as React from "react"
 
 function BubbleGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -38,7 +37,7 @@ const bubbleVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 )
 
 function Bubble({
@@ -75,7 +74,7 @@ function BubbleContent({
       data-slot="bubble-content"
       className={cn(
         "w-fit max-w-full min-w-0 overflow-hidden rounded-xl border border-transparent px-3 py-2 text-sm leading-relaxed wrap-break-word group-data-[align=end]/bubble:self-end [button]:text-left [button,a]:transition-colors [button,a]:outline-none [button,a]:focus-visible:border-ring [button,a]:focus-visible:ring-3 [button,a]:focus-visible:ring-ring/50",
-        className
+        className,
       )}
       {...props}
     />
@@ -99,7 +98,7 @@ const bubbleReactionsVariants = cva(
       side: "bottom",
       align: "end",
     },
-  }
+  },
 )
 
 function BubbleReactions({
@@ -122,4 +121,4 @@ function BubbleReactions({
   )
 }
 
-export { BubbleGroup, Bubble, BubbleContent, BubbleReactions }
+export { Bubble, BubbleContent, BubbleGroup, BubbleReactions }

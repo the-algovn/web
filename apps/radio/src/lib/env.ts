@@ -4,7 +4,8 @@
 export const env = {
   useMock: import.meta.env.VITE_USE_MOCK !== "false",
   streamUrl:
-    import.meta.env.VITE_STREAM_URL ?? "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+    import.meta.env.VITE_STREAM_URL ??
+    "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
   apiBase: import.meta.env.VITE_API_BASE ?? "https://api.algovn.com/radio",
   eventsUrl: import.meta.env.VITE_EVENTS_URL ?? "https://api.algovn.com/events",
 }

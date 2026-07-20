@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { PlayerStream, parseUserFrame, type PlayerStreamOptions, type UserFrame } from "../playerStream"
+import {
+  PlayerStream,
+  type PlayerStreamOptions,
+  parseUserFrame,
+  type UserFrame,
+} from "../playerStream"
 
 function sseStream(chunks: string[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
@@ -11,7 +16,10 @@ function sseStream(chunks: string[]): ReadableStream<Uint8Array> {
   })
 }
 
-function fakeResponse(body: string, opts: { ok?: boolean; status?: number } = {}): Response {
+function fakeResponse(
+  body: string,
+  opts: { ok?: boolean; status?: number } = {},
+): Response {
   return {
     ok: opts.ok ?? true,
     status: opts.status ?? 200,
@@ -21,7 +29,10 @@ function fakeResponse(body: string, opts: { ok?: boolean; status?: number } = {}
 
 // Same as fakeResponse but delivers the body as separate read() chunks, to
 // exercise cross-chunk buffer accumulation.
-function fakeResponseChunks(chunks: string[], opts: { ok?: boolean; status?: number } = {}): Response {
+function fakeResponseChunks(
+  chunks: string[],
+  opts: { ok?: boolean; status?: number } = {},
+): Response {
   return {
     ok: opts.ok ?? true,
     status: opts.status ?? 200,
@@ -35,8 +46,8 @@ function makeStream(overrides: Partial<PlayerStreamOptions> = {}) {
   const stream = new PlayerStream({
     url: "https://api.algovn.com/events/the-button.user",
     getToken: () => "tok-1",
-    onFrame: f => frames.push(f),
-    onError: e => errors.push(e),
+    onFrame: (f) => frames.push(f),
+    onError: (e) => errors.push(e),
     random: () => 0.5,
     ...overrides,
   })
@@ -99,7 +110,10 @@ describe("parseUserFrame", () => {
 
   it("maps a weekly quest kind", () => {
     const first = USER_FRAME_JSON.questProgress[0]!
-    const json = { ...USER_FRAME_JSON, questProgress: [{ ...first, kind: "weekly" }] }
+    const json = {
+      ...USER_FRAME_JSON,
+      questProgress: [{ ...first, kind: "weekly" }],
+    }
     const frame = parseUserFrame(json)
     expect(frame?.questProgress[0]?.kind).toBe("weekly")
   })
@@ -116,14 +130,16 @@ describe("parseUserFrame", () => {
     expect(parseUserFrame({ type: "user" })).toBeNull() // missing streak
     expect(() => parseUserFrame({ type: "user", streak: null })).not.toThrow()
     expect(parseUserFrame({ type: "user", streak: null })).toBeNull()
-    expect(() => parseUserFrame({ type: "user", streak: {}, unlocked: "nope" })).not.toThrow()
+    expect(() =>
+      parseUserFrame({ type: "user", streak: {}, unlocked: "nope" }),
+    ).not.toThrow()
   })
 })
 
 describe("PlayerStream", () => {
   it("streams and normalizes a data frame", async () => {
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
-      fakeResponse(`data: ${JSON.stringify(USER_FRAME_JSON)}\n\n`)
+      fakeResponse(`data: ${JSON.stringify(USER_FRAME_JSON)}\n\n`),
     )
     vi.stubGlobal("fetch", fetchMock)
     const { stream, frames } = makeStream()
@@ -140,10 +156,12 @@ describe("PlayerStream", () => {
     const payload = JSON.stringify(USER_FRAME_JSON, null, 2)
     const sse = payload
       .split("\n")
-      .map(line => `data: ${line}`)
+      .map((line) => `data: ${line}`)
       .join("\n")
       .concat("\n\n")
-    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => fakeResponse(sse))
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
+      fakeResponse(sse),
+    )
     vi.stubGlobal("fetch", fetchMock)
     const { stream, frames } = makeStream()
     stream.start()
@@ -154,7 +172,9 @@ describe("PlayerStream", () => {
 
   it("ignores heartbeat comments and the retry preamble", async () => {
     const sse = `retry: 3000\n\n: ping\n\ndata: ${JSON.stringify(USER_FRAME_JSON)}\n\n: ping\n\n`
-    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => fakeResponse(sse))
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
+      fakeResponse(sse),
+    )
     vi.stubGlobal("fetch", fetchMock)
     const { stream, frames } = makeStream()
     stream.start()
@@ -167,7 +187,7 @@ describe("PlayerStream", () => {
     const frame = `data: ${JSON.stringify(USER_FRAME_JSON)}\n\n`
     const mid = Math.floor(frame.length / 2) // lands inside the JSON payload
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
-      fakeResponseChunks([frame.slice(0, mid), frame.slice(mid)])
+      fakeResponseChunks([frame.slice(0, mid), frame.slice(mid)]),
     )
     vi.stubGlobal("fetch", fetchMock)
     const { stream, frames } = makeStream()
@@ -182,7 +202,7 @@ describe("PlayerStream", () => {
     // chunk 1 ends right after the first "\n" of the "\n\n" terminator; chunk 2
     // is only the second "\n" — the frame boundary itself straddles the read().
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
-      fakeResponseChunks([`${payload}\n`, "\n"])
+      fakeResponseChunks([`${payload}\n`, "\n"]),
     )
     vi.stubGlobal("fetch", fetchMock)
     const { stream, frames } = makeStream()
@@ -194,7 +214,9 @@ describe("PlayerStream", () => {
 
   it("parses a CRLF-framed event (\\r\\n line endings)", async () => {
     const sse = `data: ${JSON.stringify(USER_FRAME_JSON)}\r\n\r\n`
-    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => fakeResponse(sse))
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
+      fakeResponse(sse),
+    )
     vi.stubGlobal("fetch", fetchMock)
     const { stream, frames } = makeStream()
     stream.start()
@@ -204,7 +226,9 @@ describe("PlayerStream", () => {
   })
 
   it("sends the Authorization bearer header from getToken", async () => {
-    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => fakeResponse(""))
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
+      fakeResponse(""),
+    )
     vi.stubGlobal("fetch", fetchMock)
     const { stream } = makeStream({ getToken: () => "secret-tok" })
     stream.start()
@@ -220,7 +244,9 @@ describe("PlayerStream", () => {
 
   it("retries shortly without fetching when getToken returns null", async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => fakeResponse(""))
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
+      fakeResponse(""),
+    )
     vi.stubGlobal("fetch", fetchMock)
     let token: string | null = null
     const { stream } = makeStream({ getToken: () => token })

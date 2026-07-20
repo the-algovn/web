@@ -1,5 +1,5 @@
 export type { AuthConfig } from "./config"
-export { createAuth, type AuthClient } from "./create-auth"
+export { type AuthClient, createAuth } from "./create-auth"
+export { rolesFromToken } from "./roles"
 export { useAuth } from "./use-auth"
 export { useSignInCallback } from "./use-callback"
-export { rolesFromToken } from "./roles"

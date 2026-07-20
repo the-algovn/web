@@ -6,7 +6,11 @@ import { getCounter } from "./api"
 import { env } from "./env"
 
 export type CounterEvent = { type: "counter"; total: number; users?: number }
-export type MilestoneEvent = { type: "milestone"; threshold: number; title: string }
+export type MilestoneEvent = {
+  type: "milestone"
+  threshold: number
+  title: string
+}
 export type LiveEvent = CounterEvent | MilestoneEvent
 
 export type LiveMode = "connecting" | "live" | "polling"
@@ -91,7 +95,8 @@ export class LiveCounter {
   }
 
   private connect(): void {
-    const create = this.opts.createEventSource ?? ((url: string) => new EventSource(url))
+    const create =
+      this.opts.createEventSource ?? ((url: string) => new EventSource(url))
     const es = create(this.opts.eventsUrl ?? env.eventsUrl)
     this.es = es
     this.opts.onModeChange?.(this.polling ? "polling" : "connecting")
@@ -118,7 +123,10 @@ export class LiveCounter {
   }
 
   private scheduleReconnect(): void {
-    const cap = Math.min(RECONNECT_CAP_START_MS * 2 ** (this.failures - 1), RECONNECT_CAP_MAX_MS)
+    const cap = Math.min(
+      RECONNECT_CAP_START_MS * 2 ** (this.failures - 1),
+      RECONNECT_CAP_MAX_MS,
+    )
     const random = this.opts.random ?? Math.random
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
@@ -144,7 +152,8 @@ export class LiveCounter {
   private async pollLoop(): Promise<void> {
     const random = this.opts.random ?? Math.random
     const fetchTotal =
-      this.opts.fetchTotal ?? (async () => Number((await getCounter()).total ?? "0"))
+      this.opts.fetchTotal ??
+      (async () => Number((await getCounter()).total ?? "0"))
     while (this.polling && !this.stopped) {
       try {
         const total = await fetchTotal()
@@ -154,7 +163,7 @@ export class LiveCounter {
         // polling is best-effort; the next attempt may succeed
       }
       const delay = POLL_BASE_MS + (random() * 2 - 1) * POLL_JITTER_MS // 10s ± 3s
-      await new Promise<void>(resolve => {
+      await new Promise<void>((resolve) => {
         this.pollTimer = setTimeout(resolve, delay)
       })
       this.pollTimer = null

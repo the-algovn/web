@@ -1,14 +1,17 @@
-import { Bold, Italic, Loader2, Mail, Trash2, Underline } from "lucide-react"
 import { Button } from "@algovn/ui/button"
 import { PageHeader } from "@algovn/ui/page-header"
 import { Toggle } from "@algovn/ui/toggle"
 import { ToggleGroup, ToggleGroupItem } from "@algovn/ui/toggle-group"
+import { Bold, Italic, Loader2, Mail, Trash2, Underline } from "lucide-react"
 import { Demo } from "@/components/demo"
 
 export default function ButtonsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <PageHeader title="Buttons" description="Button, Toggle and ToggleGroup." />
+      <PageHeader
+        title="Buttons"
+        description="Button, Toggle and ToggleGroup."
+      />
       <Demo title="Variants">
         <Button>Default</Button>
         <Button variant="secondary">Secondary</Button>

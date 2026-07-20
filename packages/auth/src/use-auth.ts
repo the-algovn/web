@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react"
 import type { User, UserManager } from "oidc-client-ts"
+import { useEffect, useState } from "react"
 
-export function useAuth(userManager: UserManager): { user: User | null; token: string | null } {
+export function useAuth(userManager: UserManager): {
+  user: User | null
+  token: string | null
+} {
   const [user, setUser] = useState<User | null>(null)
   useEffect(() => {
     // guards against a stale-manager clobber: if a re-render swaps in a
@@ -9,7 +12,7 @@ export function useAuth(userManager: UserManager): { user: User | null; token: s
     // overwrite state set by the new one. Untested — unreachable while both
     // apps pass a module-scope singleton through this hook. Do not remove.
     let cancelled = false
-    void userManager.getUser().then(u => {
+    void userManager.getUser().then((u) => {
       if (!cancelled) setUser(u && !u.expired ? u : null)
     })
     const onLoaded = (u: User) => setUser(u)

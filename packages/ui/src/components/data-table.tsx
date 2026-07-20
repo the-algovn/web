@@ -1,20 +1,5 @@
 "use client"
 
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type Column,
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-} from "@tanstack/react-table"
-import { ArrowDown, ArrowUp, ChevronsUpDown, Settings2 } from "lucide-react"
-import * as React from "react"
 import { Button } from "@algovn/ui/button"
 import {
   DropdownMenu,
@@ -32,6 +17,21 @@ import {
   TableHeader,
   TableRow,
 } from "@algovn/ui/table"
+import {
+  type Column,
+  type ColumnDef,
+  type ColumnFiltersState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+  type VisibilityState,
+} from "@tanstack/react-table"
+import { ArrowDown, ArrowUp, ChevronsUpDown, Settings2 } from "lucide-react"
+import * as React from "react"
 
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -50,7 +50,8 @@ export function DataTableColumnHeader<TData, TValue>({
 }) {
   if (!column.getCanSort()) return <span>{title}</span>
   const sorted = column.getIsSorted()
-  const Icon = sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ChevronsUpDown
+  const Icon =
+    sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ChevronsUpDown
   return (
     <Button
       variant="ghost"
@@ -72,8 +73,11 @@ export function DataTable<TData, TValue>({
   pageSize = 10,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  )
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({})
 
   // eslint-disable-next-line react-hooks/incompatible-library -- @tanstack/react-table returns functions that can't be safely memoized by React Compiler
   const table = useReactTable({
@@ -138,7 +142,10 @@ export function DataTable<TData, TValue>({
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -150,14 +157,20 @@ export function DataTable<TData, TValue>({
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-muted-foreground h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-muted-foreground h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -166,8 +179,11 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       <div className="flex items-center justify-end gap-2">
-        <span className={cn("text-muted-foreground mr-auto text-sm tabular-nums")}>
-          Page {table.getState().pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
+        <span
+          className={cn("text-muted-foreground mr-auto text-sm tabular-nums")}
+        >
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {Math.max(table.getPageCount(), 1)}
         </span>
         <Button
           variant="outline"

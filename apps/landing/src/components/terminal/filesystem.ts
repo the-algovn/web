@@ -39,7 +39,10 @@ export function createFilesystem(): VFS {
     },
     "contact.txt": {
       kind: "file",
-      content: [`mail:      ${profile.email}`, `linkedin:  ${profile.linkedin}`].join("\n"),
+      content: [
+        `mail:      ${profile.email}`,
+        `linkedin:  ${profile.linkedin}`,
+      ].join("\n"),
     },
     "finders.txt": { kind: "remote", url: "/finders.txt" },
     ".plan": {
@@ -63,10 +66,7 @@ export function createFilesystem(): VFS {
 }
 
 export function resolvePath(fs: VFS, path: string): VNode | null {
-  const parts = path
-    .replace(/^\.\//, "")
-    .split("/")
-    .filter(Boolean)
+  const parts = path.replace(/^\.\//, "").split("/").filter(Boolean)
   let node: VNode = { kind: "dir", children: fs }
   for (const part of parts) {
     if (node.kind !== "dir") return null

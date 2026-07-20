@@ -8,7 +8,7 @@ export function ClickButton({
   return (
     <button
       type="button"
-      onClick={e => {
+      onClick={(e) => {
         onMash()
         const r = e.currentTarget.getBoundingClientRect()
         onParticle(r.left + r.width / 2, r.top + r.height / 2)

@@ -67,7 +67,9 @@ export function formatEta(ms: number): string {
   const years = ms / MS_PER_YEAR
   if (years < 1) {
     const days = ms / (24 * 60 * 60 * 1000)
-    return days < 1 ? "< a day" : `~${Math.round(days).toLocaleString("en-US")} days`
+    return days < 1
+      ? "< a day"
+      : `~${Math.round(days).toLocaleString("en-US")} days`
   }
   if (years >= 1e9) return `~${(years / 1e9).toFixed(1)} billion years`
   if (years >= 1e6) return `~${(years / 1e6).toFixed(1)} million years`

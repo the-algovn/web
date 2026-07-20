@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { LiveCounter, parseLiveEvent, type LiveCounterOptions, type LiveEvent } from "../liveCounter"
+import {
+  LiveCounter,
+  type LiveCounterOptions,
+  type LiveEvent,
+  parseLiveEvent,
+} from "../liveCounter"
 
 class FakeEventSource {
   static instances: FakeEventSource[] = []
@@ -19,9 +24,10 @@ function makeCounter(overrides: Partial<LiveCounterOptions> = {}) {
   const events: LiveEvent[] = []
   const fetchTotal = vi.fn(async () => 41)
   const live = new LiveCounter({
-    onEvent: e => events.push(e),
+    onEvent: (e) => events.push(e),
     eventsUrl: "https://api.algovn.com/events/the-button.counter",
-    createEventSource: url => new FakeEventSource(url) as unknown as EventSource,
+    createEventSource: (url) =>
+      new FakeEventSource(url) as unknown as EventSource,
     fetchTotal,
     random: () => 0.5,
     ...overrides,
@@ -39,10 +45,19 @@ afterEach(() => {
 })
 
 it("parses typed payloads and rejects junk", () => {
-  expect(parseLiveEvent('{"type":"counter","total":42}')).toEqual({ type: "counter", total: 42 })
+  expect(parseLiveEvent('{"type":"counter","total":42}')).toEqual({
+    type: "counter",
+    total: 42,
+  })
   expect(
-    parseLiveEvent('{"type":"milestone","threshold":1000,"title":"A Thousand Tiny Rebellions"}')
-  ).toEqual({ type: "milestone", threshold: 1000, title: "A Thousand Tiny Rebellions" })
+    parseLiveEvent(
+      '{"type":"milestone","threshold":1000,"title":"A Thousand Tiny Rebellions"}',
+    ),
+  ).toEqual({
+    type: "milestone",
+    threshold: 1000,
+    title: "A Thousand Tiny Rebellions",
+  })
   expect(parseLiveEvent("not json")).toBeNull()
   expect(parseLiveEvent('{"type":"counter","total":"nope"}')).toBeNull()
 })
@@ -103,10 +118,16 @@ it("disconnects hidden tabs and reconnects when visible again", () => {
   live.start()
   const es = FakeEventSource.instances[0]!
   es.onopen?.()
-  Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" })
+  Object.defineProperty(document, "visibilityState", {
+    configurable: true,
+    value: "hidden",
+  })
   document.dispatchEvent(new Event("visibilitychange"))
   expect(es.closed).toBe(true)
-  Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" })
+  Object.defineProperty(document, "visibilityState", {
+    configurable: true,
+    value: "visible",
+  })
   document.dispatchEvent(new Event("visibilitychange"))
   expect(FakeEventSource.instances).toHaveLength(2)
   live.stop()
@@ -114,20 +135,26 @@ it("disconnects hidden tabs and reconnects when visible again", () => {
 
 describe("parseLiveEvent users field", () => {
   it("parses a counter frame with users", () => {
-    expect(parseLiveEvent(JSON.stringify({ type: "counter", total: 5, users: 3 }))).toEqual({
+    expect(
+      parseLiveEvent(JSON.stringify({ type: "counter", total: 5, users: 3 })),
+    ).toEqual({
       type: "counter",
       total: 5,
       users: 3,
     })
   })
   it("parses a counter frame without users (back-compat)", () => {
-    expect(parseLiveEvent(JSON.stringify({ type: "counter", total: 5 }))).toEqual({
+    expect(
+      parseLiveEvent(JSON.stringify({ type: "counter", total: 5 })),
+    ).toEqual({
       type: "counter",
       total: 5,
     })
   })
   it("ignores a non-numeric users field", () => {
-    expect(parseLiveEvent(JSON.stringify({ type: "counter", total: 5, users: "3" }))).toEqual({
+    expect(
+      parseLiveEvent(JSON.stringify({ type: "counter", total: 5, users: "3" })),
+    ).toEqual({
       type: "counter",
       total: 5,
     })

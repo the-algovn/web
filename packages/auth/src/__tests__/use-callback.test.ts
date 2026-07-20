@@ -1,5 +1,5 @@
-import { StrictMode } from "react"
 import { renderHook, waitFor } from "@testing-library/react"
+import { StrictMode } from "react"
 import { expect, it, vi } from "vitest"
 import { useSignInCallback } from "../index"
 

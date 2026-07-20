@@ -1,6 +1,6 @@
-import { useState } from "react"
 import { rolesFromToken } from "@algovn/auth"
 import { Button } from "@algovn/ui/button"
+import { useState } from "react"
 import { Callback } from "./components/callback"
 import { LedgerDrawer } from "./components/ledger-drawer"
 import { Shell } from "./components/shell"
@@ -10,8 +10,8 @@ import { env } from "./lib/env"
 import { useAuth } from "./lib/use-auth"
 
 export default function App() {
-  const [isCallback, setIsCallback] = useState(() =>
-    window.location.pathname === "/console/callback"
+  const [isCallback, setIsCallback] = useState(
+    () => window.location.pathname === "/console/callback",
   )
   const { user, token } = useAuth()
   if (isCallback) {
@@ -33,8 +33,12 @@ export default function App() {
       topRight={
         <div className="flex items-center gap-2">
           {env.enableLab ? <LedgerDrawer token={token} /> : null}
-          <span className="text-muted-foreground text-xs">{user.profile.name ?? user.profile.sub}</span>
-          <Button variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>
+          <span className="text-muted-foreground text-xs">
+            {user.profile.name ?? user.profile.sub}
+          </span>
+          <Button variant="ghost" size="sm" onClick={() => void signOut()}>
+            Sign out
+          </Button>
         </div>
       }
     />

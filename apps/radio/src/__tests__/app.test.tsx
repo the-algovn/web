@@ -14,7 +14,11 @@ describe("App (integration, mock studio)", () => {
     let t = 1_700_000_000_000
     const clock = () => t
     const client = new MockStudio({ now: clock, random: () => 0.5 })
-    const deps = { client, createPlayer: () => createFakePlayer(), playheadClock: clock }
+    const deps = {
+      client,
+      createPlayer: () => createFakePlayer(),
+      playheadClock: clock,
+    }
     render(<App deps={deps} />)
 
     // Flush the initial data fetches (getNowPlaying/getQueue/getHistory) —
@@ -22,7 +26,9 @@ describe("App (integration, mock studio)", () => {
     // so the rail + feed are already hydrated once this settles. (Fake timers
     // break `findByText`'s polling here, so assertions below use the
     // synchronous `getByText` instead of awaiting a find.)
-    await act(async () => { await Promise.resolve() })
+    await act(async () => {
+      await Promise.resolve()
+    })
 
     // (a) rail + feed rendered with mock data.
     expect(screen.getByText("Tiểu Dương Dương")).toBeInTheDocument()
@@ -39,7 +45,9 @@ describe("App (integration, mock studio)", () => {
     // (item 0 carries a dedication, so once the fake player reports "playing"
     // deriveStationState resolves to "on-air").
     const playButton = screen.getByRole("button", { name: "Play" })
-    act(() => { fireEvent.click(playButton) })
+    act(() => {
+      fireEvent.click(playButton)
+    })
     expect(screen.getByText("ON AIR")).toBeInTheDocument()
 
     // (c) advance the virtual clock past item 0's duration + one ear-sync
@@ -48,11 +56,15 @@ describe("App (integration, mock studio)", () => {
     // where it's expected to remain in the DOM).
     const firstNp = await client.getNowPlaying()
     t += (firstNp.durationSeconds + 1) * 1000
-    await act(async () => { await vi.advanceTimersByTimeAsync(600) })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(600)
+    })
 
     region = nowPlayingRegion()
     expect(within(region).getByText(/tâm sự/)).toBeInTheDocument()
-    expect(within(region).queryByText("Em Của Ngày Hôm Qua")).not.toBeInTheDocument()
+    expect(
+      within(region).queryByText("Em Của Ngày Hôm Qua"),
+    ).not.toBeInTheDocument()
 
     vi.useRealTimers()
   })

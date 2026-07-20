@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
 
 const TWEEN_MS = 600
 
@@ -6,7 +6,13 @@ const TWEEN_MS = 600
 // shown value to the new total over TWEEN_MS and briefly brightens (tb-bump).
 // `secondary` is an optional right-aligned readout that fills the wide accent
 // box on desktop (the caller hides it on mobile, where the number owns the row).
-export function Counter({ total, secondary }: { total: number | null; secondary?: ReactNode }) {
+export function Counter({
+  total,
+  secondary,
+}: {
+  total: number | null
+  secondary?: ReactNode
+}) {
   const [shown, setShown] = useState(0)
   const shownRef = useRef(0)
   const [bump, setBump] = useState(false)
@@ -38,7 +44,9 @@ export function Counter({ total, secondary }: { total: number | null; secondary?
   const text = total === null ? "—" : shown.toLocaleString("en-US")
   return (
     <div className="tb-accent-box w-full max-w-3xl px-5 py-8 text-left">
-      <div className="text-primary mb-2 font-mono text-xs tracking-widest">CURRENT_COUNT</div>
+      <div className="text-primary mb-2 font-mono text-xs tracking-widest">
+        CURRENT_COUNT
+      </div>
       <div className="flex items-end justify-between gap-6">
         <div
           data-testid="counter"
