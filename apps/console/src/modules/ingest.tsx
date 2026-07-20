@@ -1,3 +1,4 @@
+import { Badge } from "@algovn/ui/badge"
 import { Button } from "@algovn/ui/button"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -21,6 +22,7 @@ interface DownloadResp {
   inputI?: number
   inputTp?: number
   inputLra?: number
+  cached?: boolean
 }
 
 export function Ingest() {
@@ -56,6 +58,7 @@ export function Ingest() {
       const r = await labCall<DownloadResp>(token, "/ingest/download", {
         ytId,
         title: c.title,
+        channel: c.channel,
       })
       setDl((d) => ({ ...d, [ytId]: r }))
     } catch (e) {
@@ -125,10 +128,15 @@ export function Ingest() {
                         "…"
                       ) : d ? (
                         <div className="flex flex-col gap-1">
-                          <span className="font-mono">
-                            {d.durationS?.toFixed(0)}s · {d.inputI?.toFixed(1)}{" "}
-                            LUFS
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono">
+                              {d.durationS?.toFixed(0)}s ·{" "}
+                              {d.inputI?.toFixed(1)} LUFS
+                            </span>
+                            {d.cached ? (
+                              <Badge variant="secondary">cached</Badge>
+                            ) : null}
+                          </div>
                           <audio
                             controls
                             src={artifactUrl(d.artifact?.id ?? "")}
