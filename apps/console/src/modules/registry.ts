@@ -23,7 +23,6 @@ export const registry: ConsoleModule[] = [
     group: "Console",
     icon: House,
     requiredRole: null,
-    requiresLab: false,
     component: Home,
   },
   {
@@ -32,7 +31,6 @@ export const registry: ConsoleModule[] = [
     group: "Radio lab",
     icon: AudioLines,
     requiredRole: "admin",
-    requiresLab: true,
     component: VoiceAudition,
   },
   {
@@ -41,7 +39,6 @@ export const registry: ConsoleModule[] = [
     group: "Radio lab",
     icon: Brain,
     requiredRole: "admin",
-    requiresLab: true,
     component: BrainPlayground,
   },
   {
@@ -50,7 +47,6 @@ export const registry: ConsoleModule[] = [
     group: "Radio lab",
     icon: MessageSquareQuote,
     requiredRole: "admin",
-    requiresLab: true,
     component: CallinParse,
   },
   {
@@ -59,7 +55,6 @@ export const registry: ConsoleModule[] = [
     group: "Radio lab",
     icon: Download,
     requiredRole: "admin",
-    requiresLab: true,
     component: Ingest,
   },
   {
@@ -68,7 +63,6 @@ export const registry: ConsoleModule[] = [
     group: "Radio lab",
     icon: SlidersHorizontal,
     requiredRole: "admin",
-    requiresLab: true,
     component: MiniRender,
   },
   {
@@ -77,7 +71,6 @@ export const registry: ConsoleModule[] = [
     group: "Radio lab",
     icon: ListMusic,
     requiredRole: "admin",
-    requiresLab: true,
     component: Library,
   },
 ]

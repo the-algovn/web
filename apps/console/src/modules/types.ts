@@ -7,8 +7,5 @@ export interface ConsoleModule {
   group: string // sidebar section, e.g. "Radio lab"
   icon: LucideIcon
   requiredRole: "admin" | null
-  // Needs the radio-lab backend, which is local-only until it deploys. Says WHY
-  // a module hides, not what group it's in — those coincide today and would drift.
-  requiresLab: boolean
   component: ComponentType
 }

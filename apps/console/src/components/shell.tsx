@@ -9,11 +9,9 @@ function moduleFromHash(): string {
 
 export function Shell({
   roles,
-  enableLab,
   topRight,
 }: {
   roles: string[]
-  enableLab: boolean
   topRight?: React.ReactNode
 }) {
   const [active, setActive] = useState(moduleFromHash)
@@ -24,9 +22,7 @@ export function Shell({
   }, [])
 
   const visible = registry.filter(
-    (m) =>
-      (!m.requiresLab || enableLab) &&
-      (m.requiredRole === null || roles.includes(m.requiredRole)),
+    (m) => m.requiredRole === null || roles.includes(m.requiredRole),
   )
   const groups = [...new Set(visible.map((m) => m.group))]
   const Active = (visible.find((m) => m.id === active) ?? visible[0])?.component

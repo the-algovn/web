@@ -6,7 +6,6 @@ import { LedgerDrawer } from "./components/ledger-drawer"
 import { Shell } from "./components/shell"
 import { SignIn } from "./components/sign-in"
 import { signOut } from "./lib/auth"
-import { env } from "./lib/env"
 import { useAuth } from "./lib/use-auth"
 
 export default function App() {
@@ -29,10 +28,9 @@ export default function App() {
   return (
     <Shell
       roles={roles}
-      enableLab={env.enableLab}
       topRight={
         <div className="flex items-center gap-2">
-          {env.enableLab ? <LedgerDrawer token={token} /> : null}
+          {roles.includes("admin") ? <LedgerDrawer token={token} /> : null}
           <span className="text-muted-foreground text-xs">
             {user.profile.name ?? user.profile.sub}
           </span>
