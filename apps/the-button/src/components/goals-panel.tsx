@@ -1,4 +1,5 @@
 import type { QuestProgress } from "../lib/api"
+import { Section } from "./section"
 
 function QuestRow({ quest }: { quest: QuestProgress }) {
   const pct =
@@ -52,17 +53,16 @@ export function GoalsPanel({
   const weekly = quests.filter((q) => q.kind === "weekly")
 
   return (
-    <section aria-label="streak and quests" className="tb-box p-4 text-left">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-muted-foreground font-mono text-sm">
-          {"// streak & quests"}
-        </h2>
+    <Section
+      label="streak and quests"
+      title="// streak & quests"
+      headerRight={
         <span className="tb-chip tb-chip-streak">
           🔥 <b>{streak.current}</b>d
           <span className="text-muted-foreground">best {streak.best}d</span>
         </span>
-      </div>
-
+      }
+    >
       {quests.length === 0 ? (
         <p className="text-muted-foreground font-mono text-xs">
           {signedIn
@@ -97,6 +97,6 @@ export function GoalsPanel({
           )}
         </>
       )}
-    </section>
+    </Section>
   )
 }

@@ -1,11 +1,9 @@
 import type { FeedItem } from "../lib/activity"
+import { Section } from "./section"
 
 export function ActivityFeed({ items }: { items: FeedItem[] }) {
   return (
-    <section aria-label="live activity" className="tb-box p-4 text-left">
-      <h2 className="text-muted-foreground mb-3 font-mono text-sm">
-        {"// live activity"}
-      </h2>
+    <Section label="live activity" title="// live activity">
       {items.length === 0 ? (
         <p className="text-muted-foreground font-mono text-xs">
           watching the counter…
@@ -28,6 +26,6 @@ export function ActivityFeed({ items }: { items: FeedItem[] }) {
           ))}
         </ul>
       )}
-    </section>
+    </Section>
   )
 }

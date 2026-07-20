@@ -248,7 +248,7 @@
     grid-area: left;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
   .tb-col-right {
     grid-area: right;
@@ -371,10 +371,6 @@
 
   .tb-feed-item {
     animation: tb-feed-in 0.4s ease;
-  }
-
-  .tb-tabbar {
-    display: none;
   }
 }
 

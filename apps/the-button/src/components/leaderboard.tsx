@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { Row } from "../lib/leaderboardStream"
+import { Section } from "./section"
 
 type Board = "allTime" | "thisWeek"
 
@@ -21,14 +22,11 @@ export function Leaderboard({
     rank !== undefined && rank > 0 && rows.some((r) => r.rank === rank)
 
   return (
-    <section
-      aria-label="leaderboard"
-      className="border-border w-full max-w-3xl border-b pb-8"
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-muted-foreground font-mono text-sm">
-          {"// leaderboard"}
-        </h2>
+    <Section
+      label="leaderboard"
+      title="// leaderboard"
+      variant="plain"
+      headerRight={
         <div className="flex gap-2">
           <Tab active={board === "allTime"} onClick={() => setBoard("allTime")}>
             ALL TIME
@@ -40,7 +38,8 @@ export function Leaderboard({
             THIS WEEK
           </Tab>
         </div>
-      </div>
+      }
+    >
       <ol className="tb-box divide-border divide-y">
         {rows.map((r) => (
           <LbRow
@@ -62,7 +61,7 @@ export function Leaderboard({
           <LbRow rank={rank} name={myName} clicks={undefined} you />
         </div>
       )}
-    </section>
+    </Section>
   )
 }
 

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { achievementMeta } from "../lib/achievement-meta"
 import type { CatalogEntry } from "../lib/catalog"
+import { Section } from "./section"
 
 function AchievementCard({
   entry,
@@ -92,14 +93,11 @@ export function AchievementsGrid({ entries }: { entries: CatalogEntry[] }) {
     : entries.filter((e, i) => i === highestIdx || e.id === nextId)
 
   return (
-    <section
-      aria-label="achievements"
-      className="border-border w-full max-w-3xl border-b pb-8"
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-muted-foreground font-mono text-sm">
-          {"// your achievements"}
-        </h2>
+    <Section
+      label="achievements"
+      title="// your achievements"
+      variant="plain"
+      headerRight={
         <div className="flex items-center gap-4">
           <span className="text-primary font-mono text-sm font-bold tabular-nums">
             {unlockedCount}/{entries.length}
@@ -112,7 +110,8 @@ export function AchievementsGrid({ entries }: { entries: CatalogEntry[] }) {
             {expanded ? "▲ HIDE" : "▼ VIEW ALL"}
           </button>
         </div>
-      </div>
+      }
+    >
       <ul className="grid gap-4 sm:grid-cols-2">
         {visible.map((entry) => (
           <AchievementCard
@@ -122,6 +121,6 @@ export function AchievementsGrid({ entries }: { entries: CatalogEntry[] }) {
           />
         ))}
       </ul>
-    </section>
+    </Section>
   )
 }
