@@ -485,7 +485,7 @@ function Home() {
                 <SessionStats total={total} users={users} />
               </div>
               <div data-group="stats">
-                <TargetHeadline eta={eta.text} />
+                <TargetHeadline total={total} users={users} eta={eta.text} />
               </div>
             </div>
 
