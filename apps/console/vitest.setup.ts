@@ -28,6 +28,15 @@ window.matchMedia ??= ((query: string) => ({
   dispatchEvent: () => false,
 })) as typeof window.matchMedia
 
+// jsdom doesn't implement ResizeObserver; @algovn/ui's Slider (Radix) calls
+// it on mount via useSize (same workaround as packages/ui/vitest.setup.ts).
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+window.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver
+
 // Tests never hit the network: individual tests stub their own responses
 // with vi.stubGlobal("fetch", ...).
 globalThis.fetch = () => Promise.reject(new Error("network disabled in tests"))
