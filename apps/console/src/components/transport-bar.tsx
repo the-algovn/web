@@ -67,7 +67,7 @@ export function TransportBar(props: {
             aria-label="Seek"
             className="flex-1"
             min={0}
-            max={props.duration || 0}
+            max={props.duration || 1}
             step={1}
             value={[props.currentTime]}
             onValueChange={([v]) => props.onSeek(v ?? 0)}
