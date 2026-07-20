@@ -2,3 +2,16 @@ pnpm-lock.yaml
 .next/
 .turbo/
 node_modules/
+
+# Biome owns code files; Prettier only formats what Biome can't (md, yaml, html)
+*.js
+*.jsx
+*.cjs
+*.mjs
+*.ts
+*.tsx
+*.cts
+*.mts
+*.json
+*.jsonc
+*.css
