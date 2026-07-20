@@ -245,6 +245,8 @@
     justify-content: center;
     background: color-mix(in srgb, var(--background) 92%, transparent);
     backdrop-filter: blur(4px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   .tb-slide {
     animation: tb-slide-in 0.25s ease;
@@ -404,13 +406,13 @@
   }
 }
 
-/* Mobile: the same markup becomes a one-screen-at-a-time game. Driven by the
-   app container width (container query), so it adapts at any viewport size. */
+/* Mobile: the layout becomes one scrolling column. Driven by the app
+   container width (container query), so it adapts at any viewport size. */
 @container (max-width: 720px) {
-  /* One screen at a time: a flex column (not a grid) so a single visible group
-     sits directly under the HUD instead of being pushed around by stretched
-     empty grid rows. The column wrappers dissolve so their grouped children
-     become direct, individually-toggled items of the column. */
+  /* One scrolling column: a flex column (not a grid) so each group sits
+     directly under the HUD instead of being pushed around by stretched
+     empty grid rows. The column wrappers dissolve (display: contents) so
+     their grouped children stack in DOM order as direct flex items. */
   .tb-grid {
     display: flex;
     flex-direction: column;
