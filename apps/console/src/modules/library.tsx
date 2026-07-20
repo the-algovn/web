@@ -1,123 +1,172 @@
 import { Button } from "@algovn/ui/button"
-import { useState } from "react"
-import { toast } from "sonner"
-import { RunPanel } from "../components/run-panel"
-import { artifactUrl, labCall } from "../lib/api"
+import { EmptyState } from "@algovn/ui/empty-state"
+import { Input } from "@algovn/ui/input"
+import { Skeleton } from "@algovn/ui/skeleton"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@algovn/ui/table"
+import { ListMusic, Play, Trash2 } from "lucide-react"
+import { useEffect } from "react"
+import { TransportBar } from "../components/transport-bar"
+import { PAGE_SIZE, formatClock } from "../lib/media"
 import { useAuth } from "../lib/use-auth"
+import { useLibrary } from "../lib/use-library"
+import { usePlayer } from "../lib/use-player"
 
-interface Track {
-  ytId?: string
-  title?: string
-  channel?: string
-  durationS?: number
-  artifactId?: string
-  inputI?: number
-  inputTp?: number
-  inputLra?: number
-  addedAt?: string
-}
-
-export function Library() {
+export function Library({ audio }: { audio?: HTMLAudioElement } = {}) {
   const { token } = useAuth()
-  const [query, setQuery] = useState("")
-  const [tracks, setTracks] = useState<Track[]>([])
-  const [running, setRunning] = useState(false)
-  const [busy, setBusy] = useState<Record<string, true>>({})
+  const lib = useLibrary(token)
+  const player = usePlayer({ audio })
 
-  async function search() {
-    if (!token) return
-    setRunning(true)
-    try {
-      const r = await labCall<{ tracks?: Track[] }>(token, "/library/list", {
-        query,
-        limit: 50,
-      })
-      setTracks(r.tracks ?? [])
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e))
-    } finally {
-      setRunning(false)
-    }
-  }
+  // Keep the player's queue aligned with the visible page.
+  useEffect(() => {
+    player.setQueue(lib.tracks)
+  }, [lib.tracks, player.setQueue])
 
-  async function del(t: Track) {
-    if (!token || !t.ytId) return
-    setBusy((b) => ({ ...b, [t.ytId as string]: true }))
-    try {
-      await labCall(token, "/library/delete", { ytId: t.ytId })
-      await search()
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e))
-      setBusy((b) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructure-to-drop; _drop is intentionally discarded
-        const { [t.ytId as string]: _drop, ...rest } = b
-        return rest
-      })
-    }
+  const pageCount = Math.max(1, Math.ceil(lib.total / PAGE_SIZE))
+  const from = lib.total === 0 ? 0 : lib.page * PAGE_SIZE + 1
+  const to = Math.min((lib.page + 1) * PAGE_SIZE, lib.total)
+
+  function del(ytId: string) {
+    if (ytId === player.loadedYtId) player.stop()
+    void lib.del(ytId)
   }
 
   return (
-    <RunPanel
-      title="Library"
-      description="Downloaded tracks — search by title/channel, preview, or remove."
-      running={running}
-      onRun={() => void search()}
-      runLabel="Search"
-      form={
-        <input
-          className="border-border bg-background w-full rounded border px-2 py-1 text-sm"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+    <div className="flex h-full flex-col">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-6">
+        <div>
+          <h1 className="text-lg font-semibold">Library</h1>
+          <p className="text-muted-foreground text-sm">
+            Downloaded tracks — search, preview, remove.
+          </p>
+        </div>
+
+        <Input
+          value={lib.query}
+          onChange={(e) => lib.setQuery(e.target.value)}
           placeholder="title or channel"
+          className="max-w-sm"
         />
-      }
-      result={
-        tracks.length ? (
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="text-muted-foreground">
-                <th>title</th>
-                <th>channel</th>
-                <th>dur</th>
-                <th>LUFS</th>
-                <th>added</th>
-                <th></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {tracks.map((t) => (
-                <tr key={t.ytId} className="border-border border-t align-top">
-                  <td className="max-w-56 truncate pr-2">{t.title}</td>
-                  <td className="max-w-32 truncate pr-2">{t.channel}</td>
-                  <td className="pr-2">{t.durationS}s</td>
-                  <td className="pr-2 font-mono">{t.inputI?.toFixed(1)}</td>
-                  <td className="pr-2">{t.addedAt?.slice(0, 10)}</td>
-                  <td className="pr-2">
-                    <audio
-                      controls
-                      src={artifactUrl(t.artifactId ?? "")}
-                      className="h-8 w-44"
-                    >
-                      <track kind="captions" />
-                    </audio>
-                  </td>
-                  <td>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!!busy[t.ytId ?? ""]}
-                      onClick={() => void del(t)}
-                    >
-                      {busy[t.ytId ?? ""] ? "…" : "Delete"}
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : undefined
-      }
-    />
+
+        {lib.loading ? (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows
+                key={i}
+                className="h-8 w-full"
+              />
+            ))}
+          </div>
+        ) : lib.tracks.length === 0 ? (
+          <EmptyState
+            icon={<ListMusic />}
+            title="No tracks match."
+            description="Try a different title or channel."
+          />
+        ) : (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-9" />
+                  <TableHead>title</TableHead>
+                  <TableHead>channel</TableHead>
+                  <TableHead>dur</TableHead>
+                  <TableHead>LUFS</TableHead>
+                  <TableHead>added</TableHead>
+                  <TableHead className="w-9" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lib.tracks.map((t) => (
+                  <TableRow key={t.ytId}>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Play ${t.title ?? ""}`}
+                        onClick={() =>
+                          player.load(lib.tracks.findIndex((x) => x.ytId === t.ytId))
+                        }
+                      >
+                        <Play />
+                      </Button>
+                    </TableCell>
+                    <TableCell className="max-w-56 truncate">{t.title}</TableCell>
+                    <TableCell className="max-w-32 truncate">{t.channel}</TableCell>
+                    <TableCell>{formatClock(Number(t.durationS))}</TableCell>
+                    <TableCell className="font-mono">{t.inputI?.toFixed(1)}</TableCell>
+                    <TableCell>{t.addedAt?.slice(0, 10)}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Delete ${t.title ?? ""}`}
+                        disabled={!!lib.pending[t.ytId ?? ""]}
+                        onClick={() => del(t.ytId ?? "")}
+                      >
+                        {lib.pending[t.ytId ?? ""] ? "…" : <Trash2 />}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            <nav
+              aria-label="Pagination"
+              className="text-muted-foreground flex items-center justify-between text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={lib.page === 0}
+                  onClick={() => lib.setPage(lib.page - 1)}
+                >
+                  Prev
+                </Button>
+                <span>
+                  Page {lib.page + 1} / {pageCount}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={lib.page >= pageCount - 1}
+                  onClick={() => lib.setPage(lib.page + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+              <span>
+                rows {from}–{to} of {lib.total}
+              </span>
+            </nav>
+          </>
+        )}
+      </div>
+
+      <TransportBar
+        track={player.track}
+        status={player.status}
+        currentTime={player.currentTime}
+        duration={player.duration}
+        volume={player.volume}
+        canPrev={player.canPrev}
+        canNext={player.canNext}
+        onToggle={player.toggle}
+        onSeek={player.seek}
+        onVolume={player.setVolume}
+        onPrev={player.prev}
+        onNext={player.next}
+      />
+    </div>
   )
 }
