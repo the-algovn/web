@@ -8,6 +8,9 @@ import { Library } from "../library"
 vi.mock("../../lib/api", () => ({
   labCall: vi.fn(),
   artifactUrl: (id: string) => `https://artifacts.test/${id}`,
+  presignArtifact: vi.fn(async (_t: string, id: string) => ({
+    url: `https://artifacts.test/${id}`,
+  })),
 }))
 vi.mock("../../lib/use-auth", () => ({ useAuth: () => ({ token: "test-token" }) }))
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }))
@@ -67,8 +70,9 @@ describe("Library", () => {
     fireEvent.click(screen.getByLabelText("Play Em của ngày hôm qua"))
     // The docked transport now shows a Pause control AND the loaded track's
     // title — scoped to the transport so the table row's title isn't matched.
+    // Pause appears after the async presign resolves the playable URL.
     const bar = await screen.findByTestId("transport-bar")
-    expect(within(bar).getByLabelText("Pause")).toBeInTheDocument()
+    await within(bar).findByLabelText("Pause")
     expect(within(bar).getByText("Em của ngày hôm qua")).toBeInTheDocument()
   })
 

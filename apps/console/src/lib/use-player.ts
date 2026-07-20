@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { artifactUrl } from "./api"
 import type { Track } from "./media"
 
 export type PlayerStatus = "idle" | "playing" | "paused" | "error"
@@ -27,12 +26,19 @@ function indexOf(track: Track | null, queue: Track[]): number {
   return track?.ytId ? queue.findIndex((x) => x.ytId === track.ytId) : -1
 }
 
-export function usePlayer(opts?: { audio?: HTMLAudioElement }): Player {
+export function usePlayer(opts: {
+  audio?: HTMLAudioElement
+  // Lazily resolve an artifact id to a playable (presigned) URL when a track
+  // is loaded — artifacts live in MinIO and are only reachable via a
+  // time-limited presigned URL, so there is no static URL to build.
+  resolveUrl: (artifactId: string) => Promise<string>
+}): Player {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   if (audioRef.current === null) {
-    audioRef.current = opts?.audio ?? new Audio()
+    audioRef.current = opts.audio ?? new Audio()
   }
   const audio = audioRef.current
+  const { resolveUrl } = opts
 
   const [queue, setQueueRender] = useState<Track[]>([])
   const [loaded, setLoaded] = useState<Track | null>(null)
@@ -61,11 +67,19 @@ export function usePlayer(opts?: { audio?: HTMLAudioElement }): Player {
       if (!t) return
       loadedRef.current = t
       setLoaded(t)
-      audio.src = artifactUrl(t.artifactId ?? "")
       setCurrentTime(0)
-      playAudio()
+      setDuration(0)
+      resolveUrl(t.artifactId ?? "")
+        .then((url) => {
+          if (loadedRef.current?.ytId !== t.ytId) return // superseded by a newer load
+          audio.src = url
+          playAudio()
+        })
+        .catch(() => {
+          if (loadedRef.current?.ytId === t.ytId) setStatus("error")
+        })
     },
-    [audio, playAudio],
+    [audio, playAudio, resolveUrl],
   )
 
   const stop = useCallback(() => {

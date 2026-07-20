@@ -11,8 +11,9 @@ import {
   TableRow,
 } from "@algovn/ui/table"
 import { ListMusic, Play, Trash2 } from "lucide-react"
-import { useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import { TransportBar } from "../components/transport-bar"
+import { presignArtifact } from "../lib/api"
 import { PAGE_SIZE, formatClock } from "../lib/media"
 import { useAuth } from "../lib/use-auth"
 import { useLibrary } from "../lib/use-library"
@@ -21,7 +22,15 @@ import { usePlayer } from "../lib/use-player"
 export function Library({ audio }: { audio?: HTMLAudioElement } = {}) {
   const { token } = useAuth()
   const lib = useLibrary(token)
-  const player = usePlayer({ audio })
+  const resolveUrl = useCallback(
+    async (id: string) => {
+      const r = await presignArtifact(token ?? "", id)
+      if (!r.url) throw new Error("no playable URL for artifact")
+      return r.url
+    },
+    [token],
+  )
+  const player = usePlayer({ audio, resolveUrl })
 
   // Keep the player's queue aligned with the visible page.
   useEffect(() => {

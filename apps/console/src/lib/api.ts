@@ -17,3 +17,12 @@ export function labCall<T>(
 
 export const artifactUrl = (id: string): string =>
   `${env.artifactsBase}/artifacts/${id}`
+
+// Resolve an artifact id to a time-limited presigned MinIO GET URL (artifacts
+// are private in object storage; there is no static URL).
+export function presignArtifact(
+  token: string,
+  id: string,
+): Promise<{ url?: string }> {
+  return labCall<{ url?: string }>(token, "/artifacts/presign", { id })
+}
