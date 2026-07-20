@@ -61,6 +61,14 @@ describe("IntroSlides", () => {
     expect(onDone).toHaveBeenCalledTimes(2)
   })
 
+  it("navigates with the arrow keys", async () => {
+    renderIntro()
+    await userEvent.keyboard("{ArrowRight}")
+    expect(screen.getByText("1,204,882")).toBeInTheDocument()
+    await userEvent.keyboard("{ArrowLeft}")
+    expect(screen.getByRole("heading", { name: "// why?" })).toBeInTheDocument()
+  })
+
   it("keeps Tab focus inside the dialog", async () => {
     renderIntro()
     const dialog = screen.getByRole("dialog", { name: "intro" })

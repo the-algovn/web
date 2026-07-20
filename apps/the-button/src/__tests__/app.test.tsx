@@ -192,3 +192,31 @@ it("reopens the intro from the footer replay link", async () => {
   await userEvent.click(screen.getByRole("button", { name: "replay intro" }))
   expect(screen.getByRole("dialog", { name: "intro" })).toBeInTheDocument()
 })
+
+it("renders the page sections in the story order", () => {
+  render(<App />)
+  const order = [
+    "why",
+    "the button",
+    "target",
+    "streak and quests",
+    "achievements",
+    "leaderboard",
+    "live activity",
+  ]
+  const nodes = order.map((name) => screen.getByRole("region", { name }))
+  for (let i = 0; i < nodes.length - 1; i++) {
+    const a = nodes[i]
+    const b = nodes[i + 1]
+    if (!a || !b) throw new Error("missing section node")
+    const rel = a.compareDocumentPosition(b)
+    expect(rel & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  }
+})
+
+it("does not render the retired tab bar", () => {
+  render(<App />)
+  expect(
+    screen.queryByRole("navigation", { name: "sections" }),
+  ).not.toBeInTheDocument()
+})
