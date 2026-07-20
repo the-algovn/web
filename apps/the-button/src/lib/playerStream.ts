@@ -38,7 +38,7 @@ export function parseUserFrame(json: unknown): UserFrame | null {
     const streak = streakRaw as Record<string, unknown>
 
     const unlockedRaw = Array.isArray(raw.unlocked) ? raw.unlocked : []
-    const unlocked = unlockedRaw.map(u => {
+    const unlocked = unlockedRaw.map((u) => {
       const r = (u ?? {}) as Record<string, unknown>
       return {
         id: String(r.id ?? ""),
@@ -47,8 +47,10 @@ export function parseUserFrame(json: unknown): UserFrame | null {
       }
     })
 
-    const questProgressRaw = Array.isArray(raw.questProgress) ? raw.questProgress : []
-    const questProgress: QuestProgress[] = questProgressRaw.map(q => {
+    const questProgressRaw = Array.isArray(raw.questProgress)
+      ? raw.questProgress
+      : []
+    const questProgress: QuestProgress[] = questProgressRaw.map((q) => {
       const r = (q ?? {}) as Record<string, unknown>
       return {
         id: String(r.id ?? ""),
@@ -62,7 +64,9 @@ export function parseUserFrame(json: unknown): UserFrame | null {
       }
     })
 
-    const questsDone = Array.isArray(raw.questsDone) ? raw.questsDone.map(String) : []
+    const questsDone = Array.isArray(raw.questsDone)
+      ? raw.questsDone.map(String)
+      : []
 
     return {
       total: Number(raw.total ?? 0),
@@ -142,7 +146,10 @@ export class PlayerStream {
   private async run(token: string, controller: AbortController): Promise<void> {
     try {
       const resp = await fetch(this.opts.url, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "text/event-stream" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "text/event-stream",
+        },
         signal: controller.signal,
       })
       if (!resp.ok || !resp.body) {
@@ -159,7 +166,10 @@ export class PlayerStream {
         // proxy could rewrite to CRLF, and doing this after each chunk
         // append (rather than once per line) still handles a "\r\n" that
         // straddles a read() chunk boundary once its "\n" half arrives.
-        buffer = (buffer + decoder.decode(value, { stream: true })).replace(/\r\n/g, "\n")
+        buffer = (buffer + decoder.decode(value, { stream: true })).replace(
+          /\r\n/g,
+          "\n",
+        )
         buffer = this.consumeBuffer(buffer)
       }
     } catch (err) {
@@ -175,8 +185,9 @@ export class PlayerStream {
   }
 
   private consumeBuffer(buffer: string): string {
-    let idx: number
-    while ((idx = buffer.indexOf("\n\n")) !== -1) {
+    for (;;) {
+      const idx = buffer.indexOf("\n\n")
+      if (idx === -1) break
       const rawEvent = buffer.slice(0, idx)
       buffer = buffer.slice(idx + 2)
       this.handleEvent(rawEvent)
@@ -190,7 +201,9 @@ export class PlayerStream {
       if (line.startsWith(":")) continue // comment / heartbeat
       if (line.startsWith("retry:") || line.startsWith("event:")) continue
       if (line.startsWith("data:")) {
-        dataLines.push(line.startsWith("data: ") ? line.slice(6) : line.slice(5))
+        dataLines.push(
+          line.startsWith("data: ") ? line.slice(6) : line.slice(5),
+        )
       }
     }
     if (dataLines.length === 0) return
@@ -204,7 +217,10 @@ export class PlayerStream {
   }
 
   private scheduleReconnect(): void {
-    const cap = Math.min(RECONNECT_CAP_START_MS * 2 ** (this.failures - 1), RECONNECT_CAP_MAX_MS)
+    const cap = Math.min(
+      RECONNECT_CAP_START_MS * 2 ** (this.failures - 1),
+      RECONNECT_CAP_MAX_MS,
+    )
     const random = this.opts.random ?? Math.random
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null

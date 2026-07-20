@@ -26,9 +26,17 @@ export type SolverResult = {
   hashes: number
   elapsedMs: number
 }
-export type BenchResult = { type: "bench-result"; jobId: number; hashesPerSecond: number }
+export type BenchResult = {
+  type: "bench-result"
+  jobId: number
+  hashesPerSecond: number
+}
 export type SolverFailure = { type: "error"; jobId: number; message: string }
-export type SolverResponse = SolverProgress | SolverResult | BenchResult | SolverFailure
+export type SolverResponse =
+  | SolverProgress
+  | SolverResult
+  | BenchResult
+  | SolverFailure
 
 const PROGRESS_EVERY = 50_000
 
@@ -42,7 +50,10 @@ export function base64UrlDecode(s: string): Uint8Array {
 }
 
 // 2^256 / (workFactor * clickCount) as 32 big-endian bytes.
-export function computeTarget(workFactor: bigint, clickCount: number): Uint8Array {
+export function computeTarget(
+  workFactor: bigint,
+  clickCount: number,
+): Uint8Array {
   const divisor = workFactor * BigInt(clickCount)
   const out = new Uint8Array(32)
   if (divisor <= 1n) {
@@ -59,8 +70,9 @@ export function computeTarget(workFactor: bigint, clickCount: number): Uint8Arra
 
 export function lessThan(hash: Uint8Array, target: Uint8Array): boolean {
   for (let i = 0; i < 32; i++) {
-    const h = hash[i]!
-    const t = target[i]!
+    // both arrays are always 32 bytes (SHA-256 digest / computeTarget output)
+    const h = hash[i] ?? 0
+    const t = target[i] ?? 0
     if (h !== t) return h < t
   }
   return false
@@ -68,7 +80,7 @@ export function lessThan(hash: Uint8Array, target: Uint8Array): boolean {
 
 export async function solve(
   req: SolveRequest,
-  onProgress?: (hashes: number) => void
+  onProgress?: (hashes: number) => void,
 ): Promise<SolverResult> {
   const token = new TextEncoder().encode(req.challenge)
   const target = computeTarget(BigInt(req.workFactor), req.clickCount)
@@ -125,9 +137,17 @@ self.onmessage = (e: MessageEvent<SolverRequest>) => {
   void (async () => {
     try {
       if (req.type === "solve") {
-        post(await solve(req, hashes => post({ type: "progress", jobId: req.jobId, hashes })))
+        post(
+          await solve(req, (hashes) =>
+            post({ type: "progress", jobId: req.jobId, hashes }),
+          ),
+        )
       } else {
-        post({ type: "bench-result", jobId: req.jobId, hashesPerSecond: await bench(req.durationMs) })
+        post({
+          type: "bench-result",
+          jobId: req.jobId,
+          hashesPerSecond: await bench(req.durationMs),
+        })
       }
     } catch (err) {
       post({

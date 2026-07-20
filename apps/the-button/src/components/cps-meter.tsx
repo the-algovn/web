@@ -14,6 +14,7 @@ export function CpsMeter({ cps, history }: { cps: number; history: number[] }) {
       <div className="tb-spark" aria-hidden>
         {history.map((h, i) => (
           <i
+            // biome-ignore lint/suspicious/noArrayIndexKey: decorative aria-hidden sparkline segments are purely positional; heights repeat, so no content-derived key is unique
             key={i}
             data-testid="cps-bar"
             style={{ height: `${Math.max(8, (h / max) * 100)}%` }}
