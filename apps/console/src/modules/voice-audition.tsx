@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { PresignedAudio } from "../components/presigned-audio"
 import { RunPanel } from "../components/run-panel"
-import { artifactUrl, labCall } from "../lib/api"
+import { labCall } from "../lib/api"
 import { useAuth } from "../lib/use-auth"
 
 interface Voice {
@@ -140,13 +141,7 @@ export function VoiceAudition() {
                   {t.voiceId}
                   {t.fake ? " (fake)" : ""}
                 </span>
-                <audio
-                  controls
-                  src={artifactUrl(t.artifactId)}
-                  className="h-9 flex-1"
-                >
-                  <track kind="captions" />
-                </audio>
+                <PresignedAudio artifactId={t.artifactId} className="h-9 flex-1" />
                 <span className="text-muted-foreground font-mono text-xs">
                   ${t.costUsd.toFixed(4)}
                 </span>

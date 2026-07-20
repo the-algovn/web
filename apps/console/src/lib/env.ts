@@ -7,7 +7,6 @@ export const env = {
   oidcClientId:
     import.meta.env.VITE_OIDC_CLIENT_ID ?? "SET_VITE_OIDC_CLIENT_ID",
   apiBase: import.meta.env.VITE_API_BASE ?? "http://localhost:8080/radio-lab",
-  artifactsBase: import.meta.env.VITE_ARTIFACTS_BASE ?? "http://localhost:9291",
   // Lab benches need radio-lab, which does not deploy yet. Unset => false, so
   // prod builds ship the shell alone; the Tiltfile sets it to "true".
   enableLab: import.meta.env.VITE_ENABLE_LAB === "true",

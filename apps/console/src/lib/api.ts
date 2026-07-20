@@ -15,9 +15,6 @@ export function labCall<T>(
   return request<T>(body === undefined ? "GET" : "POST", path, body, token)
 }
 
-export const artifactUrl = (id: string): string =>
-  `${env.artifactsBase}/artifacts/${id}`
-
 // Resolve an artifact id to a time-limited presigned MinIO GET URL (artifacts
 // are private in object storage; there is no static URL).
 export function presignArtifact(

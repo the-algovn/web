@@ -1,8 +1,9 @@
 import { Button } from "@algovn/ui/button"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { PresignedAudio } from "../components/presigned-audio"
 import { RunPanel } from "../components/run-panel"
-import { artifactUrl, labCall } from "../lib/api"
+import { labCall } from "../lib/api"
 import { useAuth } from "../lib/use-auth"
 
 interface ScriptResp {
@@ -239,9 +240,7 @@ export function BrainPlayground() {
                 Speak it ({voiceId || "no voice"})
               </Button>
               {speakId ? (
-                <audio controls src={artifactUrl(speakId)} className="h-9">
-                  <track kind="captions" />
-                </audio>
+                <PresignedAudio artifactId={speakId} className="h-9" />
               ) : null}
             </div>
           </div>

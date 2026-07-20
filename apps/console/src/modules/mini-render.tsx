@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { PresignedAudio } from "../components/presigned-audio"
 import { RunPanel } from "../components/run-panel"
-import { artifactUrl, labCall } from "../lib/api"
+import { labCall } from "../lib/api"
 import { useAuth } from "../lib/use-auth"
 
 interface Art {
@@ -129,13 +130,7 @@ export function MiniRender() {
       result={
         out ? (
           <div className="flex items-center gap-3">
-            <audio
-              controls
-              src={artifactUrl(out.artifact?.id ?? "")}
-              className="h-9 flex-1"
-            >
-              <track kind="captions" />
-            </audio>
+            <PresignedAudio artifactId={out.artifact?.id ?? ""} className="h-9 flex-1" />
             <span className="text-muted-foreground font-mono text-xs">
               {out.durationS?.toFixed(1)}s
             </span>

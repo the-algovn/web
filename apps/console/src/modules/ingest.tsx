@@ -2,8 +2,9 @@ import { Badge } from "@algovn/ui/badge"
 import { Button } from "@algovn/ui/button"
 import { useState } from "react"
 import { toast } from "sonner"
+import { PresignedAudio } from "../components/presigned-audio"
 import { RunPanel } from "../components/run-panel"
-import { artifactUrl, labCall } from "../lib/api"
+import { labCall } from "../lib/api"
 import { useAuth } from "../lib/use-auth"
 
 interface Candidate {
@@ -137,13 +138,10 @@ export function Ingest() {
                               <Badge variant="secondary">cached</Badge>
                             ) : null}
                           </div>
-                          <audio
-                            controls
-                            src={artifactUrl(d.artifact?.id ?? "")}
+                          <PresignedAudio
+                            artifactId={d.artifact?.id ?? ""}
                             className="h-8 w-44"
-                          >
-                            <track kind="captions" />
-                          </audio>
+                          />
                         </div>
                       ) : (
                         <Button

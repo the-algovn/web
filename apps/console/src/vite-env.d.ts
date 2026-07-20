@@ -4,7 +4,6 @@ interface ImportMetaEnv {
   readonly VITE_OIDC_AUTHORITY?: string
   readonly VITE_OIDC_CLIENT_ID?: string
   readonly VITE_API_BASE?: string
-  readonly VITE_ARTIFACTS_BASE?: string
 }
 
 // TypeScript 6's noUncheckedSideEffectImports (default true) checks that
