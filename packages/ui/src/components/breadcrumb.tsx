@@ -1,8 +1,7 @@
-import * as React from "react"
+import { cn } from "@algovn/ui/lib/utils"
 import { ChevronRight, MoreHorizontal } from "lucide-react"
 import { Slot } from "radix-ui"
-
-import { cn } from "@algovn/ui/lib/utils"
+import type * as React from "react"
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />
@@ -14,7 +13,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
       data-slot="breadcrumb-list"
       className={cn(
         "flex flex-wrap items-center gap-1.5 text-sm break-words text-muted-foreground sm:gap-2.5",
-        className
+        className,
       )}
       {...props}
     />
@@ -51,6 +50,8 @@ function BreadcrumbLink({
 
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   return (
+    // biome-ignore lint/a11y/useFocusableInteractive: vendored shadcn component: the current page is a disabled link placeholder and is intentionally not focusable
+    // biome-ignore lint/a11y/useSemanticElements: vendored shadcn component: role="link" with aria-disabled marks the current page; a real <a> would be navigable and styled differently
     <span
       data-slot="breadcrumb-page"
       role="link"
@@ -100,10 +101,10 @@ function BreadcrumbEllipsis({
 
 export {
   Breadcrumb,
-  BreadcrumbList,
+  BreadcrumbEllipsis,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-  BreadcrumbEllipsis,
 }

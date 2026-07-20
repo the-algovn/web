@@ -1,15 +1,16 @@
 "use client"
 
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-
-import { cn } from "@algovn/ui/lib/utils"
 import { Button } from "@algovn/ui/button"
 import { Input } from "@algovn/ui/input"
+
+import { cn } from "@algovn/ui/lib/utils"
 import { Textarea } from "@algovn/ui/textarea"
+import { cva, type VariantProps } from "class-variance-authority"
+import type * as React from "react"
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: vendored shadcn component: role is intentional; swapping to <fieldset> changes default browser styling
     <div
       data-slot="input-group"
       role="group"
@@ -29,7 +30,7 @@ function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
         // Error state.
         "has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40",
 
-        className
+        className,
       )}
       {...props}
     />
@@ -54,7 +55,7 @@ const inputGroupAddonVariants = cva(
     defaultVariants: {
       align: "inline-start",
     },
-  }
+  },
 )
 
 function InputGroupAddon({
@@ -63,6 +64,8 @@ function InputGroupAddon({
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>) {
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: vendored shadcn component: the container onClick only delegates focus to the inner input; keyboard users reach the input via Tab
+    // biome-ignore lint/a11y/useSemanticElements: vendored shadcn component: role is intentional; swapping to <fieldset> changes default browser styling
     <div
       role="group"
       data-slot="input-group-addon"
@@ -94,7 +97,7 @@ const inputGroupButtonVariants = cva(
     defaultVariants: {
       size: "xs",
     },
-  }
+  },
 )
 
 function InputGroupButton({
@@ -121,7 +124,7 @@ function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
     <span
       className={cn(
         "flex items-center gap-2 text-sm text-muted-foreground [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
-        className
+        className,
       )}
       {...props}
     />
@@ -137,7 +140,7 @@ function InputGroupInput({
       data-slot="input-group-control"
       className={cn(
         "flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
-        className
+        className,
       )}
       {...props}
     />
@@ -153,7 +156,7 @@ function InputGroupTextarea({
       data-slot="input-group-control"
       className={cn(
         "flex-1 resize-none rounded-none border-0 bg-transparent py-3 shadow-none focus-visible:ring-0 dark:bg-transparent",
-        className
+        className,
       )}
       {...props}
     />
@@ -164,7 +167,7 @@ export {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-  InputGroupText,
   InputGroupInput,
+  InputGroupText,
   InputGroupTextarea,
 }
