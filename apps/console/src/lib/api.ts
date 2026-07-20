@@ -15,6 +15,17 @@ export function labCall<T>(
   return request<T>(body === undefined ? "GET" : "POST", path, body, token)
 }
 
+const radioClient = createApiClient({ baseUrl: env.radioApiBase })
+
+// Same GET/POST convention as labCall, against the /radio product prefix.
+export function radioCall<T>(
+  token: string,
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  return radioClient.request<T>(body === undefined ? "GET" : "POST", path, body, token)
+}
+
 // Resolve an artifact id to a time-limited presigned MinIO GET URL (artifacts
 // are private in object storage; there is no static URL).
 export function presignArtifact(

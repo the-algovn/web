@@ -6,4 +6,6 @@ export const env = {
   oidcClientId:
     import.meta.env.VITE_OIDC_CLIENT_ID ?? "SET_VITE_OIDC_CLIENT_ID",
   apiBase: import.meta.env.VITE_API_BASE ?? "https://api.algovn.com/radio-lab",
+  radioApiBase:
+    import.meta.env.VITE_RADIO_API_BASE ?? "https://api.algovn.com/radio",
 }
