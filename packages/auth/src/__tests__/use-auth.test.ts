@@ -8,7 +8,13 @@ function makeUser(accessToken: string, expiresAt?: number): User {
     access_token: accessToken,
     token_type: "Bearer",
     expires_at: expiresAt,
-    profile: { sub: "user-1", iss: "https://id.algovn.com", aud: "app", exp: 0, iat: 0 },
+    profile: {
+      sub: "user-1",
+      iss: "https://id.algovn.com",
+      aud: "app",
+      exp: 0,
+      iat: 0,
+    },
   })
 }
 
@@ -32,8 +38,14 @@ function fakeManager(initial: User | null) {
   }
   return {
     manager: manager as unknown as UserManager,
-    emitLoaded: (u: User) => loaded.forEach(cb => cb(u)),
-    emitUnloaded: () => unloaded.forEach(cb => cb()),
+    emitLoaded: (u: User) =>
+      loaded.forEach((cb) => {
+        cb(u)
+      }),
+    emitUnloaded: () =>
+      unloaded.forEach((cb) => {
+        cb()
+      }),
     listenerCount: () => loaded.length + unloaded.length,
   }
 }
