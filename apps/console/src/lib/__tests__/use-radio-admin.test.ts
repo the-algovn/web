@@ -53,25 +53,52 @@ describe("useRadioAdmin", () => {
   })
 
   it("reorder is optimistic and rolls back on error", async () => {
-    mockRoutes()
+    // local 3-track fixture: with only 2 tracks, the rollback target and the
+    // submitted order are the same 2 permutations, so a refetch can't be told
+    // apart from a no-op. A distinct 3rd server-truth order proves the refetch landed.
+    const playlist3 = {
+      summary: { ...summaries[0], trackCount: 3 },
+      tracks: [
+        { ytId: "a", title: "A", durationS: "60" },
+        { ytId: "b", title: "B", durationS: "60" },
+        { ytId: "c", title: "C", durationS: "60" },
+      ],
+    }
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station") return { station }
+      if (path === "/playlists") return { playlists: summaries }
+      if (path === "/playlists/get") return { playlist: playlist3 }
+      throw new Error(`unmocked ${path}`)
+    })
     const { result } = renderHook(() => useRadioAdmin("tok"))
     await waitFor(() => expect(result.current.loading).toBe(false))
     act(() => result.current.select("p1"))
-    await waitFor(() => expect(result.current.selected?.tracks).toHaveLength(2))
+    await waitFor(() => expect(result.current.selected?.tracks).toHaveLength(3))
 
     mocked.mockImplementation(async (_t: string, path: string) => {
       if (path === "/playlists/reorder") throw new Error("stale")
-      if (path === "/playlists/get") return { playlist }
+      if (path === "/playlists/get")
+        return {
+          playlist: {
+            ...playlist3,
+            tracks: [
+              { ytId: "c", title: "C", durationS: "60" },
+              { ytId: "a", title: "A", durationS: "60" },
+              { ytId: "b", title: "B", durationS: "60" },
+            ],
+          },
+        }
       throw new Error(`unmocked ${path}`)
     })
-    await act(() => result.current.reorder(["b", "a"]))
-    // rolled back to server order after the failed call + refetch
+    await act(() => result.current.reorder(["b", "a", "c"]))
+    // final order matches server truth from the refetch, not the original
+    // ["a","b","c"] or the optimistic/submitted ["b","a","c"]
     await waitFor(() =>
-      expect(result.current.selected?.tracks?.map((t) => t.ytId)).toEqual(["a", "b"]),
+      expect(result.current.selected?.tracks?.map((t) => t.ytId)).toEqual(["c", "a", "b"]),
     )
     expect(mocked).toHaveBeenCalledWith("tok", "/playlists/reorder", {
       playlistId: "p1",
-      ytIds: ["b", "a"],
+      ytIds: ["b", "a", "c"],
     })
   })
 
