@@ -13,6 +13,6 @@ export const apps: AppTile[] = [
     name: "The Button",
     description: "One button. One goal. Millions of humans.",
     href: "/the-button",
-    status: "soon",
+    status: "live",
   },
 ]

@@ -59,7 +59,7 @@ describe("unix basics", () => {
   it("cat prints a project file", async () => {
     const { lines } = await runCommand("cat projects/the-button", makeCtx())
     expect(lines[0]).toBe("name:        The Button")
-    expect(lines).toContain("status:      soon")
+    expect(lines).toContain("status:      live")
   })
 
   it("cat marks .plan as seen", async () => {
