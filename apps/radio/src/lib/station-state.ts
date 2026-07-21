@@ -7,7 +7,9 @@ export function deriveStationState(i: {
   mode: ConnMode
   playerState: PlayerState
   nowPlaying: NowPlaying | null
+  offAir?: boolean
 }): StationStatus {
+  if (i.offAir) return "off-air"
   if (i.mode === "offline" || i.playerState === "error") return "off-air"
   if (!i.nowPlaying) return "connecting"
   if (i.playerState === "connecting" || i.playerState === "idle")

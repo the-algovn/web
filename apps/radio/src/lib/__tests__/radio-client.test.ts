@@ -18,6 +18,15 @@ describe("parseNowPlaying", () => {
     expect(parseNowPlaying({ kind: "track" })).toBeNull()
     expect(parseNowPlaying("nope")).toBeNull()
   })
+  it("defaults listeners to 0 when omitted (protojson omits zero values)", () => {
+    const np = parseNowPlaying({
+      kind: "track",
+      title: "Nơi Này Có Anh",
+      startedAt: "2026-07-20T16:41:00Z",
+      durationSeconds: 269,
+    })
+    expect(np?.listeners).toBe(0)
+  })
 })
 
 describe("parseQueue", () => {

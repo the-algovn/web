@@ -21,6 +21,16 @@ describe("deriveStationState", () => {
       }),
     ).toBe("connecting")
   })
+  it("is off-air when offAir is set, regardless of everything else", () => {
+    expect(
+      deriveStationState({
+        mode: "live",
+        playerState: "playing",
+        nowPlaying: np({ kind: "dj" }),
+        offAir: true,
+      }),
+    ).toBe("off-air")
+  })
   it("is off-air on offline mode or a player error", () => {
     expect(
       deriveStationState({

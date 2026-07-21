@@ -25,12 +25,19 @@ export function createHttpClient(opts: {
   const request =
     opts.deps?.request ?? createApiClient({ baseUrl: opts.apiBase }).request
 
-  const fetchNowPlaying = (): Promise<NowPlaying> =>
-    request<unknown>("GET", "/now-playing").then(
-      (r) => parseNowPlaying(r) ?? Promise.reject(new Error("bad now-playing")),
-    )
+  // REST responses are protojson envelopes; SSE frames are the engine's raw
+  // JSON. Absent nowPlaying (REST) or {"offAir":true} (SSE) means off-air.
+  const fetchNowPlaying = (): Promise<NowPlaying | null> =>
+    request<{ nowPlaying?: unknown }>("GET", "/now-playing").then((r) => {
+      if (r === null || typeof r !== "object" || r.nowPlaying === undefined)
+        return null
+      const np = parseNowPlaying(r.nowPlaying)
+      return np ?? Promise.reject(new Error("bad now-playing"))
+    })
   const fetchQueue = (): Promise<QueueItem[]> =>
-    request<unknown>("GET", "/queue").then((r) => parseQueue(r) ?? [])
+    request<{ items?: unknown }>("GET", "/queue").then(
+      (r) => parseQueue(r.items ?? []) ?? [],
+    )
 
   function subscribe<T>(
     channel: string,
@@ -57,18 +64,40 @@ export function createHttpClient(opts: {
     return () => ch.stop()
   }
 
+  // null from the generic channel still means "invalid frame, skip"; off-air
+  // needs a distinct marker so it can round-trip through onEvent(null).
+  type NpFrame = NowPlaying | "offair"
+
   return {
     getNowPlaying: fetchNowPlaying,
     getQueue: fetchQueue,
-    getHistory: () => request<HistoryItem[]>("GET", "/history"),
-    subscribeNowPlaying: (onEvent, onMode) =>
-      subscribe<NowPlaying>(
-        "radio.nowplaying",
-        parseNowPlaying,
-        fetchNowPlaying,
-        onEvent,
-        onMode,
+    getHistory: () =>
+      request<{ items?: HistoryItem[] }>("GET", "/history").then(
+        (r) => r.items ?? [],
       ),
+    subscribeNowPlaying: (onEvent, onMode) => {
+      const ch = createSseChannel<NpFrame>({
+        url: `${opts.eventsUrl}/radio.nowplaying`,
+        parse: (data) => {
+          try {
+            const raw = JSON.parse(data) as Record<string, unknown>
+            if (raw.offAir === true) return "offair"
+            return parseNowPlaying(raw)
+          } catch {
+            return null
+          }
+        },
+        onEvent: (v) => onEvent(v === "offair" ? null : v),
+        onModeChange: onMode ? (m) => onMode(asConnMode(m)) : undefined,
+        createEventSource: opts.deps?.createEventSource,
+        poll: {
+          fetch: () =>
+            fetchNowPlaying().then((np) => np ?? ("offair" as const)),
+        },
+      })
+      ch.start()
+      return () => ch.stop()
+    },
     subscribeQueue: (onEvent, onMode) =>
       subscribe<QueueItem[]>(
         "radio.queue",

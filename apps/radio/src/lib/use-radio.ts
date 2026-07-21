@@ -41,23 +41,33 @@ export function useRadio(
   const [listeners, setListeners] = useState(0)
   const [mode, setMode] = useState<ConnMode>("connecting")
   const [playerState, setPlayerState] = useState<PlayerState>("idle")
+  const [offAir, setOffAir] = useState(false)
   const playerRef = useRef<RadioPlayer | null>(null)
 
   // Initial reads + subscriptions + heartbeat.
   useEffect(() => {
     let alive = true
     void client.getNowPlaying().then((np) => {
-      if (alive) {
+      if (!alive) return
+      if (np) {
         sync.ingest(np)
         setListeners(np.listeners)
+        setOffAir(false)
+      } else {
+        setOffAir(true)
       }
     })
     void client.getQueue().then((q) => alive && setQueue(q))
     void client.getHistory().then((h) => alive && setHistory(h))
     const unNp = client.subscribeNowPlaying((np) => {
-      sync.ingest(np)
-      setListeners(np.listeners)
-      void client.getHistory().then((h) => alive && setHistory(h))
+      if (np) {
+        sync.ingest(np)
+        setListeners(np.listeners)
+        setOffAir(false)
+        void client.getHistory().then((h) => alive && setHistory(h))
+      } else {
+        setOffAir(true)
+      }
     }, setMode)
     const unQ = client.subscribeQueue(setQueue)
     const stopHb = startHeartbeat(client)
@@ -95,8 +105,8 @@ export function useRadio(
   useEffect(() => () => playerRef.current?.destroy(), [])
 
   const status = useMemo(
-    () => deriveStationState({ mode, playerState, nowPlaying }),
-    [mode, playerState, nowPlaying],
+    () => deriveStationState({ mode, playerState, nowPlaying, offAir }),
+    [mode, playerState, nowPlaying, offAir],
   )
 
   return {

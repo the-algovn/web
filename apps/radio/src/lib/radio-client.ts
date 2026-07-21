@@ -32,11 +32,11 @@ export interface HistoryItem {
 export type ConnMode = "connecting" | "live" | "polling" | "offline"
 
 export interface RadioClient {
-  getNowPlaying(): Promise<NowPlaying>
+  getNowPlaying(): Promise<NowPlaying | null>
   getQueue(): Promise<QueueItem[]>
   getHistory(): Promise<HistoryItem[]>
   subscribeNowPlaying(
-    onEvent: (np: NowPlaying) => void,
+    onEvent: (np: NowPlaying | null) => void,
     onMode?: (m: ConnMode) => void,
   ): () => void
   subscribeQueue(
@@ -56,14 +56,14 @@ export function parseNowPlaying(raw: unknown): NowPlaying | null {
   if (kind !== "track" && kind !== "dj" && kind !== "jingle") return null
   if (typeof r.title !== "string" || typeof r.startedAt !== "string")
     return null
-  if (typeof r.durationSeconds !== "number" || typeof r.listeners !== "number")
-    return null
+  if (typeof r.durationSeconds !== "number") return null
+  const listeners = typeof r.listeners === "number" ? r.listeners : 0
   const np: NowPlaying = {
     kind,
     title: r.title,
     startedAt: r.startedAt,
     durationSeconds: r.durationSeconds,
-    listeners: r.listeners,
+    listeners,
   }
   if (str(r.artist)) np.artist = str(r.artist)
   if (str(r.thumbnailUrl)) np.thumbnailUrl = str(r.thumbnailUrl)
