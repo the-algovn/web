@@ -167,7 +167,7 @@ jobs:
 
   build-push-radio:
     # amd64-only per iac convention: workloads run on algovn-w1, not the arm64 Pi.
-    # No build-args: radio's passive mock has no @algovn/auth / OIDC.
+    # build-args flip the prod image off mock (defaults keep local builds mock).
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -198,5 +198,8 @@ jobs:
           file: apps/radio/Dockerfile
           platforms: linux/amd64
           push: true
+          build-args: |
+            VITE_USE_MOCK=false
+            VITE_STREAM_URL=https://algovn.com/live/radio.m3u8
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
