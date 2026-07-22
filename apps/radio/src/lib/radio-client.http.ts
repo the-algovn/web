@@ -1,8 +1,8 @@
 import { type ApiClient, createApiClient } from "@algovn/api"
 import {
   type ConnMode,
-  type HistoryItem,
   type NowPlaying,
+  parseHistoryItem,
   parseNowPlaying,
   parseQueue,
   type QueueItem,
@@ -72,8 +72,8 @@ export function createHttpClient(opts: {
     getNowPlaying: fetchNowPlaying,
     getQueue: fetchQueue,
     getHistory: () =>
-      request<{ items?: HistoryItem[] }>("GET", "/history").then(
-        (r) => r.items ?? [],
+      request<{ items?: unknown[] }>("GET", "/history").then((r) =>
+        (r.items ?? []).flatMap((x) => parseHistoryItem(x) ?? []),
       ),
     subscribeNowPlaying: (onEvent, onMode) => {
       const ch = createSseChannel<NpFrame>({

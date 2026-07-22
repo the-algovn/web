@@ -102,6 +102,23 @@ export function parseQueue(raw: unknown): QueueItem[] | null {
   })
 }
 
+export function parseHistoryItem(raw: unknown): HistoryItem | null {
+  if (typeof raw !== "object" || raw === null) return null
+  const r = raw as Record<string, unknown>
+  if (typeof r.title !== "string" || typeof r.airedAt !== "string")
+    return null
+  const item: HistoryItem = {
+    title: r.title,
+    airedAt: r.airedAt,
+  }
+  if (str(r.artist)) item.artist = str(r.artist)
+  if (str(r.thumbnailUrl)) item.thumbnailUrl = str(r.thumbnailUrl)
+  if (r.source === "listener" || r.source === "ai") item.source = r.source
+  if (str(r.requestedByName)) item.requestedByName = str(r.requestedByName)
+  if (str(r.reason)) item.reason = str(r.reason)
+  return item
+}
+
 export function createClient(): RadioClient {
   return env.useMock
     ? new MockStudio()

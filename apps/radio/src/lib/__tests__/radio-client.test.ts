@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { parseNowPlaying, parseQueue } from "../radio-client"
+import { parseHistoryItem, parseNowPlaying, parseQueue } from "../radio-client"
 
 describe("parseNowPlaying", () => {
   it("accepts a well-formed track", () => {
@@ -81,5 +81,36 @@ describe("parseQueue", () => {
       { title: "B", hasDedication: false, source: "ai", reason: "đổi gió" },
     ])
     expect(q?.[0]?.reason).toBe("đổi gió")
+  })
+})
+
+describe("parseHistoryItem", () => {
+  it("keeps provenance and drops unknown source to undefined", () => {
+    const h = parseHistoryItem({
+      title: "Nơi Này Có Anh",
+      airedAt: "2026-07-22T05:00:00Z",
+      source: "ai",
+      requestedByName: "Ngọc",
+      reason: "đổi gió",
+    })
+    expect(h).toEqual({
+      title: "Nơi Này Có Anh",
+      airedAt: "2026-07-22T05:00:00Z",
+      source: "ai",
+      requestedByName: "Ngọc",
+      reason: "đổi gió",
+    })
+
+    const odd = parseHistoryItem({
+      title: "T",
+      airedAt: "2026-07-22T05:00:00Z",
+      source: "wat",
+    })
+    expect(odd?.source).toBeUndefined()
+  })
+  it("rejects an item missing title", () => {
+    expect(
+      parseHistoryItem({ airedAt: "2026-07-22T05:00:00Z" }),
+    ).toBeNull()
   })
 })
