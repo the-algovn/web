@@ -1,5 +1,5 @@
 import { Loader2, Search } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ApiError } from "@algovn/api"
 import type { Candidate, RequestApi, TrackRequest } from "../lib/request-client"
 
@@ -21,6 +21,18 @@ export function RequestModal(props: {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState(false)
+
+  // Reopening after a stale close must not surface a previous search's
+  // results/notice — an in-flight request that resolves after close would
+  // otherwise leave a confirmation banner for the NEXT open.
+  useEffect(() => {
+    if (props.open) {
+      setQuery("")
+      setResults([])
+      setNotice(null)
+      setConfirmed(false)
+    }
+  }, [props.open])
 
   if (!props.open) return null
 

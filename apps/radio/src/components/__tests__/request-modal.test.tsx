@@ -71,4 +71,25 @@ describe("RequestModal", () => {
     )
     expect(container).toBeEmptyDOMElement()
   })
+
+  it("resets query/results/notice on reopen after a stale close", async () => {
+    const api = fakeApi()
+    const { rerender } = render(
+      <RequestModal api={api} token="tok" open onClose={() => {}} onRequested={() => {}} />,
+    )
+    await userEvent.type(screen.getByRole("searchbox"), "bài a")
+    await userEvent.click(screen.getByRole("button", { name: "Tìm" }))
+    await waitFor(() => expect(screen.getByText("Bài A")).toBeInTheDocument())
+
+    rerender(
+      <RequestModal api={api} token="tok" open={false} onClose={() => {}} onRequested={() => {}} />,
+    )
+    rerender(
+      <RequestModal api={api} token="tok" open onClose={() => {}} onRequested={() => {}} />,
+    )
+
+    expect(screen.getByRole("searchbox")).toHaveValue("")
+    expect(screen.queryByText("Bài A")).not.toBeInTheDocument()
+    expect(screen.queryByText("đã vào hàng đợi")).not.toBeInTheDocument()
+  })
 })
