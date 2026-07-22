@@ -139,6 +139,9 @@ importers:
       '@algovn/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@algovn/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@algovn/ui':
         specifier: workspace:*
         version: link:../../packages/ui

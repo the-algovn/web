@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@algovn/api": "workspace:*",
+    "@algovn/auth": "workspace:*",
     "@algovn/ui": "workspace:*",
     "@fontsource-variable/geist": "^5.2.9",
     "@fontsource-variable/geist-mono": "^5.2.8",
