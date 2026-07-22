@@ -15,7 +15,11 @@ export function ListenerCount({ count }: { count: number }) {
 
   return (
     <span
-      role="status"
+      // role="img" (not "status"): the count changes on every join/leave, and
+      // a live region here would announce each tick — the project reserves
+      // aria-live for the now-playing title only. role="img" just gives the
+      // icon+number span an accessible name.
+      role="img"
       aria-label={`${count} người đang nghe`}
       className={`inline-flex items-center gap-1.5 font-mono text-xs transition-colors duration-300 ${
         bumped ? "radio-bump" : "text-[color:var(--muted-foreground)]"
