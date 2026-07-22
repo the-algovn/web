@@ -53,6 +53,9 @@ export function QueuePane(props: {
             if (dragFrom.current !== null) move(dragFrom.current, i)
             dragFrom.current = null
           }}
+          onDragEnd={() => {
+            dragFrom.current = null
+          }}
           className="flex items-center gap-2 rounded-md border px-2 py-1.5"
         >
           <span className="text-muted-foreground w-5 text-right text-xs">{i + 1}</span>
