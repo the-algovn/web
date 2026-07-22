@@ -27,6 +27,30 @@ describe("parseNowPlaying", () => {
     })
     expect(np?.listeners).toBe(0)
   })
+  it("keeps provenance on now-playing and drops unknown sources", () => {
+    const np = parseNowPlaying({
+      kind: "track", title: "T", startedAt: "2026-07-22T05:00:00Z",
+      durationSeconds: 240, listeners: 1,
+      source: "ai", reason: "hợp đêm mưa",
+    })
+    expect(np?.source).toBe("ai")
+    expect(np?.reason).toBe("hợp đêm mưa")
+    expect(np?.requestedByName).toBeUndefined()
+
+    const lis = parseNowPlaying({
+      kind: "track", title: "T", startedAt: "2026-07-22T05:00:00Z",
+      durationSeconds: 240, listeners: 1,
+      source: "listener", requestedByName: "Ngọc",
+    })
+    expect(lis?.source).toBe("listener")
+    expect(lis?.requestedByName).toBe("Ngọc")
+
+    const odd = parseNowPlaying({
+      kind: "track", title: "T", startedAt: "2026-07-22T05:00:00Z",
+      durationSeconds: 240, listeners: 1, source: "wat",
+    })
+    expect(odd?.source).toBeUndefined()
+  })
 })
 
 describe("parseQueue", () => {
@@ -51,5 +75,11 @@ describe("parseQueue", () => {
     })
     expect(q?.[1]?.source).toBe("ai")
     expect(q?.[2]?.source).toBeUndefined()
+  })
+  it("keeps the reason on queue items", () => {
+    const q = parseQueue([
+      { title: "B", hasDedication: false, source: "ai", reason: "đổi gió" },
+    ])
+    expect(q?.[0]?.reason).toBe("đổi gió")
   })
 })

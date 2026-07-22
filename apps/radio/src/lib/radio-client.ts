@@ -13,6 +13,9 @@ export interface NowPlaying {
   startedAt: string // RFC3339 — the ear-sync anchor
   durationSeconds: number
   listeners: number
+  source?: "listener" | "ai"
+  requestedByName?: string
+  reason?: string
 }
 
 export interface QueueItem {
@@ -22,6 +25,7 @@ export interface QueueItem {
   hasDedication: boolean // never the recipient — no spoiled surprises
   source?: "listener" | "ai"
   requestedByName?: string
+  reason?: string
 }
 
 export interface HistoryItem {
@@ -29,6 +33,9 @@ export interface HistoryItem {
   artist?: string
   thumbnailUrl?: string
   airedAt: string
+  source?: "listener" | "ai"
+  requestedByName?: string
+  reason?: string
 }
 
 export type ConnMode = "connecting" | "live" | "polling" | "offline"
@@ -70,6 +77,9 @@ export function parseNowPlaying(raw: unknown): NowPlaying | null {
   if (str(r.artist)) np.artist = str(r.artist)
   if (str(r.thumbnailUrl)) np.thumbnailUrl = str(r.thumbnailUrl)
   if (str(r.dedication)) np.dedication = str(r.dedication)
+  if (r.source === "listener" || r.source === "ai") np.source = r.source
+  if (str(r.requestedByName)) np.requestedByName = str(r.requestedByName)
+  if (str(r.reason)) np.reason = str(r.reason)
   return np
 }
 
@@ -87,6 +97,7 @@ export function parseQueue(raw: unknown): QueueItem[] | null {
     if (str(e.thumbnailUrl)) item.thumbnailUrl = str(e.thumbnailUrl)
     if (e.source === "listener" || e.source === "ai") item.source = e.source
     if (str(e.requestedByName)) item.requestedByName = str(e.requestedByName)
+    if (str(e.reason)) item.reason = str(e.reason)
     return [item] // recipient (if present) is deliberately dropped
   })
 }

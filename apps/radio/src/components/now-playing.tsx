@@ -45,6 +45,23 @@ export function NowPlayingCard({ np }: { np: NowPlaying | null }) {
                 {np.dedication}
               </div>
             )}
+            {(np.source === "ai" || np.source === "listener") && (
+              <div
+                className="mt-2 rounded border-l-2 px-2.5 py-1.5 text-xs"
+                style={{
+                  color: "var(--radio-amber-soft)",
+                  borderColor: "var(--radio-amber)",
+                  background:
+                    "color-mix(in srgb, var(--radio-amber) 8%, transparent)",
+                }}
+              >
+                {np.source === "ai"
+                  ? np.reason
+                    ? `Tiểu Dương Dương chọn: ${np.reason}`
+                    : "Tiểu Dương Dương chọn"
+                  : `Yêu cầu của ${np.requestedByName ?? "thính giả"}`}
+              </div>
+            )}
           </div>
         </div>
       )}

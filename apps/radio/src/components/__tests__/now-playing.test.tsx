@@ -33,4 +33,26 @@ describe("NowPlayingCard", () => {
     expect(screen.queryByText(base.title)).not.toBeInTheDocument()
     expect(container.querySelector('[data-slot="skeleton"]')).not.toBeNull()
   })
+  it("renders attribution for AI picks, listener requests, and nothing for shuffle", () => {
+    const base = {
+      kind: "track" as const, title: "T", startedAt: "2026-07-22T05:00:00Z",
+      durationSeconds: 240, listeners: 1,
+    }
+    const { rerender } = render(
+      <NowPlayingCard np={{ ...base, source: "ai", reason: "hợp đêm mưa" }} />,
+    )
+    expect(screen.getByText("Tiểu Dương Dương chọn: hợp đêm mưa")).toBeInTheDocument()
+
+    rerender(<NowPlayingCard np={{ ...base, source: "ai" }} />)
+    expect(screen.getByText("Tiểu Dương Dương chọn")).toBeInTheDocument()
+
+    rerender(<NowPlayingCard np={{ ...base, source: "listener", requestedByName: "Ngọc" }} />)
+    expect(screen.getByText("Yêu cầu của Ngọc")).toBeInTheDocument()
+
+    rerender(<NowPlayingCard np={{ ...base, source: "listener" }} />)
+    expect(screen.getByText("Yêu cầu của thính giả")).toBeInTheDocument()
+
+    rerender(<NowPlayingCard np={base} />)
+    expect(screen.queryByText(/Tiểu Dương Dương chọn|Yêu cầu của/)).not.toBeInTheDocument()
+  })
 })

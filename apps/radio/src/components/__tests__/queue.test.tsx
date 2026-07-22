@@ -37,6 +37,18 @@ describe("Queue", () => {
     expect(screen.getByText("Yêu cầu · Ngọc")).toBeInTheDocument()
     expect(screen.getByText("Tiểu Dương Dương chọn")).toBeInTheDocument()
   })
+  it("shows the DJ's reason under AI rows only", () => {
+    render(
+      <Queue
+        items={[
+          { title: "B", hasDedication: false, source: "ai", reason: "đổi gió" },
+          { title: "A", hasDedication: false, source: "listener", requestedByName: "Ngọc", reason: "leak" },
+        ]}
+      />,
+    )
+    expect(screen.getByText("đổi gió")).toBeInTheDocument()
+    expect(screen.queryByText("leak")).not.toBeInTheDocument() // listener rows never show reason
+  })
 })
 
 describe("History", () => {

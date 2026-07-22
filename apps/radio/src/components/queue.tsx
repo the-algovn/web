@@ -22,6 +22,11 @@ export function Queue({ items }: { items: QueueItem[] }) {
                 {it.artist}
               </div>
             )}
+            {it.source === "ai" && it.reason && (
+              <div className="truncate text-[11px] italic text-[color:var(--muted-foreground)]">
+                {it.reason}
+              </div>
+            )}
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {it.source && (
