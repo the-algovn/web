@@ -12,6 +12,13 @@ import {
 
 export interface UseTimelineInput {
   nowPlaying: NowPlaying | null
+  // Referential-stability contract: `queue`, `history` and `requests` must keep
+  // the same array identity between renders on which their contents did not
+  // change (i.e. pass state values straight through, as useRadio/useRequests
+  // return them — never a freshly-derived `items.filter(...)` or `x ?? []`).
+  // The reducer returns a new state object on every ingest, so an input array
+  // rebuilt every render would drive setState → re-render → new identity →
+  // setState forever, the same infinite loop `nowRef` guards `now` against.
   queue: QueueItem[]
   history: HistoryItem[]
   requests: TrackRequest[]
