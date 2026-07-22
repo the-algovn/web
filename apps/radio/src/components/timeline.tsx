@@ -25,6 +25,7 @@ export function Timeline({
   const settled = useRef(false)
   // Distance from the bottom, captured before a mutation and restored after.
   const anchor = useRef<number | null>(null)
+  const prevScrollHeight = useRef<number | null>(null)
 
   // Rest position, once, as soon as there is anything to rest against.
   useEffect(() => {
@@ -39,17 +40,36 @@ export function Timeline({
     )
   }, [])
 
+  // Keep the anchor synced to the reader's real scroll position, so a
+  // content mutation restores where they actually are — not where they were
+  // at the last React render. A manual scroll fires no render, so without
+  // this listener the anchor would go stale and later renders would yank the
+  // reader back.
+  useEffect(() => {
+    const scroller = scrollRef.current
+    if (!scroller) return
+    const onScroll = () => {
+      anchor.current = scroller.scrollHeight - scroller.scrollTop
+    }
+    scroller.addEventListener("scroll", onScroll, { passive: true })
+    return () => scroller.removeEventListener("scroll", onScroll)
+  }, [])
+
   // Manual scroll anchoring. CSS overflow-anchor handles this in Chrome and
   // Firefox but Safari does not implement it, and Safari is the primary
-  // target — so measure from the bottom before the DOM changes and restore
-  // afterwards, which keeps whatever the reader is looking at still.
+  // target. Only reposition when the content height actually changed — an
+  // unrelated re-render (a playhead tick every 500ms) must leave the
+  // reader's scroll untouched, or the timeline becomes unscrollable.
   useLayoutEffect(() => {
     const scroller = scrollRef.current
     if (!scroller || !settled.current) return
-    if (anchor.current !== null) {
+    const grew =
+      prevScrollHeight.current !== null &&
+      scroller.scrollHeight !== prevScrollHeight.current
+    if (grew && anchor.current !== null) {
       scroller.scrollTop = scroller.scrollHeight - anchor.current
     }
-    anchor.current = scroller.scrollHeight - scroller.scrollTop
+    prevScrollHeight.current = scroller.scrollHeight
   })
 
   const futureTopDown = [...state.future].reverse()
