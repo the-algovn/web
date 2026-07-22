@@ -2,11 +2,13 @@ import { useRef, useState } from "react"
 import { Callback } from "./components/callback"
 import { Feed } from "./components/feed"
 import { ReceiverRail } from "./components/receiver-rail"
+import { RequestModal } from "./components/request-modal"
 import { signIn } from "./lib/auth"
 import { env } from "./lib/env"
 import { MockStudio } from "./lib/mock-studio"
 import { createHlsPlayer } from "./lib/player"
 import { createClient } from "./lib/radio-client"
+import { createRequestApi } from "./lib/request-client"
 import { useAuth } from "./lib/use-auth"
 import { type UseRadioDeps, useRadio } from "./lib/use-radio"
 
@@ -45,7 +47,9 @@ function Receiver({ deps }: { deps?: UseRadioDeps }) {
   const [resolved] = useState(() => deps ?? defaultDeps())
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const state = useRadio(audioRef, resolved)
-  const { user } = useAuth()
+  const { user, token } = useAuth()
+  const [requestOpen, setRequestOpen] = useState(false)
+  const [api] = useState(() => createRequestApi())
 
   return (
     <main className="mx-auto grid min-h-svh max-w-3xl grid-cols-1 gap-6 p-5 md:grid-cols-[230px_1fr]">
@@ -60,13 +64,22 @@ function Receiver({ deps }: { deps?: UseRadioDeps }) {
         onPause={state.pause}
         onVolume={state.setVolume}
         onSignIn={() => void signIn()}
-        onRequest={() => {}}
+        onRequest={() => setRequestOpen(true)}
       />
       <Feed
         nowPlaying={state.nowPlaying}
         queue={state.queue}
         history={state.history}
       />
+      {token && (
+        <RequestModal
+          api={api}
+          token={token}
+          open={requestOpen}
+          onClose={() => setRequestOpen(false)}
+          onRequested={() => {}}
+        />
+      )}
     </main>
   )
 }
