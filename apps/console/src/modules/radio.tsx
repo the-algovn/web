@@ -1,61 +1,39 @@
-import { useState } from "react"
-import { AddTracksDrawer } from "../components/add-tracks-drawer"
-import { PlaylistEditor } from "../components/playlist-editor"
-import { PlaylistsPane } from "../components/playlists-pane"
+import { NowPlayingCard } from "../components/now-playing-card"
+import { QueuePane } from "../components/queue-pane"
+import { RecentPane } from "../components/recent-pane"
 import { StationBar } from "../components/station-bar"
 import { useAuth } from "../lib/use-auth"
-import { useRadioAdmin } from "../lib/use-radio-admin"
+import { useStation } from "../lib/use-station"
 
+// The station console (v1.2): mirrors the real air — the playlist era is gone.
 export function Radio() {
   const { token } = useAuth()
-  const admin = useRadioAdmin(token)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const onAir = admin.station?.onAir === true
+  const st = useStation(token)
 
   return (
     <div className="flex h-full flex-col">
       <StationBar
-        station={admin.station}
-        busy={admin.busy}
-        onGoOnAir={() => void admin.goOnAir()}
-        onGoOffAir={() => void admin.goOffAir()}
+        station={st.station}
+        stats={st.stats}
+        busy={st.busy}
+        onGoOnAir={() => void st.goOnAir()}
+        onGoOffAir={() => void st.goOffAir()}
+        onToggleAI={(enabled) => void st.setAIEnabled(enabled)}
       />
       <div className="flex min-h-0 flex-1 gap-6 overflow-auto p-6">
-        <PlaylistsPane
-          playlists={admin.playlists}
-          selectedId={admin.selectedId}
-          onAir={onAir}
-          busy={admin.busy}
-          onSelect={admin.select}
-          onCreate={(name) => void admin.create(name)}
-          onSetActive={(id) => void admin.setActive(id)}
-          onDelete={(id) => void admin.removePlaylist(id)}
-        />
-        <PlaylistEditor
-          playlist={admin.selected}
-          onAir={onAir}
-          busy={admin.busy}
-          onRename={(name) => {
-            if (admin.selectedId) void admin.rename(admin.selectedId, name)
-          }}
-          onRemoveTrack={(ytId) => void admin.removeTrack(ytId)}
-          onReorder={(ytIds) => void admin.reorder(ytIds)}
-          onOpenAddTracks={() => setDrawerOpen(true)}
-        />
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          <NowPlayingCard np={st.nowPlaying} busy={st.busy} onSkip={() => void st.skip()} />
+          <QueuePane
+            pending={st.pending}
+            busy={st.busy}
+            onReorder={(ids) => void st.reorder(ids)}
+            onRemove={(id) => void st.remove(id)}
+          />
+        </div>
+        <div className="w-80 shrink-0">
+          <RecentPane recent={st.recent} history={st.history} />
+        </div>
       </div>
-      <AddTracksDrawer
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        existingYtIds={(admin.selected?.tracks ?? []).map((t) => t.ytId ?? "")}
-        busy={admin.busy}
-        onAdd={(ytIds) => {
-          void (async () => {
-            for (const yt of ytIds) {
-              await admin.addTrack(yt)
-            }
-          })()
-        }}
-      />
     </div>
   )
 }
