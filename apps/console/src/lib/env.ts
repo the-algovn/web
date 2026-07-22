@@ -8,4 +8,5 @@ export const env = {
   apiBase: import.meta.env.VITE_API_BASE ?? "https://api.algovn.com/radio-lab",
   radioApiBase:
     import.meta.env.VITE_RADIO_API_BASE ?? "https://api.algovn.com/radio",
+  eventsUrl: import.meta.env.VITE_EVENTS_URL ?? "https://api.algovn.com/events",
 }

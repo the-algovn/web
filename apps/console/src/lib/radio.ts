@@ -1,48 +1,63 @@
 // Wire types for algovn.radio.v1 over the gateway. protojson: camelCase,
 // int64 as decimal strings, zero-valued fields omitted — every field is
 // optional; rely on tracks[] order, not position; coerce int64s with Number().
+// Durations here are int32, so plain numbers.
 
-export interface PlaylistSummary {
-  id?: string
-  name?: string
-  trackCount?: number
-  totalDurationS?: string | number
-  isActive?: boolean
-  createdAt?: string
-  updatedAt?: string
+export interface Station {
+  onAir?: boolean
+  onAirSince?: string
+  aiEnabled?: boolean
 }
 
-export interface PlaylistTrack {
-  position?: number
+export interface StationStats {
+  listeners?: number
+  libraryCount?: number
+  spendTodayUsd?: number
+  budgetUsd?: number
+}
+
+export interface StationResponse {
+  station?: Station
+  stats?: StationStats
+}
+
+export interface TrackRequest {
+  id?: string
+  source?: string
+  requestedByName?: string
   ytId?: string
   title?: string
   channel?: string
-  durationS?: string | number
+  durationS?: number
+  thumbnailUrl?: string
+  status?: string
+  failReason?: string
+  createdAt?: string
+  reason?: string
 }
 
-export interface Playlist {
-  summary?: PlaylistSummary
-  tracks?: PlaylistTrack[]
+export interface StationRequestsResponse {
+  pending?: TrackRequest[]
+  recent?: TrackRequest[]
 }
 
-export interface Station {
-  activePlaylistId?: string
-  activePlaylistName?: string
-  activeTrackCount?: number
-  onAir?: boolean
-  onAirSince?: string
+export interface NowPlayingWire {
+  kind?: string
+  title?: string
+  artist?: string
+  thumbnailUrl?: string
+  startedAt?: string
+  durationSeconds?: number
+  listeners?: number
+  source?: string
+  requestedByName?: string
+  reason?: string
 }
 
-// Response envelopes.
-export interface StationResponse {
-  station?: Station
-}
-export interface PlaylistResponse {
-  playlist?: Playlist
-}
-export interface SummaryResponse {
-  summary?: PlaylistSummary
-}
-export interface ListPlaylistsResponse {
-  playlists?: PlaylistSummary[]
+export interface HistoryWireItem {
+  title?: string
+  artist?: string
+  airedAt?: string
+  source?: string
+  requestedByName?: string
 }
