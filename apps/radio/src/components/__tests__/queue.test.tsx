@@ -25,6 +25,18 @@ describe("Queue", () => {
     expect(screen.getByText("Chạy Ngay Đi")).toBeInTheDocument()
     expect(screen.queryByLabelText(/dedication/i)).not.toBeInTheDocument()
   })
+  it("labels listener requests and AI picks", () => {
+    render(
+      <Queue
+        items={[
+          { title: "A", hasDedication: false, source: "listener", requestedByName: "Ngọc" },
+          { title: "B", hasDedication: false, source: "ai" },
+        ]}
+      />,
+    )
+    expect(screen.getByText("Yêu cầu · Ngọc")).toBeInTheDocument()
+    expect(screen.getByText("Tiểu Dương Dương chọn")).toBeInTheDocument()
+  })
 })
 
 describe("History", () => {

@@ -20,6 +20,8 @@ export interface QueueItem {
   artist?: string
   thumbnailUrl?: string
   hasDedication: boolean // never the recipient — no spoiled surprises
+  source?: "listener" | "ai"
+  requestedByName?: string
 }
 
 export interface HistoryItem {
@@ -83,6 +85,8 @@ export function parseQueue(raw: unknown): QueueItem[] | null {
     }
     if (str(e.artist)) item.artist = str(e.artist)
     if (str(e.thumbnailUrl)) item.thumbnailUrl = str(e.thumbnailUrl)
+    if (e.source === "listener" || e.source === "ai") item.source = e.source
+    if (str(e.requestedByName)) item.requestedByName = str(e.requestedByName)
     return [item] // recipient (if present) is deliberately dropped
   })
 }

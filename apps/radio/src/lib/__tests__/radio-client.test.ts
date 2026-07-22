@@ -40,4 +40,16 @@ describe("parseQueue", () => {
   it("rejects a non-array", () => {
     expect(parseQueue({})).toBeNull()
   })
+  it("keeps source and requestedByName from the request queue", () => {
+    const q = parseQueue([
+      { title: "A", artist: "ch", hasDedication: false, source: "listener", requestedByName: "Ngọc" },
+      { title: "B", hasDedication: false, source: "ai" },
+      { title: "C", hasDedication: false, source: "wat" }, // unknown source dropped to undefined
+    ])
+    expect(q?.[0]).toEqual({
+      title: "A", artist: "ch", hasDedication: false, source: "listener", requestedByName: "Ngọc",
+    })
+    expect(q?.[1]?.source).toBe("ai")
+    expect(q?.[2]?.source).toBeUndefined()
+  })
 })

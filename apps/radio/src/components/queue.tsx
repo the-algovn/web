@@ -23,20 +23,27 @@ export function Queue({ items }: { items: QueueItem[] }) {
               </div>
             )}
           </div>
-          {it.hasDedication && (
-            <span
-              role="img"
-              aria-label="has dedication"
-              className="ml-auto rounded-full px-2 py-0.5 text-[10px]"
-              style={{
-                color: "var(--radio-amber-soft)",
-                background:
-                  "color-mix(in srgb, var(--radio-amber) 10%, transparent)",
-              }}
-            >
-              🎁
-            </span>
-          )}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {it.source && (
+              <span
+                className="rounded-full px-2 py-0.5 text-[10px]"
+                style={{
+                  color: "var(--radio-amber-soft)",
+                  background:
+                    "color-mix(in srgb, var(--radio-amber) 10%, transparent)",
+                }}
+              >
+                {it.source === "listener"
+                  ? `Yêu cầu · ${it.requestedByName ?? "thính giả"}`
+                  : "Tiểu Dương Dương chọn"}
+              </span>
+            )}
+            {it.hasDedication && (
+              <span role="img" aria-label="has dedication" className="text-[10px]">
+                🎁
+              </span>
+            )}
+          </div>
         </div>
       ))}
     </section>

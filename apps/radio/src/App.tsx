@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Callback } from "./components/callback"
 import { Feed } from "./components/feed"
 import { ReceiverRail } from "./components/receiver-rail"
@@ -11,6 +11,7 @@ import { createClient } from "./lib/radio-client"
 import { createRequestApi } from "./lib/request-client"
 import { useAuth } from "./lib/use-auth"
 import { type UseRadioDeps, useRadio } from "./lib/use-radio"
+import { useRequests } from "./lib/use-requests"
 
 function defaultDeps(): UseRadioDeps {
   const client = createClient()
@@ -50,6 +51,12 @@ function Receiver({ deps }: { deps?: UseRadioDeps }) {
   const { user, token } = useAuth()
   const [requestOpen, setRequestOpen] = useState(false)
   const [api] = useState(() => createRequestApi())
+  const { requests, refresh } = useRequests(api, token)
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: state.queue is a nudge trigger, not read in the body
+  useEffect(() => {
+    if (token) refresh()
+  }, [state.queue, token, refresh])
 
   return (
     <main className="mx-auto grid min-h-svh max-w-3xl grid-cols-1 gap-6 p-5 md:grid-cols-[230px_1fr]">
@@ -70,6 +77,7 @@ function Receiver({ deps }: { deps?: UseRadioDeps }) {
         nowPlaying={state.nowPlaying}
         queue={state.queue}
         history={state.history}
+        requests={token ? requests : undefined}
       />
       {token && (
         <RequestModal
@@ -77,7 +85,7 @@ function Receiver({ deps }: { deps?: UseRadioDeps }) {
           token={token}
           open={requestOpen}
           onClose={() => setRequestOpen(false)}
-          onRequested={() => {}}
+          onRequested={() => refresh()}
         />
       )}
     </main>
