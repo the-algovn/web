@@ -24,23 +24,25 @@ export function History({ items }: { items: HistoryItem[] }) {
               </div>
             )}
           </div>
-          {(it.source === "ai" || it.source === "listener") && (
-            <span
-              className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px]"
-              style={{
-                color: "var(--radio-amber-soft)",
-                background:
-                  "color-mix(in srgb, var(--radio-amber) 10%, transparent)",
-              }}
-            >
-              {it.source === "listener"
-                ? `Yêu cầu · ${it.requestedByName ?? "thính giả"}`
-                : "Tiểu Dương Dương chọn"}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {(it.source === "ai" || it.source === "listener") && (
+              <span
+                className="shrink-0 rounded-full px-2 py-0.5 text-[10px]"
+                style={{
+                  color: "var(--radio-amber-soft)",
+                  background:
+                    "color-mix(in srgb, var(--radio-amber) 10%, transparent)",
+                }}
+              >
+                {it.source === "listener"
+                  ? `Yêu cầu · ${it.requestedByName ?? "thính giả"}`
+                  : "Tiểu Dương Dương chọn"}
+              </span>
+            )}
+            <span className="font-mono text-xs text-[color:var(--muted-foreground)]">
+              {clock(it.airedAt)}
             </span>
-          )}
-          <span className="ml-auto font-mono text-xs text-[color:var(--muted-foreground)]">
-            {clock(it.airedAt)}
-          </span>
+          </div>
         </div>
       ))}
     </section>
