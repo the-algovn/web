@@ -28,6 +28,13 @@ window.matchMedia ??= ((query: string) => ({
   dispatchEvent: () => false,
 })) as typeof window.matchMedia
 
+// vaul's Drawer (used by request-sheet) calls pointer-capture APIs jsdom
+// doesn't implement, throwing on pointerdown (same workaround as
+// packages/ui/vitest.setup.ts).
+HTMLElement.prototype.hasPointerCapture ??= () => false
+HTMLElement.prototype.setPointerCapture ??= () => {}
+HTMLElement.prototype.releasePointerCapture ??= () => {}
+
 // Tests never hit the network: individual tests stub their own responses
 // with vi.stubGlobal("fetch", ...).
 globalThis.fetch = () => Promise.reject(new Error("network disabled in tests"))
