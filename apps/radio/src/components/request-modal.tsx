@@ -1,5 +1,5 @@
 import { Loader2, Search } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ApiError } from "@algovn/api"
 import type { Candidate, RequestApi, TrackRequest } from "../lib/request-client"
 
@@ -21,14 +21,20 @@ export function RequestModal(props: {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState(false)
+  // Bumped on every open-transition so in-flight search()/requestTrack()
+  // calls from a previous session can tell they've gone stale and skip
+  // their post-await setState (see the generation checks below).
+  const generation = useRef(0)
 
   // Reopening after a stale close must not surface a previous search's
   // results/notice — an in-flight request that resolves after close would
   // otherwise leave a confirmation banner for the NEXT open.
   useEffect(() => {
     if (props.open) {
+      generation.current += 1
       setQuery("")
       setResults([])
+      setBusy(false)
       setNotice(null)
       setConfirmed(false)
     }
@@ -38,32 +44,39 @@ export function RequestModal(props: {
 
   const search = async () => {
     if (!query.trim() || busy) return
+    const gen = generation.current
     setBusy(true)
     setNotice(null)
     setConfirmed(false)
     try {
-      setResults(await props.api.search(props.token, query))
+      const found = await props.api.search(props.token, query)
+      if (generation.current !== gen) return
+      setResults(found)
     } catch (e) {
+      if (generation.current !== gen) return
       setNotice(e instanceof ApiError ? e.message : "đài đang bận, thử lại nhé")
     } finally {
-      setBusy(false)
+      if (generation.current === gen) setBusy(false)
     }
   }
 
   const requestTrack = async (c: Candidate) => {
     if (busy) return
+    const gen = generation.current
     setBusy(true)
     setNotice(null)
     try {
       const r = await props.api.requestTrack(props.token, c)
+      if (generation.current !== gen) return
       setConfirmed(true)
       setNotice("đã vào hàng đợi")
       props.onRequested(r)
     } catch (e) {
+      if (generation.current !== gen) return
       setConfirmed(false)
       setNotice(e instanceof ApiError ? e.message : "đài đang bận, thử lại nhé")
     } finally {
-      setBusy(false)
+      if (generation.current === gen) setBusy(false)
     }
   }
 

@@ -1,9 +1,17 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { ApiError } from "@algovn/api"
-import type { RequestApi } from "../../lib/request-client"
+import type { Candidate, RequestApi, TrackRequest } from "../../lib/request-client"
 import { RequestModal } from "../request-modal"
+
+function deferred<T>() {
+  let resolve!: (v: T) => void
+  const promise = new Promise<T>((res) => {
+    resolve = res
+  })
+  return { promise, resolve }
+}
 
 function fakeApi(overrides: Partial<RequestApi> = {}): RequestApi {
   return {
@@ -90,6 +98,65 @@ describe("RequestModal", () => {
 
     expect(screen.getByRole("searchbox")).toHaveValue("")
     expect(screen.queryByText("Bài A")).not.toBeInTheDocument()
+    expect(screen.queryByText("đã vào hàng đợi")).not.toBeInTheDocument()
+  })
+
+  it("ignores a search that resolves after a close→reopen across the gap", async () => {
+    const d = deferred<Candidate[]>()
+    const api = fakeApi({ search: vi.fn(() => d.promise) })
+    const { rerender } = render(
+      <RequestModal api={api} token="tok" open onClose={() => {}} onRequested={() => {}} />,
+    )
+    await userEvent.type(screen.getByRole("searchbox"), "bài a")
+    await userEvent.click(screen.getByRole("button", { name: "Tìm" }))
+    expect(screen.getByRole("button", { name: "Tìm" })).toBeDisabled()
+
+    rerender(
+      <RequestModal api={api} token="tok" open={false} onClose={() => {}} onRequested={() => {}} />,
+    )
+    rerender(
+      <RequestModal api={api} token="tok" open onClose={() => {}} onRequested={() => {}} />,
+    )
+
+    await act(async () => {
+      d.resolve([{ ytId: "a", title: "Bài A", durationS: 245 }])
+      await Promise.resolve()
+    })
+
+    expect(screen.getByRole("button", { name: "Tìm" })).not.toBeDisabled()
+    expect(screen.queryByText("Bài A")).not.toBeInTheDocument()
+    expect(screen.queryByText("đã vào hàng đợi")).not.toBeInTheDocument()
+  })
+
+  it("ignores a requestTrack that resolves after a close→reopen across the gap", async () => {
+    const d = deferred<TrackRequest>()
+    const onRequested = vi.fn()
+    const api = fakeApi({ requestTrack: vi.fn(() => d.promise) })
+    const { rerender } = render(
+      <RequestModal api={api} token="tok" open onClose={() => {}} onRequested={onRequested} />,
+    )
+    await userEvent.type(screen.getByRole("searchbox"), "bài a")
+    await userEvent.click(screen.getByRole("button", { name: "Tìm" }))
+    await waitFor(() => expect(screen.getByText("Bài A")).toBeInTheDocument())
+    await userEvent.click(screen.getAllByRole("button", { name: "Yêu cầu" })[0]!)
+    expect(screen.getAllByRole("button", { name: "Yêu cầu" })[0]).toBeDisabled()
+
+    rerender(
+      <RequestModal api={api} token="tok" open={false} onClose={() => {}} onRequested={onRequested} />,
+    )
+    rerender(
+      <RequestModal api={api} token="tok" open onClose={() => {}} onRequested={onRequested} />,
+    )
+
+    await act(async () => {
+      d.resolve({
+        id: "r1", source: "listener", ytId: "a", title: "Bài A",
+        durationS: 245, status: "approved", createdAt: "2026-07-22T01:00:00Z",
+      })
+      await Promise.resolve()
+    })
+
+    expect(onRequested).not.toHaveBeenCalled()
     expect(screen.queryByText("đã vào hàng đợi")).not.toBeInTheDocument()
   })
 })
