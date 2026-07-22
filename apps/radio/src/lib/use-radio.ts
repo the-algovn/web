@@ -10,14 +10,18 @@ import type {
   RadioClient,
 } from "./radio-client"
 import { deriveStationState, type StationStatus } from "./station-state"
+import { volumeIsControllable } from "./volume-support"
 
 export interface RadioState {
   status: StationStatus
+  mode: ConnMode
   nowPlaying: NowPlaying | null
+  playheadMs: number
   queue: QueueItem[]
   history: HistoryItem[]
   listeners: number
   playerState: PlayerState
+  volumeControllable: boolean
   play(): void
   pause(): void
   setVolume(v: number): void
@@ -42,6 +46,8 @@ export function useRadio(
   const [mode, setMode] = useState<ConnMode>("connecting")
   const [playerState, setPlayerState] = useState<PlayerState>("idle")
   const [offAir, setOffAir] = useState(false)
+  const [playheadMs, setPlayheadMs] = useState(() => Date.now())
+  const [volumeControllable, setVolumeControllable] = useState(false)
   const playerRef = useRef<RadioPlayer | null>(null)
 
   // Initial reads + subscriptions + heartbeat.
@@ -84,8 +90,13 @@ export function useRadio(
     const clock =
       deps.playheadClock ??
       (() => playerRef.current?.currentProgramDateTime() ?? Date.now())
-    const id = setInterval(() => setNowPlaying(sync.current(clock())), 500)
-    setNowPlaying(sync.current(clock()))
+    const tick = () => {
+      const at = clock()
+      setPlayheadMs(at)
+      setNowPlaying(sync.current(at))
+    }
+    const id = setInterval(tick, 500)
+    tick()
     return () => clearInterval(id)
   }, [deps.playheadClock, sync])
 
@@ -96,6 +107,9 @@ export function useRadio(
       const p = deps.createPlayer(audio)
       p.onState(setPlayerState)
       playerRef.current = p
+      // Probe once, on the real element, after the player owns it — iOS
+      // Safari accepts the write and ignores it.
+      setVolumeControllable(volumeIsControllable(audio))
     }
     void playerRef.current.play()
   }
@@ -104,6 +118,11 @@ export function useRadio(
 
   useEffect(() => () => playerRef.current?.destroy(), [])
 
+  useEffect(() => {
+    const audio = audioRef.current
+    if (audio) setVolumeControllable(volumeIsControllable(audio))
+  }, [audioRef])
+
   const status = useMemo(
     () => deriveStationState({ mode, playerState, nowPlaying, offAir }),
     [mode, playerState, nowPlaying, offAir],
@@ -111,11 +130,14 @@ export function useRadio(
 
   return {
     status,
+    mode,
     nowPlaying,
+    playheadMs,
     queue,
     history,
     listeners,
     playerState,
+    volumeControllable,
     play,
     pause,
     setVolume,

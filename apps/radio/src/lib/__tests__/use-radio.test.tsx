@@ -24,6 +24,8 @@ function Harness({ clock }: { clock: () => number }) {
       <span data-testid="np">{state.nowPlaying?.title ?? "…"}</span>
       <span data-testid="listeners">{state.listeners}</span>
       <span data-testid="queue">{state.queue.length}</span>
+      <span data-testid="mode">{state.mode}</span>
+      <span data-testid="volctl">{String(state.volumeControllable)}</span>
     </div>
   )
 }
@@ -37,6 +39,17 @@ describe("useRadio", () => {
       0,
     )
     expect(Number(screen.getByTestId("queue").textContent)).toBeGreaterThan(0)
+  })
+
+  it("exposes the connection mode and whether volume can be controlled", async () => {
+    const t = 1_700_000_000_000
+    render(<Harness clock={() => t} />)
+    await screen.findByText(/Em Của Ngày Hôm Qua/)
+    // MockStudio reports "live" synchronously from subscribeNowPlaying, to
+    // simulate a connected station (it never actually opens an EventSource).
+    expect(screen.getByTestId("mode").textContent).toBe("live")
+    // jsdom's HTMLAudioElement honours volume writes.
+    expect(screen.getByTestId("volctl").textContent).toBe("true")
   })
 })
 
