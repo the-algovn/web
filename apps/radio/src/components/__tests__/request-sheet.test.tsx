@@ -1,3 +1,4 @@
+import { ApiError } from "@algovn/api"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
@@ -84,8 +85,16 @@ describe("RequestSheet", () => {
   })
 
   it("renders a server rejection verbatim — the station talking, not a code", async () => {
+    // A real ApiError whose message is DISTINCT from messageOf()'s generic
+    // fallback ("đài đang bận, thử lại nhé"). If the component ignored
+    // e.message and always showed the fallback, this assertion would fail —
+    // so it actually proves the verbatim-message path, not just that some
+    // notice appears.
+    const rejected = "bạn đang có ba bài chờ phát rồi, đợi chút nha"
     const a = api({
-      search: vi.fn().mockRejectedValue(new Error("đài đang bận, thử lại nhé")),
+      search: vi
+        .fn()
+        .mockRejectedValue(new ApiError(429, "resource_exhausted", rejected)),
     })
     render(
       <RequestSheet
@@ -100,7 +109,11 @@ describe("RequestSheet", () => {
       screen.getByPlaceholderText("tên bài hát, ca sĩ…"),
       "x{Enter}",
     )
-    expect(await screen.findByText("đài đang bận, thử lại nhé")).toBeInTheDocument()
+    expect(await screen.findByText(rejected)).toBeInTheDocument()
+    // And the generic fallback must NOT appear — the real message won.
+    expect(
+      screen.queryByText("đài đang bận, thử lại nhé"),
+    ).not.toBeInTheDocument()
   })
 
   it("closes on Escape, which the old modal could not do", async () => {
