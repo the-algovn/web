@@ -19,7 +19,7 @@ const row = (e: TimelineEntry) => <TimelineRow entry={e} nowMs={NOW} />
 describe("TimelineRow", () => {
   it("marks a queued dedication with a gift and never names the recipient", () => {
     render(row(entry({ hasDedication: true })))
-    expect(screen.getByLabelText(/dedication/i)).toHaveTextContent("🎁")
+    expect(screen.getByLabelText("có lời nhắn gửi")).toHaveTextContent("🎁")
     expect(screen.queryByText(/gửi/i)).not.toBeInTheDocument()
   })
 

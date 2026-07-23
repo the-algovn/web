@@ -26,6 +26,7 @@ export function Stage(props: {
   onPlay(): void
   onPause(): void
   onVolume(v: number): void
+  onMute(muted: boolean): void
   onRequest(): void
   onSignIn(): void
 }) {
@@ -123,6 +124,7 @@ export function Stage(props: {
         onPlay={props.onPlay}
         onPause={props.onPause}
         onVolume={props.onVolume}
+        onMute={props.onMute}
       />
 
       <div className="flex gap-2">

@@ -27,6 +27,7 @@ const stageProps = {
   onPlay: noop,
   onPause: noop,
   onVolume: noop,
+  onMute: noop,
   onRequest: noop,
   onSignIn: noop,
 }
@@ -55,6 +56,7 @@ describe("PlayerControls", () => {
         onPlay={noop}
         onPause={onPause}
         onVolume={noop}
+        onMute={noop}
       />,
     )
     await userEvent.click(screen.getByRole("button", { name: "Tạm dừng" }))
@@ -69,6 +71,7 @@ describe("PlayerControls", () => {
         onPlay={noop}
         onPause={noop}
         onVolume={noop}
+        onMute={noop}
       />,
     )
     expect(screen.getByLabelText("Âm lượng")).toBeInTheDocument()
@@ -76,19 +79,20 @@ describe("PlayerControls", () => {
   })
 
   it("replaces the dead slider with a mute toggle on iOS", async () => {
-    const onVolume = vi.fn()
+    const onMute = vi.fn()
     render(
       <PlayerControls
         playerState="playing"
         volumeControllable={false}
         onPlay={noop}
         onPause={noop}
-        onVolume={onVolume}
+        onVolume={noop}
+        onMute={onMute}
       />,
     )
     expect(screen.queryByLabelText("Âm lượng")).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Tắt tiếng" }))
-    expect(onVolume).toHaveBeenCalledWith(0)
+    expect(onMute).toHaveBeenCalledWith(true)
   })
 
   it("shows a busy indicator while connecting", () => {
@@ -99,6 +103,7 @@ describe("PlayerControls", () => {
         onPlay={noop}
         onPause={noop}
         onVolume={noop}
+        onMute={noop}
       />,
     )
     expect(screen.getByRole("button", { name: "Đang kết nối" })).toBeDisabled()

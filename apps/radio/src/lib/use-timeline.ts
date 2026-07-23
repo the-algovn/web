@@ -43,8 +43,8 @@ export function useTimeline(input: UseTimelineInput): TimelineState {
     if (seeded.current) return
     if (history.length === 0 && nowPlaying === null) return
     seeded.current = true
-    setState(seed({ history, queue }))
-  }, [history, queue, nowPlaying])
+    setState(ingestRequests(seed({ history, queue }), requests))
+  }, [history, queue, nowPlaying, requests])
 
   useEffect(() => {
     if (!seeded.current) return

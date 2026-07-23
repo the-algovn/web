@@ -8,12 +8,14 @@ export function PlayerControls({
   onPlay,
   onPause,
   onVolume,
+  onMute,
 }: {
   playerState: PlayerState
   volumeControllable: boolean
   onPlay(): void
   onPause(): void
   onVolume(v: number): void
+  onMute(muted: boolean): void
 }) {
   const [muted, setMuted] = useState(false)
   const playing = playerState === "playing"
@@ -63,7 +65,7 @@ export function PlayerControls({
           onClick={() => {
             const next = !muted
             setMuted(next)
-            onVolume(next ? 0 : 0.8)
+            onMute(next)
           }}
           className="grid size-11 shrink-0 place-items-center rounded-full border border-[color:var(--border)] text-[color:var(--muted-foreground)]"
         >

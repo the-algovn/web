@@ -120,6 +120,7 @@ function Receiver({ deps }: { deps?: UseRadioDeps }) {
           onPlay={state.play}
           onPause={state.pause}
           onVolume={state.setVolume}
+          onMute={state.setMuted}
           onRequest={() => setRequestOpen(true)}
           onSignIn={() => void signIn()}
         />

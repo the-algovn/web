@@ -9,7 +9,7 @@ function stage() {
 }
 
 function timeline() {
-  return screen.getByRole("log", { name: "Dòng thời gian của đài" })
+  return screen.getByRole("region", { name: "Dòng thời gian của đài" })
 }
 
 describe("App (integration, mock studio)", () => {

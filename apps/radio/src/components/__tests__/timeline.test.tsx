@@ -20,9 +20,10 @@ const state = (over: Partial<TimelineState> = {}): TimelineState => ({
 })
 
 function titlesInOrder(): string[] {
-  return screen
-    .getAllByRole("button", { expanded: false })
-    .map((b) => b.textContent ?? "")
+  // Not filtered by { expanded: false }: none of these rows carry a
+  // reason/dedication/artist, so aria-expanded is correctly omitted
+  // (hasDetail false) rather than reporting a collapsed state.
+  return screen.getAllByRole("button").map((b) => b.textContent ?? "")
 }
 
 describe("Timeline", () => {
@@ -71,7 +72,7 @@ describe("Timeline", () => {
 
   it("labels the scroll region for assistive tech without making it a live region", () => {
     render(<Timeline state={state()} elapsedS={0} remainingS={0} />)
-    const region = screen.getByRole("log", { name: "Dòng thời gian của đài" })
+    const region = screen.getByRole("region", { name: "Dòng thời gian của đài" })
     expect(region).not.toHaveAttribute("aria-live")
   })
 })

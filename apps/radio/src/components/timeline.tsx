@@ -20,7 +20,7 @@ export function Timeline({
   remainingS: number
 }) {
   const nowMs = useNowTick()
-  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const scrollRef = useRef<HTMLElement | null>(null)
   const markerRef = useRef<HTMLDivElement | null>(null)
   const settled = useRef(false)
   // Distance from the bottom, captured before a mutation and restored after.
@@ -75,9 +75,8 @@ export function Timeline({
   const futureTopDown = [...state.future].reverse()
 
   return (
-    <div
+    <section
       ref={scrollRef}
-      role="log"
       aria-label="Dòng thời gian của đài"
       className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
     >
@@ -106,6 +105,6 @@ export function Timeline({
       {state.past.map((entry) => (
         <TimelineRow key={entry.key} entry={entry} nowMs={nowMs} />
       ))}
-    </div>
+    </section>
   )
 }

@@ -25,6 +25,7 @@ export interface RadioState {
   play(): void
   pause(): void
   setVolume(v: number): void
+  setMuted(muted: boolean): void
 }
 
 export interface UseRadioDeps {
@@ -115,6 +116,10 @@ export function useRadio(
   }
   const pause = () => playerRef.current?.pause()
   const setVolume = (v: number) => playerRef.current?.setVolume(v)
+  const setMuted = (m: boolean) => {
+    const a = audioRef.current
+    if (a) a.muted = m
+  }
 
   useEffect(() => () => playerRef.current?.destroy(), [])
 
@@ -141,5 +146,6 @@ export function useRadio(
     play,
     pause,
     setVolume,
+    setMuted,
   }
 }

@@ -100,4 +100,40 @@ describe("useTimeline", () => {
     })
     expect(screen.getByTestId("pending").textContent).toBe("mine")
   })
+
+  it("keeps a pending request alive across the seeding transition", () => {
+    // Same array reference throughout — the standalone ingestRequests effect
+    // (deps [requests]) will not re-fire on the second render, so this only
+    // passes if the seed effect itself folds `requests` in.
+    const requests: TrackRequest[] = [
+      {
+        id: "r1",
+        source: "listener",
+        ytId: "y",
+        title: "mine",
+        durationS: 10,
+        status: "approved",
+        createdAt: "2026-07-23T09:00:00.000Z",
+      },
+    ]
+
+    render(<Harness initial={{ ...EMPTY_INPUT, requests }} />)
+    // Before seeding: nowPlaying is null and history is empty, so `seed`
+    // has not run yet — the pending row comes from the standalone effect.
+    expect(screen.getByTestId("pending").textContent).toBe("mine")
+
+    act(() => {
+      setInput({
+        nowPlaying: np("one"),
+        queue: [],
+        history: [{ title: "old", airedAt: "2026-07-23T09:00:00.000Z" }],
+        requests,
+      })
+    })
+
+    // Seeding just ran (history/nowPlaying changed), replacing the whole
+    // state — the pending row must have survived the replacement.
+    expect(screen.getByTestId("current").textContent).toBe("one")
+    expect(screen.getByTestId("pending").textContent).toBe("mine")
+  })
 })

@@ -39,7 +39,7 @@ export function TimelineRow({
     >
       <button
         type="button"
-        aria-expanded={open}
+        aria-expanded={hasDetail ? open : undefined}
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
       >
@@ -88,7 +88,7 @@ export function TimelineRow({
             </span>
           )}
           {entry.hasDedication && !dedication && (
-            <span role="img" aria-label="has dedication" className="text-[10px]">
+            <span role="img" aria-label="có lời nhắn gửi" className="text-[10px]">
               🎁
             </span>
           )}
