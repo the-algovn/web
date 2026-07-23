@@ -1,17 +1,25 @@
 import { useEffect, useRef, useState } from "react"
 import { Callback } from "./components/callback"
-import { Feed } from "./components/feed"
-import { ReceiverRail } from "./components/receiver-rail"
-import { RequestModal } from "./components/request-modal"
+import { RequestSheet } from "./components/request-sheet"
+import { Stage } from "./components/stage"
+import { StationHeader } from "./components/station-header"
+import { Timeline } from "./components/timeline"
 import { signIn } from "./lib/auth"
 import { env } from "./lib/env"
+import {
+  setMediaHandlers,
+  setMediaMetadata,
+  setMediaPlaybackState,
+} from "./lib/media-session"
 import { MockStudio } from "./lib/mock-studio"
 import { createHlsPlayer } from "./lib/player"
+import { progressOf } from "./lib/progress"
 import { createClient } from "./lib/radio-client"
 import { createRequestApi } from "./lib/request-client"
 import { useAuth } from "./lib/use-auth"
 import { type UseRadioDeps, useRadio } from "./lib/use-radio"
 import { useRequests } from "./lib/use-requests"
+import { useTimeline } from "./lib/use-timeline"
 
 function defaultDeps(): UseRadioDeps {
   const client = createClient()
@@ -52,35 +60,83 @@ function Receiver({ deps }: { deps?: UseRadioDeps }) {
   const [requestOpen, setRequestOpen] = useState(false)
   const [api] = useState(() => createRequestApi())
   const { requests, refresh } = useRequests(api, token)
+  const timeline = useTimeline({
+    nowPlaying: state.nowPlaying,
+    queue: state.queue,
+    history: state.history,
+    requests,
+  })
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: state.queue is a nudge trigger, not read in the body
   useEffect(() => {
     if (token) refresh()
   }, [state.queue, token, refresh])
 
+  useEffect(() => {
+    setMediaMetadata(state.nowPlaying)
+  }, [state.nowPlaying])
+
+  useEffect(
+    () => setMediaHandlers({ play: state.play, pause: state.pause }),
+    [state.play, state.pause],
+  )
+
+  useEffect(() => {
+    setMediaPlaybackState(
+      state.playerState === "playing"
+        ? "playing"
+        : state.playerState === "paused"
+          ? "paused"
+          : "none",
+    )
+  }, [state.playerState])
+
+  // state.playheadMs, never Date.now(): it is the ear-synced clock, and it is
+  // the state change that makes the bar re-render at all — nowPlaying keeps
+  // object identity between ticks.
+  const progress = state.nowPlaying
+    ? progressOf(state.nowPlaying, state.playheadMs)
+    : { elapsedS: 0, remainingS: 0, fraction: 0 }
+
   return (
-    <main className="mx-auto grid min-h-svh max-w-3xl grid-cols-1 gap-6 p-5 md:grid-cols-[230px_1fr]">
+    <main className="mx-auto flex h-svh max-w-[1100px] flex-col lg:border-x lg:border-[color:var(--border)]">
       {/* biome-ignore lint/a11y/useMediaCaption: live radio stream has no caption track */}
       <audio ref={audioRef} className="hidden" />
-      <ReceiverRail
+
+      <StationHeader
         status={state.status}
+        mode={state.mode}
         listeners={state.listeners}
-        playerState={state.playerState}
-        signedIn={user !== null}
-        onPlay={state.play}
-        onPause={state.pause}
-        onVolume={state.setVolume}
-        onSignIn={() => void signIn()}
-        onRequest={() => setRequestOpen(true)}
       />
-      <Feed
-        nowPlaying={state.nowPlaying}
-        queue={state.queue}
-        history={state.history}
-        requests={token ? requests : undefined}
-      />
+
+      <div className="flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-2 lg:overflow-hidden">
+        <Stage
+          nowPlaying={state.nowPlaying}
+          status={state.status}
+          progress={progress}
+          playerState={state.playerState}
+          volumeControllable={state.volumeControllable}
+          signedIn={user !== null}
+          onPlay={state.play}
+          onPause={state.pause}
+          onVolume={state.setVolume}
+          onRequest={() => setRequestOpen(true)}
+          onSignIn={() => void signIn()}
+        />
+        <div
+          className="flex min-h-0 flex-1 flex-col lg:border-l lg:border-[color:var(--border)]"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
+          <Timeline
+            state={timeline}
+            elapsedS={progress.elapsedS}
+            remainingS={progress.remainingS}
+          />
+        </div>
+      </div>
+
       {token && (
-        <RequestModal
+        <RequestSheet
           api={api}
           token={token}
           open={requestOpen}

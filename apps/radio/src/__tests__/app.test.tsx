@@ -4,68 +4,89 @@ import App from "../App"
 import { MockStudio } from "../lib/mock-studio"
 import { createFakePlayer } from "../lib/player"
 
-function nowPlayingRegion() {
-  return screen.getByRole("region", { name: /now playing/i })
+function stage() {
+  return screen.getByRole("region", { name: "Đang phát" })
+}
+
+function timeline() {
+  return screen.getByRole("log", { name: "Dòng thời gian của đài" })
 }
 
 describe("App (integration, mock studio)", () => {
-  it("renders the rail and feed and flips now-playing on the virtual clock", async () => {
+  it("renders the stage and timeline, and flips on the virtual clock", async () => {
     vi.useFakeTimers()
     let t = 1_700_000_000_000
     const clock = () => t
     const client = new MockStudio({ now: clock, random: () => 0.5 })
-    const deps = {
-      client,
-      createPlayer: () => createFakePlayer(),
-      playheadClock: clock,
-    }
-    render(<App deps={deps} />)
+    render(
+      <App
+        deps={{
+          client,
+          createPlayer: () => createFakePlayer(),
+          playheadClock: clock,
+        }}
+      />,
+    )
 
-    // Flush the initial data fetches (getNowPlaying/getQueue/getHistory) —
-    // React runs the mount effects synchronously as part of `render`/`act`,
-    // so the rail + feed are already hydrated once this settles. (Fake timers
-    // break `findByText`'s polling here, so assertions below use the
-    // synchronous `getByText` instead of awaiting a find.)
+    // Flush the initial fetches. Fake timers break findBy* polling, so every
+    // assertion below is synchronous.
     await act(async () => {
       await Promise.resolve()
     })
 
-    // (a) rail + feed rendered with mock data.
+    // (a) station identity, stage and timeline are wired up.
     expect(screen.getByText("Tiểu Dương Dương")).toBeInTheDocument()
-    // Scope to the now-playing card specifically: item 1's title ("...tâm
-    // sự") is ALSO in the "Up next" queue from the very first render (queue
-    // shows index+1..+3), so an unscoped getByText(/tâm sự/) would be a
-    // tautology that passes even if the ear-sync flip is broken. Assert
-    // within the "Now playing" region only.
-    let region = nowPlayingRegion()
-    expect(within(region).getByText("Em Của Ngày Hôm Qua")).toBeInTheDocument()
-    expect(within(region).queryByText(/tâm sự/)).not.toBeInTheDocument()
+    expect(timeline()).toBeInTheDocument()
+    expect(within(stage()).getByRole("progressbar")).toBeInTheDocument()
+    // Scope to the stage: item 1's title is also in the queue from the first
+    // render, so an unscoped query would pass even with the ear-sync broken.
+    expect(
+      within(stage()).getByText("Em Của Ngày Hôm Qua"),
+    ).toBeInTheDocument()
+    expect(within(stage()).queryByText(/tâm sự/)).not.toBeInTheDocument()
 
-    // (b) clicking play routes through state.play() -> the lamp lights ON AIR
-    // (item 0 carries a dedication, so once the fake player reports "playing"
-    // deriveStationState resolves to "on-air").
-    const playButton = screen.getByRole("button", { name: "Play" })
+    // (b) play routes through state.play() and the lamp lights — item 0
+    // carries a dedication, so deriveStationState resolves to "on-air".
     act(() => {
-      fireEvent.click(playButton)
+      fireEvent.click(screen.getByRole("button", { name: "Phát" }))
     })
     expect(screen.getByText("ON AIR")).toBeInTheDocument()
 
-    // (c) advance the virtual clock past item 0's duration + one ear-sync
-    // tick: the now-playing CARD flips to item 1, the DJ slot "Tiểu Dương
-    // Dương tâm sự" — and item 0 leaves the card (it moves into History,
-    // where it's expected to remain in the DOM).
-    const firstNp = await client.getNowPlaying()
-    t += (firstNp.durationSeconds + 1) * 1000
+    // (c) advance past item 0's duration plus one ear-sync tick: the stage
+    // flips to the DJ slot, and item 0 accrues into the timeline's past.
+    const first = await client.getNowPlaying()
+    t += (first.durationSeconds + 1) * 1000
     await act(async () => {
       await vi.advanceTimersByTimeAsync(600)
     })
 
-    region = nowPlayingRegion()
-    expect(within(region).getByText(/tâm sự/)).toBeInTheDocument()
+    expect(within(stage()).getByText(/tâm sự/)).toBeInTheDocument()
     expect(
-      within(region).queryByText("Em Của Ngày Hôm Qua"),
+      within(stage()).queryByText("Em Của Ngày Hôm Qua"),
     ).not.toBeInTheDocument()
+    expect(
+      within(timeline()).getByText("Em Của Ngày Hôm Qua"),
+    ).toBeInTheDocument()
 
     vi.useRealTimers()
+  })
+
+  it("invites an anonymous listener to sign in", async () => {
+    const client = new MockStudio({
+      now: () => 1_700_000_000_000,
+      random: () => 0.5,
+    })
+    render(
+      <App
+        deps={{
+          client,
+          createPlayer: () => createFakePlayer(),
+          playheadClock: () => 1_700_000_000_000,
+        }}
+      />,
+    )
+    expect(
+      await screen.findByRole("button", { name: /đăng nhập/i }),
+    ).toBeInTheDocument()
   })
 })

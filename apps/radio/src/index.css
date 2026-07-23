@@ -12,6 +12,12 @@
     /* biome-ignore lint/complexity/noImportantStyles: reduced-motion kill switch must beat any radio-* animation rule regardless of specificity or source order */
     animation: none !important;
   }
+  /* The bar's value keeps updating — only the tweening between playhead
+     ticks is dropped. */
+  .radio-progress-fill {
+    /* biome-ignore lint/complexity/noImportantStyles: same kill-switch rationale as the animation rule above */
+    transition: none !important;
+  }
 }
 
 @keyframes radio-pulse {
@@ -25,4 +31,38 @@
 }
 .radio-pulse {
   animation: radio-pulse 2s ease-in-out infinite;
+}
+
+.radio-progress-fill {
+  transition: width 500ms linear;
+}
+
+/* Entries arrive rather than blink into place. This is the modest half of the
+   spec's track-change choreography — a full cross-zone FLIP is descoped. */
+@keyframes radio-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.radio-enter {
+  animation: radio-enter 220ms ease-out;
+}
+
+@keyframes radio-bump {
+  0% {
+    color: var(--radio-amber);
+    transform: scale(1.12);
+  }
+  100% {
+    color: inherit;
+    transform: scale(1);
+  }
+}
+.radio-bump {
+  animation: radio-bump 600ms ease-out;
 }
