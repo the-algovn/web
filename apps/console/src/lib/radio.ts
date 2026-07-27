@@ -16,9 +16,20 @@ export interface StationStats {
   budgetUsd?: number
 }
 
+// v3 DJ voice settings. protojson omits zero values: absent breakEvery /
+// stationIdMin mean 0 (= disabled).
+export interface DJSettings {
+  voiceId?: string
+  speakingRate?: number
+  breakEvery?: number
+  stationIdMin?: number
+  maxChars?: number
+}
+
 export interface StationResponse {
   station?: Station
   stats?: StationStats
+  dj?: DJSettings
 }
 
 export interface TrackRequest {
