@@ -7,6 +7,7 @@ import {
   MessageSquareQuote,
   Mic,
   RadioTower,
+  ScrollText,
   SlidersHorizontal,
 } from "lucide-react"
 import { BrainPlayground } from "./brain-playground"
@@ -15,6 +16,7 @@ import { DJ } from "./dj"
 import { Home } from "./home"
 import { Ingest } from "./ingest"
 import { Library } from "./library"
+import { LLMAudit } from "./llm-audit"
 import { MiniRender } from "./mini-render"
 import { Radio } from "./radio"
 import type { ConsoleModule } from "./types"
@@ -92,5 +94,13 @@ export const registry: ConsoleModule[] = [
     icon: ListMusic,
     requiredRole: "admin",
     component: Library,
+  },
+  {
+    id: "llm-audit",
+    title: "LLM calls",
+    group: "Radio lab",
+    icon: ScrollText,
+    requiredRole: "admin",
+    component: LLMAudit,
   },
 ]
