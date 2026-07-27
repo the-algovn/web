@@ -94,12 +94,12 @@ export function DJ() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="dj-maxchars">Script cap (chars, 50–1000)</Label>
+              <Label htmlFor="dj-maxchars">Script cap (chars, 50–2000)</Label>
               <Input
                 id="dj-maxchars"
                 type="number"
                 min={50}
-                max={1000}
+                max={2000}
                 value={s.form.maxChars}
                 onChange={(e) => s.setForm({ ...s.form, maxChars: intOrZero(e.target.value) })}
               />
