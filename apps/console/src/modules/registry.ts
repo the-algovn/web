@@ -5,11 +5,13 @@ import {
   House,
   ListMusic,
   MessageSquareQuote,
+  Mic,
   RadioTower,
   SlidersHorizontal,
 } from "lucide-react"
 import { BrainPlayground } from "./brain-playground"
 import { CallinParse } from "./callin-parse"
+import { DJ } from "./dj"
 import { Home } from "./home"
 import { Ingest } from "./ingest"
 import { Library } from "./library"
@@ -34,6 +36,14 @@ export const registry: ConsoleModule[] = [
     icon: RadioTower,
     requiredRole: "admin",
     component: Radio,
+  },
+  {
+    id: "dj",
+    title: "DJ",
+    group: "Radio",
+    icon: Mic,
+    requiredRole: "admin",
+    component: DJ,
   },
   {
     id: "voice-audition",
