@@ -4,6 +4,9 @@ const STAGES: { key: string; label: string }[] = [
   { key: "simulating", label: "Dựng cuộc đua" },
   { key: "commentating", label: "Viết lời bình" },
   { key: "voicing", label: "Thu giọng đọc" },
+  // Client-side: every clip is decoded before the gun, so the race never waits
+  // on the network once it has started.
+  { key: "decoding", label: "Tải âm thanh" },
 ]
 
 /**

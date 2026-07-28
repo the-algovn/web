@@ -13,3 +13,9 @@ interface ImportMetaEnv {
 // package.json `exports` map, so they need their own declarations.
 declare module "@fontsource-variable/geist"
 declare module "@fontsource-variable/geist-mono"
+
+// Safari still ships the prefixed constructor; the unprefixed one is optional
+// there, so both are declared and the app picks whichever exists.
+interface Window {
+  webkitAudioContext?: typeof AudioContext
+}
