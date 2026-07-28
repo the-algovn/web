@@ -28,6 +28,11 @@ export function useRaceClock(
   useEffect(() => {
     if (!running || durationMs <= 0) return
 
+    // Rewind here, at the gun — not when the race stops. Resetting on stop
+    // rewinds the stage the instant the result appears, so the winner's panel
+    // sits above ducks back at the start line.
+    setTMs(0)
+
     let frame = 0
     const origin = performance.now()
 
@@ -55,11 +60,6 @@ export function useRaceClock(
 
     return () => cancelAnimationFrame(frame)
   }, [running, durationMs])
-
-  // Rewind whenever the race stops, so replay starts from the gun.
-  useEffect(() => {
-    if (!running) setTMs(0)
-  }, [running])
 
   return tMs
 }
