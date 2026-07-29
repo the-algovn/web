@@ -418,6 +418,10 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    /* the desktop rule sets `align-items: start` for the two-column grid; as a
+       flex column that becomes a cross-axis (horizontal) shrink-to-fit, which
+       leaves the hero/goals/achievements narrower than the screen. */
+    align-items: stretch;
   }
   .tb-col-left,
   .tb-col-right {
