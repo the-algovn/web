@@ -125,3 +125,48 @@ export function scheduledLineAt(
   const visibleFor = Math.max(current.durationMs, holdMs)
   return tMs - current.startMs <= visibleFor ? current : null
 }
+
+/**
+ * What a silent intro line is given instead of a measured clip length. The
+ * server stamps its nominal timings at this same interval, so a fully silent
+ * intro plays at exactly the pace it was written for.
+ */
+export const INTRO_FALLBACK_GAP_MS = 2500
+
+/**
+ * scheduleIntro lays the pre-race commentary out sequentially: every line starts
+ * when the previous one stops speaking.
+ *
+ * Deliberately none of schedule()'s rules apply. There is no finish call to pin
+ * and nothing to protect, so nothing is dropped — the intro's length is defined
+ * by its content rather than fixed in advance, which is why the phase ends when
+ * the last clip does.
+ */
+export function scheduleIntro(
+  lines: Line[],
+  durationOf: (line: Line, index: number) => number,
+): ScheduleResult {
+  const placed: ScheduledLine[] = []
+  let at = 0
+
+  lines.forEach((line, index) => {
+    const durationMs = Math.max(0, durationOf(line, index))
+    placed.push({
+      ...line,
+      index,
+      startMs: at,
+      durationMs,
+      nudged: at !== line.atMs,
+    })
+    at += durationMs > 0 ? durationMs : INTRO_FALLBACK_GAP_MS
+  })
+
+  return { lines: placed, dropped: [] }
+}
+
+/** When a scheduled track stops speaking. Zero for an empty track. */
+export function trackEndMs(lines: ScheduledLine[]): number {
+  const last = lines[lines.length - 1]
+  if (!last) return 0
+  return last.startMs + (last.durationMs > 0 ? last.durationMs : INTRO_FALLBACK_GAP_MS)
+}

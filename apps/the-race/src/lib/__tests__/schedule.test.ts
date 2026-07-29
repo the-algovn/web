@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { schedule, scheduledLineAt } from "../schedule"
+import { schedule, scheduledLineAt, INTRO_FALLBACK_GAP_MS, scheduleIntro, trackEndMs } from "../schedule"
 import type { Line } from "../types"
 
 const line = (atMs: number, text: string, intensity = 3): Line => ({
@@ -130,5 +130,54 @@ describe("scheduledLineAt", () => {
     const { lines: silent } = schedule([line(0, "a"), line(9000, "f", 5)], fixed(0))
     expect(scheduledLineAt(silent, 999, 1000)?.text).toBe("a")
     expect(scheduledLineAt(silent, 1001, 1000)).toBeNull()
+  })
+})
+
+const introLines: Line[] = [
+  { atMs: 0, text: "Chào bà con!", intensity: 3, audioUrl: "a" },
+  { atMs: 2500, text: "Thể lệ hôm nay…", intensity: 3, audioUrl: "b" },
+  { atMs: 5000, text: "Các tay đua!", intensity: 3, audioUrl: "c" },
+]
+
+describe("scheduleIntro", () => {
+  it("lays lines end to end from the measured clip lengths", () => {
+    const { lines } = scheduleIntro(introLines, (_l, i) => [1800, 2200, 1500][i] ?? 0)
+    expect(lines.map((l) => l.startMs)).toEqual([0, 1800, 4000])
+  })
+
+  it("never drops a line, however long the clips run", () => {
+    const { lines, dropped } = scheduleIntro(introLines, () => 30_000)
+    expect(lines).toHaveLength(3)
+    expect(dropped).toEqual([])
+  })
+
+  it("falls back to a fixed gap for a line with no clip", () => {
+    const { lines } = scheduleIntro(introLines, (_l, i) => (i === 1 ? 0 : 1000))
+    expect(lines.map((l) => l.startMs)).toEqual([
+      0,
+      1000,
+      1000 + INTRO_FALLBACK_GAP_MS,
+    ])
+  })
+
+  it("keeps each line's source index so its clip can still be found", () => {
+    const { lines } = scheduleIntro(introLines, () => 1000)
+    expect(lines.map((l) => l.index)).toEqual([0, 1, 2])
+  })
+})
+
+describe("trackEndMs", () => {
+  it("is when the last line stops speaking", () => {
+    const { lines } = scheduleIntro(introLines, () => 1200)
+    expect(trackEndMs(lines)).toBe(3600)
+  })
+
+  it("is zero for a track with no lines", () => {
+    expect(trackEndMs([])).toBe(0)
+  })
+
+  it("uses the fallback gap for a silent last line", () => {
+    const { lines } = scheduleIntro(introLines, (_l, i) => (i === 2 ? 0 : 1000))
+    expect(trackEndMs(lines)).toBe(2000 + INTRO_FALLBACK_GAP_MS)
   })
 })
