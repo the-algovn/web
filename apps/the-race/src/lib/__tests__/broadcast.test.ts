@@ -6,6 +6,7 @@ import {
   cameraScaleAt,
   captionAt,
   countdownLabel,
+  stageMs,
   totalMs,
 } from "../broadcast"
 import type { ScheduledLine } from "../schedule"
@@ -151,6 +152,31 @@ describe("captionAt", () => {
     expect(captionAt("countdown", 0, empty, empty)).toBeNull()
     expect(captionAt("race", 0, empty, empty)).toBeNull()
     expect(captionAt("result", 0, empty, empty)).toBeNull()
+  })
+})
+
+describe("stageMs", () => {
+  it("holds the ducks at the gate through both pre-gun beats", () => {
+    // A stage that read the presentation clock before the gun would show the
+    // field already strung out down the course while the caster is introducing
+    // them.
+    expect(stageMs("prerace", 0, 24_000)).toBe(0)
+    expect(stageMs("prerace", 7999, 24_000)).toBe(0)
+    expect(stageMs("countdown", 0, 24_000)).toBe(0)
+    expect(stageMs("countdown", 2999, 24_000)).toBe(0)
+  })
+
+  it("runs on the race's own clock once the gun goes", () => {
+    expect(stageMs("race", 0, 24_000)).toBe(0)
+    expect(stageMs("race", 12_345, 24_000)).toBe(12_345)
+  })
+
+  it("holds the final frame at the result rather than rewinding", () => {
+    // The result beat's clock restarts at zero: following it would put the ducks
+    // back on the start line under the winner's panel.
+    for (const localMs of [0, 1000, 600_000]) {
+      expect(stageMs("result", localMs, 24_000)).toBe(24_000)
+    }
   })
 })
 

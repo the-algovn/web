@@ -81,6 +81,27 @@ export function captionAt(
   }
 }
 
+/**
+ * stageMs is the race time the water is painted at, which is not the same thing
+ * as the presentation's clock.
+ *
+ * Nothing has moved before the gun, so both pre-gun beats read position zero
+ * rather than a race time — and the result holds the final frame rather than
+ * following its own clock, which restarts at zero and would rewind the ducks to
+ * the start line underneath the winner's panel.
+ */
+export function stageMs(beat: Beat, localMs: number, durationMs: number): number {
+  switch (beat) {
+    case "prerace":
+    case "countdown":
+      return 0
+    case "race":
+      return localMs
+    case "result":
+      return durationMs
+  }
+}
+
 /** Four beats of countdown across COUNTDOWN_MS, the last landing on the gun. */
 export function countdownLabel(localMs: number): string {
   const step = COUNTDOWN_MS / 4
