@@ -1,10 +1,13 @@
 import { Button } from "@algovn/ui/button"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { Chrome } from "./components/chrome"
+import { Countdown } from "./components/countdown"
 import { Lobby } from "./components/lobby"
 import { Preparing } from "./components/preparing"
 import { Result } from "./components/result"
 import { Stage } from "./components/stage"
 import { signIn } from "./lib/auth"
+import { COUNTDOWN_MS, beatAt, totalMs } from "./lib/broadcast"
 import { authConfigured, env } from "./lib/env"
 import { createRaceClient } from "./lib/race-client"
 import { CAPTION_HOLD_MS } from "./lib/timeline"
@@ -54,6 +57,11 @@ export default function App() {
   const [clock, setClock] = useState<AudioClock | null>(null)
   const [decoding, setDecoding] = useState(false)
 
+  const timings = useMemo(
+    () => ({ introMs: audio.loaded?.intro.endMs ?? 0, raceMs: race?.durationMs ?? 0 }),
+    [audio.loaded, race],
+  )
+
   // Once the package is sealed, decode every clip and only then drop the flag.
   // The race must not start against a half-loaded commentary track.
   //
@@ -65,23 +73,24 @@ export default function App() {
       return
     }
     setDecoding(true)
-    void audio.load(race.lines).then((ready) => {
-      setClock(audio.start(ready))
+    void audio.load(race).then((ready) => {
+      setClock(audio.start(ready, ready.intro.endMs + COUNTDOWN_MS))
       setDecoding(false)
     })
   }, [state.phase, race, audio, decoding])
 
   const ready = audio.loaded
-  const tMs = useRaceClock(
-    race?.durationMs ?? 0,
+  const elapsed = useRaceClock(
+    totalMs(timings),
     state.phase === "racing" && !!ready,
     finish,
     clock,
   )
+  const { beat, localMs } = beatAt(elapsed, timings)
 
   const replayAll = useCallback(() => {
     audio.stop()
-    if (ready) setClock(audio.start(ready))
+    if (ready) setClock(audio.start(ready, ready.intro.endMs + COUNTDOWN_MS))
     replay()
   }, [audio, ready, replay])
 
@@ -120,62 +129,40 @@ export default function App() {
   }
 
   if (race && ready && (state.phase === "racing" || state.phase === "result")) {
-    const caption = scheduledLineAt(ready.lines, tMs, CAPTION_HOLD_MS)
-    const progress = race.durationMs > 0 ? tMs / race.durationMs : 0
+    const track = beat === "prerace" ? ready.intro : ready.race
+    const current = scheduledLineAt(track.lines, localMs, CAPTION_HOLD_MS)
+    const started = beat === "race" || beat === "result"
+    // Before the gun nothing has moved: the stage reads position 0 rather than a
+    // race time. After it, the result beat holds the final frame.
+    const tMs = beat === "race" ? localMs : started ? race.durationMs : 0
 
     return (
       <Shell>
-        <div className="mx-auto flex w-full max-w-md flex-col gap-3 px-4 py-6">
-          <header className="flex items-baseline justify-between">
-            <h1 className="font-semibold text-lg">
-              {state.room?.title ?? "Đua Vịt"}
-            </h1>
-            <div className="flex items-center gap-2">
-              {ready.voiced > 0 && (
-                <button
-                  type="button"
-                  onClick={audio.toggleMute}
-                  aria-label={audio.muted ? "Bật tiếng" : "Tắt tiếng"}
-                  aria-pressed={audio.muted}
-                  className="rounded px-1.5 py-0.5 text-white/60 text-xs hover:text-white"
-                >
-                  {audio.muted ? "🔇" : "🔊"}
-                </button>
-              )}
-              <span aria-hidden className="text-white/40 text-xs">
-                🔒 {state.seedCommit.slice(0, 8) || race.fairness.seedCommit.slice(0, 8)}
-              </span>
-            </div>
-          </header>
+        <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-3 px-4 py-6 md:max-w-3xl">
+          <Chrome
+            title={state.room?.title ?? "Đua Vịt"}
+            seedCommit={state.seedCommit || race.fairness.seedCommit}
+            live={beat === "race"}
+            tMs={tMs}
+            durationMs={race.durationMs}
+            caption={current?.text ?? ""}
+            muted={audio.muted}
+            voiced={ready.race.voiced + ready.intro.voiced}
+            showClock={started}
+            onToggleMute={audio.toggleMute}
+          />
 
-          <Stage race={race} tMs={tMs} reducedMotion={reducedMotion} />
-
-          <div
-            className="min-h-12 rounded-md bg-black/30 px-3 py-2 text-sm"
-            aria-live="polite"
-          >
-            {caption ? (
-              <span>🎙 {caption.text}</span>
-            ) : (
-              <span className="text-white/30">…</span>
-            )}
-          </div>
-
-          <div
-            className="h-1.5 overflow-hidden rounded-full bg-white/10"
-            role="progressbar"
-            aria-label="Tiến độ cuộc đua"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(progress * 100)}
-          >
-            <div
-              className="h-full bg-cyan-400/70"
-              style={{ width: `${progress * 100}%` }}
+          <div className="relative">
+            <Stage
+              race={race}
+              tMs={tMs}
+              reducedMotion={reducedMotion}
+              bobbing={beat === "prerace" || beat === "countdown"}
             />
+            {beat === "countdown" && <Countdown localMs={localMs} />}
           </div>
 
-          {state.phase === "result" && (
+          {beat === "result" && (
             <Result
               race={race}
               history={state.history}
@@ -209,7 +196,5 @@ export default function App() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="min-h-dvh bg-[#071a20] text-white">{children}</main>
-  )
+  return <main className="min-h-dvh bg-[#0a0d12] text-white">{children}</main>
 }

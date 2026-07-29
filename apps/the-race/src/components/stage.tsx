@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react"
-import { positionsAt, standingsLabel } from "../lib/timeline"
+import { cameraScaleAt } from "../lib/broadcast"
+import { duckColor, ranksAt } from "../lib/ducks"
+import { positionsAt, standings, standingsLabel } from "../lib/timeline"
 import type { RacePackage } from "../lib/types"
 
 const LANE_H = 46
@@ -8,8 +10,9 @@ const PAD_X = 14
 /**
  * The water. A dumb painter: it holds no state, decides nothing, and reads every
  * position from the authored timeline at the current clock. All of the logic it
- * depends on lives in lib/timeline.ts under test — canvas is untestable in
- * jsdom, so nothing that matters is allowed in here.
+ * depends on — the camera, the colours, the ranks — lives under lib/ and under
+ * test; canvas is untestable in jsdom, so nothing that matters is allowed in
+ * here.
  *
  * The canvas is decorative. Standings are published as an aria-label and the
  * commentary is real text, so the race is followable without it.
@@ -18,10 +21,13 @@ export function Stage({
   race,
   tMs,
   reducedMotion,
+  bobbing = false,
 }: {
   race: RacePackage
   tMs: number
   reducedMotion: boolean
+  /** Pre-race: the ducks wait at the gate and nothing has a rank yet. */
+  bobbing?: boolean
 }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const positions = positionsAt(race.ticks, tMs)
@@ -44,20 +50,36 @@ export function Stage({
 
     const trackW = w - PAD_X * 2 - 30
 
+    const scale = cameraScaleAt(race.drama, tMs, race.durationMs)
+    const finishX = PAD_X + trackW
+    // Horizontal only, anchored on the finish line: the gap that matters gets
+    // wider while every lane stays in frame, however many ducks there are.
+    ctx.translate(finishX, 0)
+    ctx.scale(scale, 1)
+    ctx.translate(-finishX, 0)
+
+    const leader = standings(positions)[0]
+
     race.duckNames.forEach((_, duck) => {
       const y = duck * LANE_H + LANE_H / 2
       const p = positions[duck] ?? 0
+      const color = duckColor(duck)
 
-      // lane water
-      ctx.fillStyle = duck % 2 === 0 ? "#0e2a33" : "#0c242c"
+      // The lane carries "leader"; the duck keeps its own colour, because the
+      // colour is what tells you who it is.
+      ctx.fillStyle =
+        duck === leader && !bobbing
+          ? "rgba(0, 224, 122, 0.10)"
+          : duck % 2 === 0
+            ? "#131b24"
+            : "#111820"
       ctx.fillRect(0, duck * LANE_H, w, LANE_H)
 
-      // wake behind the duck
       const x = PAD_X + trackW * Math.min(p, 1)
       if (!reducedMotion) {
         const grad = ctx.createLinearGradient(PAD_X, 0, x, 0)
-        grad.addColorStop(0, "rgba(120, 220, 255, 0)")
-        grad.addColorStop(1, "rgba(120, 220, 255, 0.35)")
+        grad.addColorStop(0, `${color}00`)
+        grad.addColorStop(1, `${color}66`)
         ctx.strokeStyle = grad
         ctx.lineWidth = 3
         ctx.beginPath()
@@ -66,16 +88,21 @@ export function Stage({
         ctx.stroke()
       }
 
-      // the duck itself; a gentle bob unless motion is unwelcome
       const bob = reducedMotion ? 0 : Math.sin(tMs / 220 + duck) * 2.5
-      ctx.font = "22px system-ui, sans-serif"
+      // A colour disc behind the glyph: the emoji cannot be tinted, so identity
+      // rides underneath it.
+      ctx.beginPath()
+      ctx.fillStyle = color
+      ctx.arc(x, y + bob, 13, 0, Math.PI * 2)
+      ctx.fill()
+
+      ctx.font = "20px system-ui, sans-serif"
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
       ctx.fillText("🦆", x, y + bob)
     })
 
     // finish line
-    const finishX = PAD_X + trackW
     ctx.strokeStyle = "rgba(255,255,255,0.55)"
     ctx.setLineDash([6, 6])
     ctx.lineWidth = 2
@@ -84,7 +111,9 @@ export function Stage({
     ctx.lineTo(finishX, h)
     ctx.stroke()
     ctx.setLineDash([])
-  }, [race, tMs, positions, reducedMotion])
+  }, [race, tMs, positions, reducedMotion, bobbing])
+
+  const ranks = ranksAt(positions)
 
   return (
     <div className="relative">
@@ -100,10 +129,18 @@ export function Stage({
           <li
             // biome-ignore lint/suspicious/noArrayIndexKey: a lane IS its index — duck order is fixed for the life of a race and names may legitimately repeat, so the index is the stable identity here, not a positional stand-in
             key={duck}
-            className="flex items-center pl-3 font-medium text-white/85 text-xs"
+            className="flex items-center gap-1.5 pl-2.5 font-medium text-xs"
             style={{ height: LANE_H }}
           >
-            <span className="rounded bg-black/45 px-1.5 py-0.5">{name}</span>
+            <span
+              className="w-4 text-center font-bold tabular-nums"
+              style={{ color: duckColor(duck) }}
+            >
+              {bobbing ? "–" : ranks[duck]}
+            </span>
+            <span className="rounded bg-black/55 px-1.5 py-0.5 text-white/90">
+              {name}
+            </span>
           </li>
         ))}
       </ol>
