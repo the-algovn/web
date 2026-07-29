@@ -16,7 +16,7 @@ export function Callback() {
   }, [])
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-[#071a20] p-6 text-white">
+    <main className="flex min-h-dvh items-center justify-center bg-[#0a0d12] p-6 text-white">
       {error ? (
         <div role="alert" className="text-center">
           <p className="text-red-400">{error}</p>

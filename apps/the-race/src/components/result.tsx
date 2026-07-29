@@ -116,7 +116,7 @@ export function Result({
             onClick={() => setShowProof((v) => !v)}
             aria-expanded={showProof}
           >
-            🔒 Kiểm chứng kết quả
+            ✓ Kiểm chứng kết quả
           </button>
           {showProof && (
             <div className="mt-2 flex flex-col gap-2 text-[11px] text-white/55">

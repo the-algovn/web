@@ -1,5 +1,3 @@
-import { Lock } from "lucide-react"
-
 const STAGES: { key: string; label: string }[] = [
   { key: "simulating", label: "Dựng cuộc đua" },
   { key: "commentating", label: "Viết lời bình" },
@@ -37,7 +35,7 @@ export function Preparing({
             key={s.key}
             className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm ${
               i <= current
-                ? "border-cyan-400/40 bg-cyan-400/10 text-cyan-100"
+                ? "border-[#00E07A]/40 bg-[#00E07A]/10 text-[#00E07A]"
                 : "border-white/10 text-white/40"
             }`}
           >
@@ -49,8 +47,11 @@ export function Preparing({
 
       {seedCommit && (
         <div className="w-full rounded-md border border-white/10 bg-black/30 p-3 text-left">
-          <p className="flex items-center gap-1.5 font-medium text-white/80 text-xs">
-            <Lock className="size-3.5" /> Đã niêm phong kết quả
+          {/* The credential the chrome wears on air, not a padlock in a corner:
+              the commit–reveal proof is the product's central claim, and this is
+              the screen every player sees before every race. */}
+          <p className="font-semibold text-[#00E07A] text-[11px] tracking-[0.18em]">
+            ✓ ĐÃ NIÊM PHONG KẾT QUẢ
           </p>
           <p className="mt-1 break-all font-mono text-[11px] text-white/45">
             {seedCommit}
