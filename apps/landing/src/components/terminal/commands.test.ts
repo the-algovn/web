@@ -46,7 +46,7 @@ describe("unix basics", () => {
 
   it("ls projects/ lists app entries", async () => {
     expect((await runCommand("ls projects/", makeCtx())).lines).toEqual([
-      "the-button",
+      "the-button  radio  the-race",
     ])
   })
 

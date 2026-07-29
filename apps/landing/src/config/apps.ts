@@ -15,4 +15,18 @@ export const apps: AppTile[] = [
     href: "/the-button",
     status: "live",
   },
+  {
+    id: "radio",
+    name: "Tần Số 42",
+    description: "A late-night radio station that programs itself.",
+    href: "/radio",
+    status: "live",
+  },
+  {
+    id: "the-race",
+    name: "Đua Vịt",
+    description: "Let the ducks decide.",
+    href: "/the-race",
+    status: "live",
+  },
 ]

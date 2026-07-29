@@ -40,7 +40,14 @@ describe("file completion", () => {
 
   it("completes directories with a trailing slash and descends", () => {
     expect(complete("ls proj", fs, fresh())).toBe("ls projects/")
-    expect(complete("cat projects/the", fs, fresh())).toBe(
+    expect(complete("cat projects/ra", fs, fresh())).toBe("cat projects/radio")
+  })
+
+  // "the-button" and "the-race" share the "the-" prefix; like bash, an
+  // ambiguous prefix completes to nothing rather than guessing.
+  it("returns null when a project prefix is ambiguous", () => {
+    expect(complete("cat projects/the", fs, fresh())).toBeNull()
+    expect(complete("cat projects/the-b", fs, fresh())).toBe(
       "cat projects/the-button",
     )
   })
