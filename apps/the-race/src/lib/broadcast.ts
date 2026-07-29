@@ -4,6 +4,9 @@
 // result lands, and these functions slice it. Three timers would give audio and
 // picture something to disagree with; one timeline cannot.
 
+import { type ScheduledLine, scheduledLineAt } from "./schedule"
+import { CAPTION_HOLD_MS } from "./timeline"
+
 export type Beat = "prerace" | "countdown" | "race" | "result"
 
 /** The countdown. Silent by design — the caster's first race line covers the gun. */
@@ -40,6 +43,41 @@ export function beatAt(elapsedMs: number, t: Timings): { beat: Beat; localMs: nu
   if (raceMs < t.raceMs) return { beat: "race", localMs: raceMs }
 
   return { beat: "result", localMs: raceMs - t.raceMs }
+}
+
+/**
+ * captionAt picks the line on the rail.
+ *
+ * The rail follows the beat, not the clock. Pre-race and countdown belong to the
+ * intro track; the countdown reads past the intro's end so the last line lingers
+ * and then falls silent on its own. The result holds the finish call, which is
+ * the one line whose timing carries meaning.
+ *
+ * Both halves of that are load-bearing. Reading the race track on the countdown
+ * would announce the opening call before the gun and give the start away; reading
+ * it at the result beat's own clock — which restarts at zero, and then freezes
+ * there when the race clock stops — would snap the rail back to the first line of
+ * the race at the exact moment the winner lands.
+ */
+export function captionAt(
+  beat: Beat,
+  localMs: number,
+  durationMs: number,
+  intro: { lines: ScheduledLine[]; endMs: number },
+  race: { lines: ScheduledLine[] },
+): ScheduledLine | null {
+  switch (beat) {
+    case "prerace":
+      return scheduledLineAt(intro.lines, localMs, CAPTION_HOLD_MS)
+    case "countdown":
+      return scheduledLineAt(intro.lines, intro.endMs + localMs, CAPTION_HOLD_MS)
+    case "race":
+      return scheduledLineAt(race.lines, localMs, CAPTION_HOLD_MS)
+    case "result":
+      // The race's full length, not the result beat's local clock: the finish
+      // call is pinned there and stays visible for as long as the panel is up.
+      return scheduledLineAt(race.lines, durationMs, CAPTION_HOLD_MS)
+  }
 }
 
 /** Four beats of countdown across COUNTDOWN_MS, the last landing on the gun. */

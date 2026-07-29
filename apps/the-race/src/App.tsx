@@ -7,11 +7,9 @@ import { Preparing } from "./components/preparing"
 import { Result } from "./components/result"
 import { Stage } from "./components/stage"
 import { signIn } from "./lib/auth"
-import { COUNTDOWN_MS, beatAt, totalMs } from "./lib/broadcast"
+import { COUNTDOWN_MS, beatAt, captionAt, totalMs } from "./lib/broadcast"
 import { authConfigured, env } from "./lib/env"
 import { createRaceClient } from "./lib/race-client"
-import { CAPTION_HOLD_MS } from "./lib/timeline"
-import { scheduledLineAt } from "./lib/schedule"
 import { useAudio } from "./lib/use-audio"
 import { useAuth } from "./lib/use-auth"
 import { useRace } from "./lib/use-race"
@@ -129,12 +127,12 @@ export default function App() {
   }
 
   if (race && ready && (state.phase === "racing" || state.phase === "result")) {
-    const track = beat === "prerace" ? ready.intro : ready.race
-    const current = scheduledLineAt(track.lines, localMs, CAPTION_HOLD_MS)
     const started = beat === "race" || beat === "result"
     // Before the gun nothing has moved: the stage reads position 0 rather than a
     // race time. After it, the result beat holds the final frame.
     const tMs = beat === "race" ? localMs : started ? race.durationMs : 0
+    // The rail follows the beat, not the clock — see captionAt.
+    const current = captionAt(beat, localMs, race.durationMs, ready.intro, ready.race)
 
     return (
       <Shell>
