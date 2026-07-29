@@ -29,7 +29,7 @@ const laneLabels = () =>
 
 describe("Stage", () => {
   it("announces no standings before the gun, matching the ranks it shows", () => {
-    render(<Stage race={race} tMs={0} reducedMotion={false} bobbing />)
+    render(<Stage race={race} tMs={0} reducedMotion={false} atGate />)
 
     expect(
       screen.getByRole("img", { name: "Các vịt đang chờ ở vạch xuất phát" }),

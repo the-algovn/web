@@ -154,7 +154,7 @@ export default function App() {
               race={race}
               tMs={tMs}
               reducedMotion={reducedMotion}
-              bobbing={beat === "prerace" || beat === "countdown"}
+              atGate={beat === "prerace" || beat === "countdown"}
             />
             {beat === "countdown" && <Countdown localMs={localMs} />}
           </div>

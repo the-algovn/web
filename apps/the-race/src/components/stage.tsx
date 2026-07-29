@@ -21,13 +21,16 @@ export function Stage({
   race,
   tMs,
   reducedMotion,
-  bobbing = false,
+  atGate = false,
 }: {
   race: RacePackage
   tMs: number
   reducedMotion: boolean
-  /** Pre-race: the ducks wait at the gate and nothing has a rank yet. */
-  bobbing?: boolean
+  /**
+   * Before the gun. No lane is the leader's and no duck has a rank yet, so the
+   * stage shows a field waiting rather than a standing nobody has earned.
+   */
+  atGate?: boolean
 }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const positions = positionsAt(race.ticks, tMs)
@@ -68,7 +71,7 @@ export function Stage({
       // The lane carries "leader"; the duck keeps its own colour, because the
       // colour is what tells you who it is.
       ctx.fillStyle =
-        duck === leader && !bobbing
+        duck === leader && !atGate
           ? "rgba(0, 224, 122, 0.10)"
           : duck % 2 === 0
             ? "#131b24"
@@ -115,7 +118,7 @@ export function Stage({
     ctx.lineTo(finishX, h)
     ctx.stroke()
     ctx.setLineDash([])
-  }, [race, tMs, positions, reducedMotion, bobbing])
+  }, [race, tMs, positions, reducedMotion, atGate])
 
   const ranks = ranksAt(positions)
 
@@ -128,7 +131,7 @@ export function Stage({
         // lane order out as though it were a standing, telling anyone not looking
         // at the canvas the opposite of the "–" the lane labels show.
         aria-label={
-          bobbing
+          atGate
             ? "Các vịt đang chờ ở vạch xuất phát"
             : standingsLabel(positions, race.duckNames)
         }
@@ -147,7 +150,7 @@ export function Stage({
               className="w-4 text-center font-bold tabular-nums"
               style={{ color: duckColor(duck) }}
             >
-              {bobbing ? "–" : ranks[duck]}
+              {atGate ? "–" : ranks[duck]}
             </span>
             <span className="rounded bg-black/55 px-1.5 py-0.5 text-white/90">
               {name}
