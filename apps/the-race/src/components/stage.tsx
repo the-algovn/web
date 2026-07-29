@@ -133,10 +133,11 @@ export function Stage({
     ctx.stroke()
     ctx.setLineDash([])
     // `positions` is a fresh array on every render, so this effect never skips.
-    // That is deliberate rather than an oversight: the painter is a pure
-    // function of its props, repainting is cheap, and it is what keeps the bob
-    // running through the pre-race — where tMs, race and atGate are all frozen
-    // and only elapsedMs is still moving.
+    // That is deliberate rather than an oversight, and it is harmless: the
+    // painter is a pure function of its props and repainting is cheap. It is
+    // not what drives the motion, though — elapsedMs is a real dependency, and
+    // through the pre-race, where everything else here is frozen, it is the only
+    // one still changing.
   }, [race, tMs, elapsedMs, positions, reducedMotion, atGate])
 
   const ranks = ranksAt(positions)
