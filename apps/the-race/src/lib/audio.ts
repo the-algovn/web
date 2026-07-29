@@ -1,6 +1,7 @@
-// The commentary track.
+// The commentary tracks: the intro, spoken over the starting gate, and the race
+// itself.
 //
-// Everything is decoded before the race starts, then scheduled against the
+// Both are decoded before the race starts, then scheduled against the
 // AudioContext clock — the same clock the ducks are drawn from. One timebase is
 // the whole reason audio and picture cannot drift: there is no second clock to
 // disagree with.

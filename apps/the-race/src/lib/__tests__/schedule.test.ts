@@ -160,6 +160,16 @@ describe("scheduleIntro", () => {
     ])
   })
 
+  // "No TTS falls back to 2500ms per line" is a named degradation requirement,
+  // so it gets pinned end to end and in literals: a test written against
+  // INTRO_FALLBACK_GAP_MS would follow the constant wherever it moved, which is
+  // exactly the change this is here to catch.
+  it("paces a wholly unvoiced intro at 2500ms a line", () => {
+    const { lines } = scheduleIntro(introLines, () => 0)
+    expect(lines.map((l) => l.startMs)).toEqual([0, 2500, 5000])
+    expect(trackEndMs(lines)).toBe(7500)
+  })
+
   it("keeps each line's source index so its clip can still be found", () => {
     const { lines } = scheduleIntro(introLines, () => 1000)
     expect(lines.map((l) => l.index)).toEqual([0, 1, 2])

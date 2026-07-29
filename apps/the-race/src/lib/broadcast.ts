@@ -39,10 +39,12 @@ export function beatAt(elapsedMs: number, t: Timings): { beat: Beat; localMs: nu
   const afterIntro = elapsedMs - t.introMs
   if (afterIntro < COUNTDOWN_MS) return { beat: "countdown", localMs: afterIntro }
 
-  const raceMs = afterIntro - COUNTDOWN_MS
-  if (raceMs < t.raceMs) return { beat: "race", localMs: raceMs }
+  // intoRace, not raceMs: this is elapsed time INTO the race, and it is
+  // compared against t.raceMs — the race's total length — on the very next line.
+  const intoRace = afterIntro - COUNTDOWN_MS
+  if (intoRace < t.raceMs) return { beat: "race", localMs: intoRace }
 
-  return { beat: "result", localMs: raceMs - t.raceMs }
+  return { beat: "result", localMs: intoRace - t.raceMs }
 }
 
 /**
