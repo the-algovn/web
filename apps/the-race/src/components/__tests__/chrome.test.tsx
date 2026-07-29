@@ -34,6 +34,18 @@ describe("Chrome", () => {
     expect(screen.queryByText("0.0s")).not.toBeInTheDocument()
   })
 
+  it("claims no progress before the gun either", () => {
+    // Same reason as the clock: 0% of a race that has not started is a claim
+    // about a race that has not started.
+    render(<Chrome {...props} showClock={false} tMs={0} />)
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
+  })
+
+  it("shows how far in it is once the race is running", () => {
+    render(<Chrome {...props} />)
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "51")
+  })
+
   it("marks itself live only while the race is running", () => {
     const { rerender } = render(<Chrome {...props} />)
     expect(screen.getByText("LIVE")).toBeInTheDocument()

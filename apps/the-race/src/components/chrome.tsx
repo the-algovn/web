@@ -66,19 +66,24 @@ export function Chrome({
         </div>
       </header>
 
-      <div
-        className="h-1 overflow-hidden rounded-full bg-white/10"
-        role="progressbar"
-        aria-label="Tiến độ cuộc đua"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress * 100)}
-      >
+      {/* Gated with the clock, and for the same reason: a bar announcing "Tiến độ
+          cuộc đua, 0%" through the whole pre-race claims a race is under way and
+          nobody has moved. */}
+      {showClock && (
         <div
-          className="h-full bg-[#00E07A] transition-[width] duration-100 ease-linear"
-          style={{ width: `${progress * 100}%` }}
-        />
-      </div>
+          className="h-1 overflow-hidden rounded-full bg-white/10"
+          role="progressbar"
+          aria-label="Tiến độ cuộc đua"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress * 100)}
+        >
+          <div
+            className="h-full bg-[#00E07A] transition-[width] duration-100 ease-linear"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
+      )}
 
       <div
         className="min-h-11 rounded-md border border-white/5 bg-black/40 px-3 py-2 text-sm text-white/90"
