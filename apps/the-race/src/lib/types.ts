@@ -58,6 +58,8 @@ export interface RacePackage {
   events: { tMs: number; kind: EventKind; duckIndexes: number[] }[]
   finishOrder: number[]
   lines: Line[]
+  /** Spoken before the gun. Its own clock, from 0 — never negative race times. */
+  introLines: Line[]
   drama: string
   fairness: Fairness
 }
@@ -101,6 +103,7 @@ export type RawRacePackage = {
   events?: RawEvent[]
   finishOrder?: number[]
   lines?: RawLine[]
+  introLines?: RawLine[]
   drama?: string
   fairness?: Partial<Fairness>
 }
@@ -117,6 +120,13 @@ const num = (v: number | undefined): number => v ?? 0
 
 // int64 crosses protojson as a decimal STRING, and is dropped when zero.
 const int64 = (v: string | number | undefined): number => Number(v ?? 0)
+
+const lineOf = (l: RawLine): Line => ({
+  atMs: num(l.atMs),
+  text: l.text ?? "",
+  intensity: num(l.intensity),
+  audioUrl: l.audioUrl ?? "",
+})
 
 export function normalizeRoom(raw: RawRoom | undefined): Room {
   return {
@@ -143,12 +153,8 @@ export function normalizeRace(raw: RawRacePackage): RacePackage {
       duckIndexes: e.duckIndexes ?? [],
     })),
     finishOrder: raw.finishOrder ?? [],
-    lines: (raw.lines ?? []).map((l) => ({
-      atMs: num(l.atMs),
-      text: l.text ?? "",
-      intensity: num(l.intensity),
-      audioUrl: l.audioUrl ?? "",
-    })),
+    lines: (raw.lines ?? []).map(lineOf),
+    introLines: (raw.introLines ?? []).map(lineOf),
     drama: raw.drama ?? "",
     fairness: {
       seedCommit: raw.fairness?.seedCommit ?? "",

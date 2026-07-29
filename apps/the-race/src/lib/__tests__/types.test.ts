@@ -72,3 +72,25 @@ describe("normalizeRoom", () => {
     expect(room.createdAtMs).toBe(0)
   })
 })
+
+describe("normalizeRace intro lines", () => {
+  it("carries the intro track", () => {
+    const race = normalizeRace({
+      introLines: [
+        { text: "Chào bà con!", intensity: 3, audioUrl: "https://x/intro-0.mp3" },
+        { atMs: 2500, text: "Vào vạch!", intensity: 3 },
+      ],
+    })
+    expect(race.introLines).toHaveLength(2)
+    // atMs is absent on the first line because protojson drops zeros. It must
+    // normalize to 0, not undefined, or every downstream sum becomes NaN.
+    expect(race.introLines[0]?.atMs).toBe(0)
+    expect(race.introLines[0]?.audioUrl).toBe("https://x/intro-0.mp3")
+    expect(race.introLines[1]?.atMs).toBe(2500)
+    expect(race.introLines[1]?.audioUrl).toBe("")
+  })
+
+  it("is an empty array when the server sent no intro", () => {
+    expect(normalizeRace({}).introLines).toEqual([])
+  })
+})
