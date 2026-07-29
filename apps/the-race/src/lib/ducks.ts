@@ -13,10 +13,15 @@ import type { Tick } from "./types"
  * Twelve, because twelve is the largest field. Chosen to stay apart on the
  * stage's #111820 and to survive the common colourblindnesses in pairs that sit
  * next to each other in lane order.
+ *
+ * None of them is #00E07A. The accent belongs to the broadcast's chrome — the
+ * LIVE dot, the progress bar, the seal, the leader's lane, the winner's panel —
+ * and a duck wearing it reads as furniture rather than as a racer, worst of all
+ * when it leads and its lit lane is the same hue as the duck standing in it.
  */
 export const DUCK_COLORS = [
   "#FFD23F",
-  "#00E07A",
+  "#308CE8",
   "#4CC9F0",
   "#F72585",
   "#FF8C42",

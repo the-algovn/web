@@ -11,6 +11,13 @@ describe("duckColor", () => {
   it("wraps rather than running out", () => {
     expect(duckColor(DUCK_COLORS.length)).toBe(duckColor(0))
   })
+
+  it("never hands a duck the chrome's accent", () => {
+    // #00E07A is the LIVE dot, the progress bar, the seal, the leader's lane
+    // tint and the winner's panel. A duck wearing it reads as furniture — and
+    // when it leads, the duck and its lit lane are the same colour.
+    expect([...DUCK_COLORS]).not.toContain("#00E07A")
+  })
 })
 
 describe("ranksAt", () => {
