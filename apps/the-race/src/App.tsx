@@ -60,6 +60,25 @@ export default function App() {
     [audio.loaded, race],
   )
 
+  // A decoded commentary and a clock origin belong to ONE race. When a different
+  // package arrives they have to go, or the new race is played with the old
+  // one's voice and, far worse, the old one's clock: useRaceClock would read an
+  // origin many seconds in the past, compute an elapsed past totalMs on its very
+  // first frame, and call onEnd before the gun — the viewer gets the winner's
+  // panel instantly, with the previous race's caption on the rail.
+  //
+  // Keyed on the race's identity rather than on a phase transition, so a
+  // rematch, a replay of a DIFFERENT race and a pasted share link are all the
+  // same event. `audio.reset` and not `audio`: the hook returns a fresh object
+  // every render, and depending on it would reset the audio it had just loaded,
+  // every render, forever.
+  const raceId = race?.raceId ?? ""
+  // biome-ignore lint/correctness/useExhaustiveDependencies: raceId is the trigger, not an input — the effect fires BECAUSE the identity changed and has nothing to read from it, which is a shape the rule cannot model
+  useEffect(() => {
+    audio.reset()
+    setClock(null)
+  }, [raceId, audio.reset])
+
   // Once the package is sealed, decode every clip and only then drop the flag.
   // The race must not start against a half-loaded commentary track.
   //

@@ -66,6 +66,19 @@ export function useAudio() {
     playbackRef.current = null
   }, [])
 
+  /**
+   * Tear the whole broadcast down, decoded tracks and all.
+   *
+   * `stop` silences what is playing but leaves `loaded` in place, which is
+   * right for a replay of the same race — it is the same commentary, restarted.
+   * It is wrong for a different race: the next package would be played with the
+   * previous one's clips and captions. Anything switching races calls this.
+   */
+  const reset = useCallback(() => {
+    stop()
+    setLoaded(null)
+  }, [stop])
+
   const toggleMute = useCallback(() => {
     setMuted((m) => {
       const next = !m
@@ -77,5 +90,5 @@ export function useAudio() {
 
   useEffect(() => () => playbackRef.current?.stop(), [])
 
-  return { arm, armed, load, loaded, start, stop, muted, toggleMute }
+  return { arm, armed, load, loaded, start, stop, reset, muted, toggleMute }
 }
