@@ -96,6 +96,10 @@ export function Stage({
       ctx.arc(x, y + bob, 13, 0, Math.PI * 2)
       ctx.fill()
 
+      // Ink, before the glyph: a colour-emoji font ignores fillStyle, but where
+      // the duck falls back to a monochrome glyph it would otherwise be drawn in
+      // the disc's own colour and vanish into it.
+      ctx.fillStyle = "#0a0d12"
       ctx.font = "20px system-ui, sans-serif"
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
