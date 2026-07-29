@@ -50,19 +50,20 @@ export function beatAt(elapsedMs: number, t: Timings): { beat: Beat; localMs: nu
  *
  * The rail follows the beat, not the clock. Pre-race and countdown belong to the
  * intro track; the countdown reads past the intro's end so the last line lingers
- * and then falls silent on its own. The result holds the finish call, which is
- * the one line whose timing carries meaning.
+ * and then falls silent on its own. The result takes the finish call outright —
+ * it is the one line whose timing carries meaning, and it belongs on the rail for
+ * as long as the winner's panel is up.
  *
- * Both halves of that are load-bearing. Reading the race track on the countdown
- * would announce the opening call before the gun and give the start away; reading
- * it at the result beat's own clock — which restarts at zero, and then freezes
- * there when the race clock stops — would snap the rail back to the first line of
- * the race at the exact moment the winner lands.
+ * Every one of those is load-bearing. Reading the race track during the countdown
+ * would announce the opening call before the gun and give the start away. Reading
+ * the result at a clock — any clock — eventually times the finish call out and
+ * leaves the rail empty under the panel: the result beat's own clock restarts at
+ * zero and freezes there, and the race's full length falls silent for a finish
+ * call the server pinned more than CAPTION_HOLD_MS before the end.
  */
 export function captionAt(
   beat: Beat,
   localMs: number,
-  durationMs: number,
   intro: { lines: ScheduledLine[]; endMs: number },
   race: { lines: ScheduledLine[] },
 ): ScheduledLine | null {
@@ -74,9 +75,9 @@ export function captionAt(
     case "race":
       return scheduledLineAt(race.lines, localMs, CAPTION_HOLD_MS)
     case "result":
-      // The race's full length, not the result beat's local clock: the finish
-      // call is pinned there and stays visible for as long as the panel is up.
-      return scheduledLineAt(race.lines, durationMs, CAPTION_HOLD_MS)
+      // Not a lookup: schedule() pins the finish call and always places it last,
+      // so the last line IS the result, whenever it was called.
+      return race.lines[race.lines.length - 1] ?? null
   }
 }
 

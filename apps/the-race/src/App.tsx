@@ -132,7 +132,7 @@ export default function App() {
     // race time. After it, the result beat holds the final frame.
     const tMs = beat === "race" ? localMs : started ? race.durationMs : 0
     // The rail follows the beat, not the clock — see captionAt.
-    const current = captionAt(beat, localMs, race.durationMs, ready.intro, ready.race)
+    const current = captionAt(beat, localMs, ready.intro, ready.race)
 
     return (
       <Shell>

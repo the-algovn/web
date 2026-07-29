@@ -9,6 +9,7 @@ import {
   totalMs,
 } from "../broadcast"
 import type { ScheduledLine } from "../schedule"
+import { CAPTION_HOLD_MS } from "../timeline"
 
 const timings = { introMs: 8000, raceMs: 24_000 }
 
@@ -89,8 +90,8 @@ describe("captionAt", () => {
   }
 
   it("reads the intro track before the gun", () => {
-    expect(captionAt("prerace", 0, 24_000, intro, race)?.text).toBe("Chào mừng!")
-    expect(captionAt("prerace", 3000, 24_000, intro, race)?.text).toBe(
+    expect(captionAt("prerace", 0, intro, race)?.text).toBe("Chào mừng!")
+    expect(captionAt("prerace", 3000, intro, race)?.text).toBe(
       "Bốn tay đua hôm nay",
     )
   })
@@ -98,58 +99,58 @@ describe("captionAt", () => {
   it("never announces the opening race call before the gun", () => {
     // The countdown reading the race track would give the start away — it is
     // still the intro's track, read past the intro's end.
-    expect(captionAt("countdown", 0, 24_000, intro, race)?.text).toBe(
+    expect(captionAt("countdown", 0, intro, race)?.text).toBe(
       "Bốn tay đua hôm nay",
     )
     for (let localMs = 0; localMs < COUNTDOWN_MS; localMs += 100) {
-      expect(captionAt("countdown", localMs, 24_000, intro, race)?.text).not.toBe(
-        "Xuất phát!",
-      )
+      expect(captionAt("countdown", localMs, intro, race)?.text).not.toBe("Xuất phát!")
     }
   })
 
   it("lets the last intro line linger and then fall silent on its own", () => {
     // Held from its own start, not re-timed by the countdown: 2500ms in at the
     // gun, silent once CAPTION_HOLD_MS is up.
-    expect(captionAt("countdown", 1000, 24_000, intro, race)?.text).toBe(
+    expect(captionAt("countdown", 1000, intro, race)?.text).toBe(
       "Bốn tay đua hôm nay",
     )
-    expect(captionAt("countdown", 2999, 24_000, intro, race)).toBeNull()
+    expect(captionAt("countdown", 2999, intro, race)).toBeNull()
   })
 
   it("runs the race track on the race's own clock", () => {
-    expect(captionAt("race", 0, 24_000, intro, race)?.text).toBe("Xuất phát!")
-    expect(captionAt("race", 24_000, 24_000, intro, race)?.text).toBe("Đức thắng!")
+    expect(captionAt("race", 0, intro, race)?.text).toBe("Xuất phát!")
+    expect(captionAt("race", 24_000, intro, race)?.text).toBe("Đức thắng!")
   })
 
   it("holds the finish call at the result instead of snapping back to the start", () => {
     // The result beat's own clock restarts at zero and then freezes there, so
     // reading the race track at localMs would show the opening call under the
     // winner's panel for as long as it is up.
-    expect(captionAt("result", 0, 24_000, intro, race)?.text).toBe("Đức thắng!")
-    expect(captionAt("result", 0, 24_000, intro, race)?.text).not.toBe("Xuất phát!")
+    expect(captionAt("result", 0, intro, race)?.text).toBe("Đức thắng!")
+    expect(captionAt("result", 0, intro, race)?.text).not.toBe("Xuất phát!")
   })
 
   it("keeps holding it however long the panel stays up", () => {
-    const held = captionAt("result", 0, 24_000, intro, race)
+    const held = captionAt("result", 0, intro, race)
     for (const localMs of [0, 1000, 30_000, 600_000]) {
-      expect(captionAt("result", localMs, 24_000, intro, race)).toEqual(held)
+      expect(captionAt("result", localMs, intro, race)).toEqual(held)
     }
   })
 
-  it("holds a finish call the schedule pinned slightly early", () => {
-    // schedule() pins the finish call at its own atMs, which is near the end of
-    // the race but need not be exactly durationMs.
-    const early = { lines: [line(0, "Xuất phát!", 0), line(23_800, "Đức thắng!", 1)] }
-    expect(captionAt("result", 0, 24_000, intro, early)?.text).toBe("Đức thắng!")
+  it("holds a finish call however far before the end it was called", () => {
+    // The hold must not depend on a clock at all. This call lands 5s before the
+    // race ends — comfortably past CAPTION_HOLD_MS — so a lookup at the race's
+    // full length would return nothing and leave the rail empty under the panel.
+    const early = { lines: [line(0, "Xuất phát!", 0), line(19_000, "Đức thắng!", 1)] }
+    expect(24_000 - 19_000).toBeGreaterThan(CAPTION_HOLD_MS)
+    expect(captionAt("result", 0, intro, early)?.text).toBe("Đức thắng!")
   })
 
   it("is silent rather than throwing on a race with no commentary at all", () => {
     const empty = { lines: [], endMs: 0 }
-    expect(captionAt("prerace", 0, 24_000, empty, empty)).toBeNull()
-    expect(captionAt("countdown", 0, 24_000, empty, empty)).toBeNull()
-    expect(captionAt("race", 0, 24_000, empty, empty)).toBeNull()
-    expect(captionAt("result", 0, 24_000, empty, empty)).toBeNull()
+    expect(captionAt("prerace", 0, empty, empty)).toBeNull()
+    expect(captionAt("countdown", 0, empty, empty)).toBeNull()
+    expect(captionAt("race", 0, empty, empty)).toBeNull()
+    expect(captionAt("result", 0, empty, empty)).toBeNull()
   })
 })
 
