@@ -165,10 +165,13 @@ export function Stage({
             className="flex items-center gap-1.5 pl-2.5 font-medium text-xs"
             style={{ height: LANE_H }}
           >
-            <span
-              className="w-4 text-center font-bold tabular-nums"
-              style={{ color: duckColor(duck) }}
-            >
+            {/* White, never the duck's own colour. At 12px bold this is text,
+                and two of the twelve fall under AA on the stage — but the point
+                is bigger than the ratio: the rank is precisely the signal that
+                has to survive when colour does not. The disc on the canvas
+                carries the colour; the number carries the order, independently.
+                */}
+            <span className="w-4 text-center font-bold text-white/90 tabular-nums">
               {atGate ? "–" : ranks[duck]}
             </span>
             <span className="rounded bg-black/55 px-1.5 py-0.5 text-white/90">
