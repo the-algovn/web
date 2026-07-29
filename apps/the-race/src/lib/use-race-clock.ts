@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react"
 
 /**
- * The single clock the race is drawn from. One timebase means the ducks and the
- * captions can never disagree; when spoken commentary lands, this becomes the
- * AudioContext clock and everything keeps reading from the same place.
+ * The single clock the whole broadcast is drawn from — intro, countdown and race
+ * are stretches of it, not separate timers. One timebase means the ducks, the
+ * captions and the spoken commentary can never disagree; when audio is playing
+ * this becomes the AudioContext clock and everything keeps reading from the same
+ * place.
  *
- * Returns elapsed milliseconds, clamped to durationMs.
+ * Returns elapsed milliseconds, clamped to totalMs.
  */
 export interface AudioClock {
   ctx: { readonly currentTime: number }
@@ -13,7 +15,7 @@ export interface AudioClock {
 }
 
 export function useRaceClock(
-  durationMs: number,
+  totalMs: number,
   running: boolean,
   onEnd?: () => void,
   audio?: AudioClock | null,
@@ -26,11 +28,11 @@ export function useRaceClock(
   audioRef.current = audio
 
   useEffect(() => {
-    if (!running || durationMs <= 0) return
+    if (!running || totalMs <= 0) return
 
-    // Rewind here, at the gun — not when the race stops. Resetting on stop
-    // rewinds the stage the instant the result appears, so the winner's panel
-    // sits above ducks back at the start line.
+    // Rewind here, at the start of the broadcast — not when it stops. Resetting
+    // on stop rewinds the stage the instant the result appears, so the winner's
+    // panel sits above ducks back at the start line.
     setTMs(0)
 
     let frame = 0
@@ -48,8 +50,8 @@ export function useRaceClock(
 
     const step = () => {
       const elapsed = elapsedMs()
-      if (elapsed >= durationMs) {
-        setTMs(durationMs)
+      if (elapsed >= totalMs) {
+        setTMs(totalMs)
         onEndRef.current?.()
         return
       }
@@ -59,7 +61,7 @@ export function useRaceClock(
     frame = requestAnimationFrame(step)
 
     return () => cancelAnimationFrame(frame)
-  }, [running, durationMs])
+  }, [running, totalMs])
 
   return tMs
 }
