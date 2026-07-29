@@ -1,0 +1,45 @@
+import { render, screen } from "@testing-library/react"
+import { describe, expect, it } from "vitest"
+import { Stage } from "../stage"
+import type { RacePackage } from "../../lib/types"
+
+// The painter itself is deliberately untested — jsdom has no 2D context. What is
+// tested here is everything the canvas is NOT: the standings a screen reader is
+// given, and the rank numbers beside the names.
+const race: RacePackage = {
+  raceId: "r1",
+  roomId: "m1",
+  duckNames: ["Đức", "Lan", "Minh"],
+  durationMs: 2000,
+  ticks: [
+    { tMs: 0, positions: [0, 0, 0] },
+    { tMs: 2000, positions: [0.5, 0.9, 0.2] },
+  ],
+  events: [],
+  finishOrder: [1, 0, 2],
+  lines: [],
+  introLines: [],
+  drama: "chaos",
+  fairness: { seedCommit: "abc", serverSeed: "def", clientNonce: "n", seed: "s" },
+}
+
+describe("Stage", () => {
+  it("announces no standings before the gun, matching the ranks it shows", () => {
+    render(<Stage race={race} tMs={0} reducedMotion={false} bobbing />)
+
+    expect(
+      screen.getByRole("img", { name: "Các vịt đang chờ ở vạch xuất phát" }),
+    ).toBeInTheDocument()
+    // The lane labels say the same thing: nothing has a rank yet.
+    expect(screen.getAllByText("–")).toHaveLength(3)
+  })
+
+  it("announces the running order once the race is on", () => {
+    render(<Stage race={race} tMs={2000} reducedMotion={false} />)
+
+    expect(
+      screen.getByRole("img", { name: "Thứ tự hiện tại: 1. Lan, 2. Đức, 3. Minh" }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("–")).not.toBeInTheDocument()
+  })
+})

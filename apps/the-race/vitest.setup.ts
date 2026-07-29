@@ -29,4 +29,6 @@ window.matchMedia ??= ((query: string) => ({
 
 // The stage paints to a canvas. jsdom has no 2D context, and the painter is
 // deliberately untested — stub just enough that mounting it never throws.
-HTMLCanvasElement.prototype.getContext ??= (() => null) as never
+// Assigned rather than defaulted: jsdom DOES define getContext, and its version
+// reports "Not implemented" to the virtual console on every mount.
+HTMLCanvasElement.prototype.getContext = (() => null) as never

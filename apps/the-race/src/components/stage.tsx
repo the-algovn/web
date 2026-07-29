@@ -120,7 +120,14 @@ export function Stage({
       <canvas
         ref={ref}
         role="img"
-        aria-label={standingsLabel(positions, race.duckNames)}
+        // Before the gun there is no order to announce. standingsLabel would read
+        // lane order out as though it were a standing, telling anyone not looking
+        // at the canvas the opposite of the "–" the lane labels show.
+        aria-label={
+          bobbing
+            ? "Các vịt đang chờ ở vạch xuất phát"
+            : standingsLabel(positions, race.duckNames)
+        }
         className="w-full rounded-lg"
         style={{ height: race.duckNames.length * LANE_H }}
       />
