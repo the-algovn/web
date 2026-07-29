@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { type Playback, type Preloaded, play, preload } from "./audio"
-import type { Line } from "./types"
+import type { RacePackage } from "./types"
 
 /**
  * The audio side of the race.
@@ -39,22 +39,25 @@ export function useAudio() {
     setArmed(true)
   }, [])
 
-  /** Decode every clip. Resolves to a silent schedule if audio is unavailable. */
-  const load = useCallback(async (lines: Line[]) => {
+  /** Decode both tracks. Resolves to silent schedules if audio is unavailable. */
+  const load = useCallback(async (race: RacePackage) => {
     const ctx = ctxRef.current
     const result = ctx
-      ? await preload(ctx, lines)
-      : await preload({ currentTime: 0, decodeAudioData: () => Promise.reject() }, lines)
+      ? await preload(ctx, race)
+      : await preload(
+          { currentTime: 0, decodeAudioData: () => Promise.reject() },
+          race,
+        )
     setLoaded(result)
     return result
   }, [])
 
-  /** Start the commentary and return the clock origin the visuals read from. */
-  const start = useCallback((ready: Preloaded) => {
+  /** Start the broadcast and return the clock origin the visuals read from. */
+  const start = useCallback((ready: Preloaded, raceOffsetMs: number) => {
     const ctx = ctxRef.current
     const gain = gainRef.current
     if (!ctx || !gain) return null
-    playbackRef.current = play(ctx, ready.lines, ready.buffers, gain)
+    playbackRef.current = play(ctx, ready, raceOffsetMs, gain)
     return { ctx, startedAt: playbackRef.current.startedAt }
   }, [])
 
