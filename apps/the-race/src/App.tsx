@@ -153,6 +153,7 @@ export default function App() {
             <Stage
               race={race}
               tMs={tMs}
+              elapsedMs={elapsed}
               reducedMotion={reducedMotion}
               atGate={beat === "prerace" || beat === "countdown"}
             />

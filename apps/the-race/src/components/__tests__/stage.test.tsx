@@ -29,7 +29,9 @@ const laneLabels = () =>
 
 describe("Stage", () => {
   it("announces no standings before the gun, matching the ranks it shows", () => {
-    render(<Stage race={race} tMs={0} reducedMotion={false} atGate />)
+    // Two clocks: the presentation is 4.2s in (the caster is talking) while the
+    // race clock is still pinned at zero, because nobody has moved.
+    render(<Stage race={race} tMs={0} elapsedMs={4200} reducedMotion={false} atGate />)
 
     expect(
       screen.getByRole("img", { name: "Các vịt đang chờ ở vạch xuất phát" }),
@@ -39,7 +41,7 @@ describe("Stage", () => {
   })
 
   it("announces the running order once the race is on", () => {
-    render(<Stage race={race} tMs={2000} reducedMotion={false} />)
+    render(<Stage race={race} tMs={2000} elapsedMs={13_000} reducedMotion={false} />)
 
     expect(
       screen.getByRole("img", { name: "Thứ tự hiện tại: 1. Lan, 2. Đức, 3. Minh" }),
@@ -49,7 +51,7 @@ describe("Stage", () => {
   it("numbers the lanes by position, not by lane order", () => {
     // Lan leads from lane two. Rendering `duck + 1` would read 1, 2, 3 down the
     // lanes and look perfectly plausible while being the wrong race.
-    render(<Stage race={race} tMs={2000} reducedMotion={false} />)
+    render(<Stage race={race} tMs={2000} elapsedMs={13_000} reducedMotion={false} />)
 
     expect(laneLabels()).toEqual(["2Đức", "1Lan", "3Minh"])
   })

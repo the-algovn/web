@@ -20,11 +20,23 @@ const PAD_X = 14
 export function Stage({
   race,
   tMs,
+  elapsedMs,
   reducedMotion,
   atGate = false,
 }: {
   race: RacePackage
+  /**
+   * Where the ducks ARE: race time, pinned at zero through both pre-gun beats
+   * because nobody has moved yet. See stageMs.
+   */
   tMs: number
+  /**
+   * The presentation clock, which never stops. Two time props, because the
+   * water has to move while the field waits: driving the bob off tMs freezes
+   * the picture for the whole intro and countdown, and a still frame repainted
+   * sixty times a second is still a still frame.
+   */
+  elapsedMs: number
   reducedMotion: boolean
   /**
    * Before the gun. No lane is the leader's and no duck has a rank yet, so the
@@ -91,7 +103,9 @@ export function Stage({
         ctx.stroke()
       }
 
-      const bob = reducedMotion ? 0 : Math.sin(tMs / 220 + duck) * 2.5
+      // The one thing read off the presentation clock rather than the race's:
+      // the ducks bob at the gate before the gun, where tMs is pinned at zero.
+      const bob = reducedMotion ? 0 : Math.sin(elapsedMs / 220 + duck) * 2.5
       // A colour disc behind the glyph: the emoji cannot be tinted, so identity
       // rides underneath it.
       ctx.beginPath()
@@ -118,7 +132,12 @@ export function Stage({
     ctx.lineTo(finishX, h)
     ctx.stroke()
     ctx.setLineDash([])
-  }, [race, tMs, positions, reducedMotion, atGate])
+    // `positions` is a fresh array on every render, so this effect never skips.
+    // That is deliberate rather than an oversight: the painter is a pure
+    // function of its props, repainting is cheap, and it is what keeps the bob
+    // running through the pre-race — where tMs, race and atGate are all frozen
+    // and only elapsedMs is still moving.
+  }, [race, tMs, elapsedMs, positions, reducedMotion, atGate])
 
   const ranks = ranksAt(positions)
 
