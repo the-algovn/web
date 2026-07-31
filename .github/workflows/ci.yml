@@ -204,3 +204,39 @@ jobs:
             VITE_OIDC_CLIENT_ID=${{ vars.VITE_RADIO_OIDC_CLIENT_ID || 'placeholder' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  build-push-the-race:
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: the-race-build-push
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/the-algovn/web-the-race
+          tags: |
+            type=raw,value=main
+            type=sha,prefix=sha-
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/the-race/Dockerfile
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            VITE_OIDC_CLIENT_ID=${{ vars.VITE_THE_RACE_OIDC_CLIENT_ID || 'placeholder' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
