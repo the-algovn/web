@@ -17,7 +17,10 @@ import { PAGE_SIZE } from "../lib/llm-audit"
 import { useAuth } from "../lib/use-auth"
 import { useLLMAudit } from "../lib/use-llm-audit"
 
-const SITES = ["", "director:backsell", "programmer:pick", "script:", "callin"]
+// A value ending in ':' is a prefix filter server-side (query.sql ListLLMCalls).
+// "director:backsell" is gone — the segment is "seam" now — so filter the whole
+// director group rather than naming one segment.
+const SITES = ["", "director:", "programmer:", "script:", "callin"]
 
 export function LLMAudit() {
   const { token } = useAuth()
