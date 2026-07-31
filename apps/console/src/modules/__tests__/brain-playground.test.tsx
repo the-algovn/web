@@ -45,8 +45,9 @@ describe("BrainPlayground", () => {
     expect(body.model).toBe("script")
 
     const brief = JSON.parse(body.briefJson) as Record<string, unknown>
-    // Field order must match the director's Brief struct verbatim, since the
-    // server forwards brief_json byte-for-byte.
+    // Field order must match the director's Brief struct verbatim (internal/
+    // director/brief.go), since the server forwards brief_json byte-for-byte.
+    // max_chars is last in the struct, not right after just_played.
     expect(Object.keys(brief)).toEqual([
       "type",
       "local_time",
@@ -54,8 +55,8 @@ describe("BrainPlayground", () => {
       "on_air_for_min",
       "listeners",
       "just_played",
-      "max_chars",
       "coming_up",
+      "max_chars",
     ])
     expect(brief.type).toBe("seam")
     expect(brief.just_played).toEqual({ title: "Lạc Trôi", artist: "Sơn Tùng M-TP" })

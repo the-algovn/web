@@ -67,20 +67,25 @@ export function BrainPlayground() {
     setResp(null)
     setSpeakId("")
     try {
-      // Send the DIRECTOR's brief verbatim as JSON — the typed Brief message
-      // drifted from the Go struct and is deprecated.
+      // KEY ORDER IS LOAD-BEARING. The server forwards brief_json byte-for-byte
+      // into the prompt so the bench's <brief> block matches the director's, and
+      // the director marshals a Go struct — so these keys must appear in struct
+      // field order: type, local_time, daypart, on_air_for_min, listeners,
+      // just_played, coming_up, tonight, thread, recent_phrases, max_chars.
+      // Note max_chars is assigned LAST, after the conditionals, not in the
+      // literal. `listeners` is omitempty on the Go side, so a zero is omitted
+      // there too rather than sent as 0.
       const brief: Record<string, unknown> = {
         type: "seam",
         local_time: clock,
         daypart,
         on_air_for_min: onAirForMin,
-        listeners,
+        ...(listeners > 0 ? { listeners } : {}),
         just_played: {
           title: justTitle,
           artist: justArtist,
           ...(justRequestedBy ? { source: "listener", requested_by_name: justRequestedBy } : {}),
         },
-        max_chars: maxChars,
       }
       if (nextTitle) {
         brief.coming_up = { title: nextTitle, artist: nextArtist }
@@ -95,6 +100,7 @@ export function BrainPlayground() {
       if (thread.trim()) {
         brief.thread = thread.split("\n").map((l) => l.trim()).filter(Boolean)
       }
+      brief.max_chars = maxChars
 
       const r = await labCall<ScriptResp>(token, "/brain/script", {
         briefJson: JSON.stringify(brief),
@@ -172,7 +178,7 @@ export function BrainPlayground() {
               on air (min)
               <input
                 type="number"
-                className={input}
+                className={`${input} min-w-0`}
                 value={onAirForMin}
                 onChange={(e) => setOnAirForMin(Number(e.target.value))}
               />
@@ -181,7 +187,7 @@ export function BrainPlayground() {
               listeners
               <input
                 type="number"
-                className={input}
+                className={`${input} min-w-0`}
                 value={listeners}
                 onChange={(e) => setListeners(Number(e.target.value))}
               />
