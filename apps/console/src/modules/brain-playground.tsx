@@ -18,32 +18,23 @@ interface ScriptResp {
   model?: string
 }
 
-const SEGMENT_TYPES = [
-  "intro",
-  "backsell",
-  "station_id",
-  "dedication_read",
-  "wake_greeting",
-  "musing",
-  "daypart_transition",
-]
-
 export function BrainPlayground() {
   const { token } = useAuth()
   const [personaText, setPersonaText] = useState("")
   const [personaDirty, setPersonaDirty] = useState(false)
-  const [segType, setSegType] = useState("intro")
-  const [clock, setClock] = useState("hai mươi ba giờ mười hai, thứ Năm")
+  const [clock, setClock] = useState("Thứ Năm 23:12")
+  const [daypart, setDaypart] = useState("đêm khuya")
+  const [onAirForMin, setOnAirForMin] = useState(120)
+  const [listeners, setListeners] = useState(3)
+  const [justTitle, setJustTitle] = useState("Lạc Trôi")
+  const [justArtist, setJustArtist] = useState("Sơn Tùng M-TP")
+  const [justRequestedBy, setJustRequestedBy] = useState("")
   const [nextTitle, setNextTitle] = useState("Em Của Ngày Hôm Qua")
   const [nextArtist, setNextArtist] = useState("Sơn Tùng M-TP")
-  const [dedFrom, setDedFrom] = useState("Đức")
-  const [dedTo, setDedTo] = useState("Ngọc")
-  const [dedDigest, setDedDigest] = useState(
-    "muốn quay về hôm qua để gặp lại nụ cười đó",
-  )
-  const [dedWeight, setDedWeight] = useState("heavy")
-  const [model, setModel] = useState("")
-  const [maxChars, setMaxChars] = useState(700)
+  const [tonight, setTonight] = useState("")
+  const [thread, setThread] = useState("")
+  const [maxChars, setMaxChars] = useState(1500)
+  const [model, setModel] = useState("script")
   const [running, setRunning] = useState(false)
   const [resp, setResp] = useState<ScriptResp | null>(null)
   const [speakId, setSpeakId] = useState("")
@@ -76,18 +67,37 @@ export function BrainPlayground() {
     setResp(null)
     setSpeakId("")
     try {
-      const dedications =
-        dedFrom || dedTo
-          ? [{ from: dedFrom, to: dedTo, digest: dedDigest, weight: dedWeight }]
-          : []
-      const r = await labCall<ScriptResp>(token, "/brain/script", {
-        brief: {
-          type: segType,
-          clock,
-          next: { title: nextTitle, artist: nextArtist },
-          dedications,
-          maxChars,
+      // Send the DIRECTOR's brief verbatim as JSON — the typed Brief message
+      // drifted from the Go struct and is deprecated.
+      const brief: Record<string, unknown> = {
+        type: "seam",
+        local_time: clock,
+        daypart,
+        on_air_for_min: onAirForMin,
+        listeners,
+        just_played: {
+          title: justTitle,
+          artist: justArtist,
+          ...(justRequestedBy ? { source: "listener", requested_by_name: justRequestedBy } : {}),
         },
+        max_chars: maxChars,
+      }
+      if (nextTitle) {
+        brief.coming_up = { title: nextTitle, artist: nextArtist }
+      }
+      if (tonight.trim()) {
+        brief.tonight = tonight
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((l) => ({ title: l }))
+      }
+      if (thread.trim()) {
+        brief.thread = thread.split("\n").map((l) => l.trim()).filter(Boolean)
+      }
+
+      const r = await labCall<ScriptResp>(token, "/brain/script", {
+        briefJson: JSON.stringify(brief),
         model,
         personaOverride: personaDirty ? personaText : "",
       })
@@ -105,7 +115,7 @@ export function BrainPlayground() {
       const r = await labCall<{ artifact?: { id?: string } }>(
         token,
         "/voice/synthesize",
-        { text: resp.script, voiceId, label: `speak:${segType}` },
+        { text: resp.script, voiceId, label: "speak:seam" },
       )
       setSpeakId(r.artifact?.id ?? "")
     } catch (e) {
@@ -146,71 +156,90 @@ export function BrainPlayground() {
             </Button>
           </details>
           <div className="grid grid-cols-2 gap-2">
-            <select
-              className={input}
-              value={segType}
-              onChange={(e) => setSegType(e.target.value)}
-            >
-              {SEGMENT_TYPES.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
             <input
               className={input}
               value={clock}
               onChange={(e) => setClock(e.target.value)}
-              placeholder="clock (bằng chữ)"
+              placeholder="local time"
+            />
+            <input
+              className={input}
+              value={daypart}
+              onChange={(e) => setDaypart(e.target.value)}
+              placeholder="daypart"
+            />
+            <label className="flex items-center gap-2 text-sm">
+              on air (min)
+              <input
+                type="number"
+                className={input}
+                value={onAirForMin}
+                onChange={(e) => setOnAirForMin(Number(e.target.value))}
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              listeners
+              <input
+                type="number"
+                className={input}
+                value={listeners}
+                onChange={(e) => setListeners(Number(e.target.value))}
+              />
+            </label>
+            <input
+              className={input}
+              value={justTitle}
+              onChange={(e) => setJustTitle(e.target.value)}
+              placeholder="just played title"
+            />
+            <input
+              className={input}
+              value={justArtist}
+              onChange={(e) => setJustArtist(e.target.value)}
+              placeholder="just played artist"
+            />
+            <input
+              className={`${input} col-span-2`}
+              value={justRequestedBy}
+              onChange={(e) => setJustRequestedBy(e.target.value)}
+              placeholder="just played — requested by (optional)"
             />
             <input
               className={input}
               value={nextTitle}
               onChange={(e) => setNextTitle(e.target.value)}
-              placeholder="next title"
+              placeholder="coming up title (optional)"
             />
             <input
               className={input}
               value={nextArtist}
               onChange={(e) => setNextArtist(e.target.value)}
-              placeholder="next artist"
+              placeholder="coming up artist"
             />
-            <input
-              className={input}
-              value={dedFrom}
-              onChange={(e) => setDedFrom(e.target.value)}
-              placeholder="dedication from"
-            />
-            <input
-              className={input}
-              value={dedTo}
-              onChange={(e) => setDedTo(e.target.value)}
-              placeholder="to"
-            />
-            <input
+            <textarea
               className={`${input} col-span-2`}
-              value={dedDigest}
-              onChange={(e) => setDedDigest(e.target.value)}
-              placeholder="digest"
+              value={tonight}
+              onChange={(e) => setTonight(e.target.value)}
+              placeholder="tonight (one title per line)"
             />
-            <select
-              className={input}
-              value={dedWeight}
-              onChange={(e) => setDedWeight(e.target.value)}
-            >
-              <option>casual</option>
-              <option>warm</option>
-              <option>heavy</option>
-            </select>
+            <textarea
+              className={`${input} col-span-2`}
+              value={thread}
+              onChange={(e) => setThread(e.target.value)}
+              placeholder="thread (one line per entry)"
+            />
             <select
               className={input}
               value={model}
               onChange={(e) => setModel(e.target.value)}
             >
+              <option value="script">script (airing model)</option>
               <option value="">default model</option>
               <option value="gemini">gemini</option>
               <option value="anthropic">anthropic</option>
               <option value="fake">fake</option>
             </select>
-            <label className="col-span-2 flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm">
               max chars
               <input
                 type="number"
