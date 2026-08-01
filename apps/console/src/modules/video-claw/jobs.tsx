@@ -8,7 +8,7 @@ import {
 import { Play, RefreshCw, ScrollText } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
-import { labCall } from "../../lib/api"
+import { videoClawCall } from "../../lib/api"
 import { useAuth } from "../../lib/use-auth"
 
 interface Source {
@@ -45,7 +45,7 @@ export function Jobs() {
   const fetchSources = useCallback(async () => {
     if (!token) return
     try {
-      const r = await labCall<{sources: Source[]}>(token, "/video-claw/sources", {})
+      const r = await videoClawCall<{sources: Source[]}>(token, "/sources", {})
       setSources(r.sources ?? [])
     } catch { /* non-critical */ }
   }, [token])
@@ -56,7 +56,7 @@ export function Jobs() {
     if (!token) return
     setLoading(true)
     try {
-      const r = await labCall<{jobs: CrawlJob[]}>(token, "/video-claw/jobs/list", {})
+      const r = await videoClawCall<{jobs: CrawlJob[]}>(token, "/jobs/list", {})
       setJobs(r.jobs ?? [])
     } catch (e) { toast.error(msg(e)) }
     finally { setLoading(false) }
@@ -69,7 +69,7 @@ export function Jobs() {
     setSelectedJob(jobId)
     setVideosLoading(true)
     try {
-      const r = await labCall<{videos: Video[]}>(token, "/video-claw/videos/list", { crawlJobId: jobId, limit: 100 })
+      const r = await videoClawCall<{videos: Video[]}>(token, "/videos/list", { crawlJobId: jobId, limit: 100 })
       setVideos(r.videos ?? [])
     } catch (e) { toast.error(msg(e)) }
     finally { setVideosLoading(false) }
@@ -78,7 +78,7 @@ export function Jobs() {
   const startCrawl = async (sourceId: string) => {
     if (!token) return
     try {
-      await labCall(token, "/video-claw/jobs/start", { sourceId })
+      await videoClawCall(token, "/jobs/start", { sourceId })
       toast.success("Crawl started")
       void fetchJobs()
     } catch (e) { toast.error(msg(e)) }
@@ -87,7 +87,7 @@ export function Jobs() {
   const retryDownload = async (videoId: string) => {
     if (!token) return
     try {
-      await labCall(token, "/video-claw/videos/retry", { videoId })
+      await videoClawCall(token, "/videos/retry", { videoId })
       toast.success("Retrying download")
       if (selectedJob) void fetchVideos(selectedJob)
     } catch (e) { toast.error(msg(e)) }

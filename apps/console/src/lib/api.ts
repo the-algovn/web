@@ -26,6 +26,19 @@ export function radioCall<T>(
   return radioClient.request<T>(body === undefined ? "GET" : "POST", path, body, token)
 }
 
+// Video-claw routes live at the gateway root (/video-claw/*), not under
+// any product prefix. Derive the gateway base by stripping the last segment.
+const gatewayBase = env.apiBase.replace(/\/[^/]+$/, "")
+const gatewayClient = createApiClient({ baseUrl: gatewayBase })
+
+export function videoClawCall<T>(
+  token: string,
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  return gatewayClient.request<T>(body === undefined ? "GET" : "POST", path, body, token)
+}
+
 // Resolve an artifact id to a time-limited presigned MinIO GET URL (artifacts
 // are private in object storage; there is no static URL).
 export function presignArtifact(

@@ -8,7 +8,7 @@ import {
 import { Clapperboard, Plus, Trash2 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
-import { labCall } from "../../lib/api"
+import { videoClawCall } from "../../lib/api"
 import { useAuth } from "../../lib/use-auth"
 
 interface Source {
@@ -28,7 +28,7 @@ export function Sources() {
     if (!token) return
     setLoading(true)
     try {
-      const r = await labCall<{sources: Source[]}>(token, "/video-claw/sources", {})
+      const r = await videoClawCall<{sources: Source[]}>(token, "/sources", {})
       setSources(r.sources ?? [])
     } catch (e) { toast.error(msg(e)) }
     finally { setLoading(false) }
@@ -39,7 +39,7 @@ export function Sources() {
   const create = async () => {
     if (!token || !name || !urls) return
     try {
-      await labCall(token, "/video-claw/sources/create", {
+      await videoClawCall(token, "/sources/create", {
         name, baseUrls: urls.split("\n").map(s => s.trim()).filter(Boolean),
       })
       setName(""); setUrls("")
@@ -50,7 +50,7 @@ export function Sources() {
   const remove = async (id: string) => {
     if (!token) return
     try {
-      await labCall(token, "/video-claw/sources/delete", { id })
+      await videoClawCall(token, "/sources/delete", { id })
       void fetch()
     } catch (e) { toast.error(msg(e)) }
   }
