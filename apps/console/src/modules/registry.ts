@@ -1,11 +1,13 @@
 import {
   AudioLines,
   Brain,
+  Clapperboard,
   Download,
   House,
   ListMusic,
   MessageSquareQuote,
   Mic,
+  Play,
   RadioTower,
   ScrollText,
   SlidersHorizontal,
@@ -21,6 +23,8 @@ import { MiniRender } from "./mini-render"
 import { Radio } from "./radio"
 import type { ConsoleModule } from "./types"
 import { VoiceAudition } from "./voice-audition"
+import { Sources } from "./video-claw/sources"
+import { Jobs } from "./video-claw/jobs"
 
 export const registry: ConsoleModule[] = [
   {
@@ -102,5 +106,21 @@ export const registry: ConsoleModule[] = [
     icon: ScrollText,
     requiredRole: "admin",
     component: LLMAudit,
+  },
+  {
+    id: "video-claw:sources",
+    title: "Sources",
+    group: "Video Claw",
+    icon: Clapperboard,
+    requiredRole: "admin",
+    component: Sources,
+  },
+  {
+    id: "video-claw:jobs",
+    title: "Jobs",
+    group: "Video Claw",
+    icon: Play,
+    requiredRole: "admin",
+    component: Jobs,
   },
 ]
