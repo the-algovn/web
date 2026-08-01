@@ -36,7 +36,7 @@ export function videoClawCall<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  return gatewayClient.request<T>(body === undefined ? "GET" : "POST", path, body, token)
+  return gatewayClient.request<T>(body === undefined ? "GET" : "POST", `/video-claw${path}`, body, token)
 }
 
 // Resolve an artifact id to a time-limited presigned MinIO GET URL (artifacts
