@@ -5,11 +5,15 @@ import { Skeleton } from "@algovn/ui/skeleton"
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@algovn/ui/table"
-import { RefreshCw, ScrollText } from "lucide-react"
+import { Play, RefreshCw, ScrollText } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { labCall } from "../../lib/api"
 import { useAuth } from "../../lib/use-auth"
+
+interface Source {
+  id: string; name: string
+}
 
 interface CrawlJob {
   id: string; sourceId: string; status: string
@@ -35,6 +39,18 @@ export function Jobs() {
   const [selectedJob, setSelectedJob] = useState<string | null>(null)
   const [videos, setVideos] = useState<Video[]>([])
   const [videosLoading, setVideosLoading] = useState(false)
+  const [sources, setSources] = useState<Source[]>([])
+  const [startSourceId, setStartSourceId] = useState("")
+
+  const fetchSources = useCallback(async () => {
+    if (!token) return
+    try {
+      const r = await labCall<{sources: Source[]}>(token, "/video-claw/sources", {})
+      setSources(r.sources ?? [])
+    } catch { /* non-critical */ }
+  }, [token])
+
+  useEffect(() => { void fetchSources() }, [fetchSources])
 
   const fetchJobs = useCallback(async () => {
     if (!token) return
@@ -86,9 +102,23 @@ export function Jobs() {
           <h1 className="text-lg font-semibold">Video Claw · Jobs</h1>
           <p className="text-muted-foreground text-sm">Start and monitor crawl jobs.</p>
         </div>
-        <Button size="sm" variant="outline" onClick={fetchJobs}>
-          <RefreshCw className="mr-1 size-4" /> Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <select className="border-input bg-background text-sm border rounded-md px-2 py-1.5"
+            value={startSourceId}
+            onChange={e => setStartSourceId(e.target.value)}>
+            <option value="">Source…</option>
+            {sources.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+          <Button size="sm" onClick={() => { startCrawl(startSourceId); setStartSourceId("") }}
+            disabled={!startSourceId}>
+            <Play className="mr-1 size-4" /> Start
+          </Button>
+          <Button size="sm" variant="outline" onClick={fetchJobs}>
+            <RefreshCw className="mr-1 size-4" /> Refresh
+          </Button>
+        </div>
       </div>
 
       {jobs.length === 0 ? (
