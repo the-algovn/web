@@ -39,7 +39,7 @@ const props = {
   page: 0,
   onPage: () => {},
   onSkip: () => {},
-  onReorder: () => {},
+  onMove: () => {},
   onRemove: () => {},
 }
 
@@ -61,11 +61,28 @@ describe("ShowList", () => {
     expect(screen.getAllByRole("button", { name: "Skip" })).toHaveLength(1)
   })
 
-  it("submits the whole id list in the new order when a row moves down", () => {
-    const onReorder = vi.fn()
-    render(<ShowList timeline={timeline()} {...props} onReorder={onReorder} />)
+  it("names the request and a direction, and builds no id list of its own", () => {
+    const onMove = vi.fn()
+    render(<ShowList timeline={timeline()} {...props} onMove={onMove} />)
     fireEvent.click(screen.getByRole("button", { name: "Move First later" }))
-    expect(onReorder).toHaveBeenCalledWith(["r2", "r1"])
+    expect(onMove).toHaveBeenCalledWith("r1", 1)
+    fireEvent.click(screen.getByRole("button", { name: "Move Second earlier" }))
+    expect(onMove).toHaveBeenCalledWith("r2", -1)
+    // The projection is not the reorder set, so nothing here may hand up ids.
+    for (const call of onMove.mock.calls) {
+      expect(Array.isArray(call[0])).toBe(false)
+    }
+  })
+
+  it("offers reorder on the last upcoming row - the set it moves within is not this list", () => {
+    // Under the old upcoming-derived list the bottom row could never move
+    // later. The pending set is longer than the projection, so it can.
+    const onMove = vi.fn()
+    render(<ShowList timeline={timeline()} {...props} onMove={onMove} />)
+    const later = screen.getByRole("button", { name: "Move Second later" })
+    expect(later).not.toBeDisabled()
+    fireEvent.click(later)
+    expect(onMove).toHaveBeenCalledWith("r2", 1)
   })
 
   it("does not offer reorder controls on rows with no request id", () => {

@@ -25,26 +25,16 @@ export function ShowList(props: {
   page: number
   onPage(p: number): void
   onSkip(): void
-  onReorder(ids: string[]): void
+  // The id list the server compares against lives behind /station/requests,
+  // not in this projection, so the row only names the request and a direction
+  // and the hook builds the submission. See useShowTimeline.move.
+  onMove(requestId: string, delta: number): void
   onRemove(requestId: string): void
   renderDetail?(seg: Segment): ReactNode
 }) {
   const { timeline: tl, nowMs } = props
   const toggle = (id: string) => props.onSelect(props.selectedId === id ? null : id)
   const detail = (s: Segment) => (props.renderDetail ? props.renderDetail(s) : null)
-
-  // Reorder submits the WHOLE ready-request id list in air order, so it is
-  // built from upcoming rather than tracked separately - a partial list would
-  // be read by the server as a request to drop the rest.
-  const reorderable = tl.upcoming.filter((s) => s.requestId !== "")
-  const move = (requestId: string, delta: number) => {
-    const ids = reorderable.map((s) => s.requestId)
-    const i = ids.indexOf(requestId)
-    const j = i + delta
-    if (i < 0 || j < 0 || j >= ids.length) return
-    ;[ids[i], ids[j]] = [ids[j] ?? "", ids[i] ?? ""]
-    props.onReorder(ids)
-  }
 
   const pageCount = Math.max(1, Math.ceil(tl.totalPast / PAST_PAGE_SIZE))
 
@@ -93,10 +83,10 @@ export function ShowList(props: {
                 actions={
                   s.requestId ? (
                     <>
-                      <Button variant="ghost" size="sm" aria-label={`Move ${s.title} earlier`} disabled={props.busy} onClick={() => move(s.requestId, -1)}>
+                      <Button variant="ghost" size="sm" aria-label={`Move ${s.title} earlier`} disabled={props.busy} onClick={() => props.onMove(s.requestId, -1)}>
                         <ChevronUp />
                       </Button>
-                      <Button variant="ghost" size="sm" aria-label={`Move ${s.title} later`} disabled={props.busy} onClick={() => move(s.requestId, 1)}>
+                      <Button variant="ghost" size="sm" aria-label={`Move ${s.title} later`} disabled={props.busy} onClick={() => props.onMove(s.requestId, 1)}>
                         <ChevronDown />
                       </Button>
                       <Button variant="ghost" size="sm" aria-label={`Remove ${s.title}`} disabled={props.busy} onClick={() => props.onRemove(s.requestId)}>

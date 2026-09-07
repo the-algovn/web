@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { radioCall } from "./api"
 import { env } from "./env"
+import type { StationRequestsResponse } from "./radio"
 import { PAST_PAGE_SIZE, type ShowTimelineWire, type Timeline, toTimeline } from "./show-timeline"
 
 export interface UseShowTimelineOptions {
@@ -20,7 +21,7 @@ export interface ShowTimelineState {
   setPage(p: number): void
   refresh(): void
   skip(): Promise<void>
-  reorder(ids: string[]): Promise<void>
+  move(requestId: string, delta: number): Promise<void>
   remove(id: string): Promise<void>
 }
 
@@ -133,14 +134,29 @@ export function useShowTimeline(
     [run, load],
   )
 
-  // The whole id list is resubmitted every time; the server rejects a stale
-  // set, and the only correct response to that is to resync rather than to
-  // retry a set built from a timeline that has already moved.
-  const reorder = useCallback(
-    (ids: string[]) =>
+  // Reorder is all-or-nothing: the server compares the submitted ids against
+  // EVERY request whose status is approved or ready and rejects anything that
+  // is not exactly that set, in any order. The timeline's upcoming[] is a
+  // strict subset of it - the walk keeps only ready rows and stops at the
+  // 30-minute horizon - so the ids are read fresh from /station/requests,
+  // which is built by the same query the server compares against. A GET, hence
+  // no third argument.
+  const move = useCallback(
+    (requestId: string, delta: number) =>
       run(async () => {
+        const t = tokenRef.current ?? ""
+        const r = await radioCall<StationRequestsResponse>(t, "/station/requests")
+        const ids = (r.pending ?? []).map((p) => p.id ?? "")
+        const i = ids.indexOf(requestId)
+        if (i < 0) {
+          await load() // it aired or was removed while the row was on screen
+          return
+        }
+        const j = i + delta
+        if (j < 0 || j >= ids.length) return
+        ;[ids[i], ids[j]] = [ids[j] ?? "", ids[i] ?? ""]
         try {
-          await radioCall(tokenRef.current ?? "", "/station/requests/reorder", { ids })
+          await radioCall(t, "/station/requests/reorder", { ids })
         } finally {
           await load()
         }
@@ -157,5 +173,5 @@ export function useShowTimeline(
     [run, load],
   )
 
-  return { timeline, nowMs, loading, busy, page, setPage, refresh, skip, reorder, remove }
+  return { timeline, nowMs, loading, busy, page, setPage, refresh, skip, move, remove }
 }

@@ -46,6 +46,19 @@ const bodyAt = () => ({
   serverNow: new Date(Date.now() + SKEW_MS).toISOString(),
 })
 
+// What /station/requests returns: every approved AND ready request, in the
+// server's own position order. Deliberately larger than bodyAt().upcoming,
+// which carries r1 alone - a0 is still downloading and r9 sits past the walk's
+// 30-minute horizon, so neither can ever appear in the projection.
+const pendingSet = () => ({
+  pending: [
+    { id: "a0", status: "approved", title: "Downloading" },
+    { id: "r1", status: "ready", title: "Next" },
+    { id: "r9", status: "ready", title: "Beyond the horizon" },
+  ],
+  recent: [],
+})
+
 beforeEach(() => {
   mocked.mockReset()
   vi.mocked(toast.error).mockReset()
@@ -121,6 +134,97 @@ describe("useShowTimeline", () => {
     expect(mocked).toHaveBeenCalledWith("tok", "/station/timeline", { limit: 50, offset: 0 })
   })
 
+  it("reorders against the WHOLE pending set, not the projected running order", async () => {
+    // upcoming holds one ready request; pending also holds an approved row
+    // that is still downloading (so it is in staging, never in upcoming) and a
+    // ready row past the walk's 30-minute horizon. The server compares against
+    // all three, so all three have to be submitted.
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station/requests") return pendingSet()
+      return bodyAt()
+    })
+    const { result } = renderHook(() => useShowTimeline("tok", opts))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    // The premise: the projection the operator is looking at is a strict
+    // subset of the set the server compares against.
+    expect(result.current.timeline?.upcoming.map((s) => s.requestId)).toEqual(["r1"])
+    mocked.mockClear()
+
+    await act(async () => {
+      await result.current.move("r1", 1)
+    })
+    expect(mocked).toHaveBeenCalledWith("tok", "/station/requests")
+    expect(mocked).toHaveBeenCalledWith("tok", "/station/requests/reorder", {
+      ids: ["a0", "r9", "r1"],
+    })
+    expect(mocked).toHaveBeenCalledWith("tok", "/station/timeline", { limit: 50, offset: 0 })
+  })
+
+  it("reads the pending list with a GET - a POST would be a write", async () => {
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station/requests") return pendingSet()
+      return bodyAt()
+    })
+    const { result } = renderHook(() => useShowTimeline("tok", opts))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    await act(async () => {
+      await result.current.move("r1", 1)
+    })
+    const read = mocked.mock.calls.find((c) => c[1] === "/station/requests")
+    expect(read).toBeDefined()
+    expect(read).toHaveLength(2)
+  })
+
+  it("moves earlier past a request the projection never showed", async () => {
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station/requests") return pendingSet()
+      return bodyAt()
+    })
+    const { result } = renderHook(() => useShowTimeline("tok", opts))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    await act(async () => {
+      await result.current.move("r1", -1)
+    })
+    expect(mocked).toHaveBeenCalledWith("tok", "/station/requests/reorder", {
+      ids: ["r1", "a0", "r9"],
+    })
+  })
+
+  it("does not reorder a request that has left the pending set", async () => {
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station/requests") return pendingSet()
+      return bodyAt()
+    })
+    const { result } = renderHook(() => useShowTimeline("tok", opts))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    mocked.mockClear()
+
+    await act(async () => {
+      await result.current.move("gone", 1)
+    })
+    expect(mocked).not.toHaveBeenCalledWith("tok", "/station/requests/reorder", expect.anything())
+    // It resyncs instead, so the row stops being on screen.
+    expect(mocked).toHaveBeenCalledWith("tok", "/station/timeline", { limit: 50, offset: 0 })
+  })
+
+  it("does not reorder off either end of the pending set", async () => {
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station/requests") return pendingSet()
+      return bodyAt()
+    })
+    const { result } = renderHook(() => useShowTimeline("tok", opts))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    mocked.mockClear()
+
+    await act(async () => {
+      await result.current.move("a0", -1)
+      await result.current.move("r9", 1)
+    })
+    expect(mocked).not.toHaveBeenCalledWith("tok", "/station/requests/reorder", expect.anything())
+  })
+
   it("resyncs when the server rejects a stale reorder set", async () => {
     mocked.mockImplementation(async () => bodyAt())
     const { result } = renderHook(() => useShowTimeline("tok", opts))
@@ -128,11 +232,12 @@ describe("useShowTimeline", () => {
     mocked.mockClear()
 
     mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station/requests") return pendingSet()
       if (path === "/station/requests/reorder") throw new Error("stale set")
       return bodyAt()
     })
     await act(async () => {
-      await result.current.reorder(["r2", "r1"])
+      await result.current.move("r1", -1)
     })
     expect(mocked).toHaveBeenCalledWith("tok", "/station/timeline", { limit: 50, offset: 0 })
   })

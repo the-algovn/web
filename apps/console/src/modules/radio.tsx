@@ -48,7 +48,7 @@ export function Radio() {
               page={show.page}
               onPage={show.setPage}
               onSkip={() => void show.skip()}
-              onReorder={(ids) => void show.reorder(ids)}
+              onMove={(id, delta) => void show.move(id, delta)}
               onRemove={(id) => void show.remove(id)}
               renderDetail={(seg) =>
                 token && seg.correlationId ? (
