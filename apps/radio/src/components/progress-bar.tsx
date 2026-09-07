@@ -14,17 +14,30 @@ export function ProgressBar({ progress }: { progress: Progress }) {
       aria-valuenow={Math.round(progress.elapsedS)}
       aria-valuemax={total}
       aria-valuetext={`${mmss(progress.elapsedS)} / ${mmss(total)}`}
-      className="h-1 w-full overflow-hidden rounded-full bg-[color:var(--border)]"
+      className="relative h-[3px] w-full overflow-hidden"
+      style={{ background: "rgb(232 233 230 / 0.13)" }}
     >
       <div
-        className="radio-progress-fill h-full rounded-full"
+        className="radio-progress-fill absolute inset-y-0 left-0"
         style={{
           width: `${progress.fraction * 100}%`,
-          background: "var(--radio-amber)",
-          boxShadow:
-            "0 0 8px color-mix(in srgb, var(--radio-amber) 50%, transparent)",
+          background: "var(--radio-air)",
+          boxShadow: "0 0 10px rgb(63 169 138 / 0.7)",
         }}
       />
+    </div>
+  )
+}
+
+// Elapsed and remaining, in the tabular mono the whole deck uses for numbers.
+export function ProgressClock({ progress }: { progress: Progress }) {
+  return (
+    <div
+      className="radio-mono flex justify-between pt-2 text-[11px]"
+      style={{ color: "var(--radio-ink-55)" }}
+    >
+      <span>{mmss(progress.elapsedS)}</span>
+      <span>−{mmss(progress.remainingS)}</span>
     </div>
   )
 }

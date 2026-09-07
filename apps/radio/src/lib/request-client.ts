@@ -26,6 +26,7 @@ export interface TrackRequest {
   status: RequestStatus
   failReason?: string
   createdAt: string
+  dedication?: string
 }
 
 const str = (v: unknown): string | undefined =>
@@ -67,12 +68,17 @@ export function parseTrackRequest(raw: unknown): TrackRequest | null {
   if (str(r.channel)) out.channel = str(r.channel)
   if (str(r.thumbnailUrl)) out.thumbnailUrl = str(r.thumbnailUrl)
   if (str(r.failReason)) out.failReason = str(r.failReason)
+  if (str(r.dedication)) out.dedication = str(r.dedication)
   return out
 }
 
 export interface RequestApi {
   search(token: string, query: string): Promise<Candidate[]>
-  requestTrack(token: string, candidate: Candidate): Promise<TrackRequest>
+  requestTrack(
+    token: string,
+    candidate: Candidate,
+    dedication?: string,
+  ): Promise<TrackRequest>
   myRequests(token: string): Promise<TrackRequest[]>
 }
 
@@ -87,7 +93,7 @@ export function createRequestApi(deps?: {
       request<{ candidates?: unknown[] }>("POST", "/search", { query }, token).then(
         (r) => (r.candidates ?? []).flatMap((c) => parseCandidate(c) ?? []),
       ),
-    requestTrack: (token, candidate) => {
+    requestTrack: (token, candidate, dedication) => {
       const body: Record<string, unknown> = {
         ytId: candidate.ytId,
         title: candidate.title,
@@ -95,8 +101,12 @@ export function createRequestApi(deps?: {
       }
       if (candidate.channel) body.channel = candidate.channel
       if (candidate.thumbnailUrl) body.thumbnailUrl = candidate.thumbnailUrl
+      const payload: Record<string, unknown> = { candidate: body }
+      // Omitted rather than sent empty: protojson drops zero values, so an
+      // empty string and an absent field are the same request on the wire.
+      if (dedication?.trim()) payload.dedication = dedication.trim()
       return request<{ request?: unknown }>(
-        "POST", "/requests", { candidate: body }, token,
+        "POST", "/requests", payload, token,
       ).then((r) => {
         const parsed = parseTrackRequest(r.request)
         if (!parsed) throw new Error("bad request response")

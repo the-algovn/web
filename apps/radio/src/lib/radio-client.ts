@@ -36,6 +36,9 @@ export interface HistoryItem {
   source?: "listener" | "ai"
   requestedByName?: string
   reason?: string
+  // Safe to carry here, unlike on QueueItem: it has already aired, so
+  // there is no surprise left to spoil.
+  dedication?: string
 }
 
 export type ConnMode = "connecting" | "live" | "polling" | "offline"
@@ -116,6 +119,7 @@ export function parseHistoryItem(raw: unknown): HistoryItem | null {
   if (r.source === "listener" || r.source === "ai") item.source = r.source
   if (str(r.requestedByName)) item.requestedByName = str(r.requestedByName)
   if (str(r.reason)) item.reason = str(r.reason)
+  if (str(r.dedication)) item.dedication = str(r.dedication)
   return item
 }
 

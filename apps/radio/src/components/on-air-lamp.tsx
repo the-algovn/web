@@ -7,34 +7,54 @@ const LABEL: Record<StationStatus, string> = {
   "off-air": "OFF AIR",
 }
 
-export function OnAirLamp({ status }: { status: StationStatus }) {
-  const lit = status === "on-air"
-  const dim = status === "music-only" || status === "connecting"
-  const color =
-    status === "off-air" ? "var(--muted-foreground)" : "var(--radio-air)"
+// Four bars, four durations, four offsets. Deliberately co-prime-ish so the
+// meter never settles into a visible loop the way a single shared duration
+// would.
+const BARS = [
+  { duration: "0.62s", delay: "0s" },
+  { duration: "0.46s", delay: "-0.2s" },
+  { duration: "0.78s", delay: "-0.35s" },
+  { duration: "0.54s", delay: "-0.1s" },
+]
+
+// The station's pulse. It moves only while audio is actually going out; a
+// meter that keeps dancing off air would be lying about the signal.
+export function OnAirLamp({
+  status,
+  className,
+}: {
+  status: StationStatus
+  className?: string
+}) {
+  const live = status === "on-air" || status === "music-only"
+  const color = status === "off-air" ? "var(--radio-ink-50)" : "var(--radio-air)"
+
   return (
-    <span
-      className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[11px] tracking-[0.12em]"
-      style={{
-        borderColor: "color-mix(in srgb, var(--radio-air) 35%, transparent)",
-        color,
-      }}
-    >
+    <span className={`inline-flex items-center gap-[7px] ${className ?? ""}`}>
+      <span aria-hidden className="flex h-[15px] items-end gap-[2px]">
+        {BARS.map((bar) => (
+          <span
+            key={bar.duration}
+            className="radio-meter-bar w-[2px] origin-bottom"
+            style={{
+              height: 15,
+              background: color,
+              boxShadow:
+                status === "off-air" ? "none" : "var(--radio-air-glow-soft)",
+              transform: live ? undefined : "scaleY(0.2)",
+              animation: live
+                ? `radio-meter ${bar.duration} ease-in-out ${bar.delay} infinite alternate`
+                : undefined,
+            }}
+          />
+        ))}
+      </span>
       <span
-        aria-hidden
-        className={lit ? "radio-pulse" : undefined}
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: color,
-          boxShadow:
-            status === "off-air"
-              ? "none"
-              : `0 0 8px 2px ${dim ? "color-mix(in srgb, var(--radio-air) 50%, transparent)" : "var(--radio-air)"}`,
-        }}
-      />
-      {LABEL[status]}
+        className="radio-mono text-[9.5px] font-bold tracking-[0.14em]"
+        style={{ color }}
+      >
+        {LABEL[status]}
+      </span>
     </span>
   )
 }

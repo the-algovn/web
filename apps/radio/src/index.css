@@ -1,22 +1,87 @@
 @import "@algovn/ui/globals.css";
 @source "../../../packages/ui/src";
 
+/* Tần Số 42's own surface. The shared @algovn/ui dark theme is a different
+   station entirely (near-black + acid green), so the radio tokens are
+   redefined here rather than tinted - and the shared names are pointed at
+   them so Dialog, Drawer, Skeleton and Toaster come along. */
 :root {
-  --radio-amber: #ffb454;
-  --radio-amber-soft: #ffcf8a;
-  --radio-air: #ff5a4d;
+  --radio-deep: #08090a;
+  --radio-screen: #0e0f10;
+  --radio-surface: #191b1d;
+  --radio-surface-alt: #1f2224;
+  --radio-dock: #131516;
+  --radio-dock-air: #101615;
+
+  --radio-ink: #e8e9e6;
+  --radio-ink-92: rgb(232 233 230 / 0.92);
+  --radio-ink-78: rgb(232 233 230 / 0.78);
+  --radio-ink-60: rgb(232 233 230 / 0.6);
+  --radio-ink-55: rgb(232 233 230 / 0.55);
+  --radio-ink-50: rgb(232 233 230 / 0.5);
+  --radio-ink-38: rgb(232 233 230 / 0.38);
+
+  --radio-line: rgb(232 233 230 / 0.11);
+  --radio-line-soft: rgb(232 233 230 / 0.1);
+  --radio-line-firm: rgb(232 233 230 / 0.16);
+  --radio-line-loud: rgb(232 233 230 / 0.28);
+
+  --radio-air: #3fa98a;
+  --radio-air-hi: #63c4a7;
+  --radio-air-dim: rgb(63 169 138 / 0.5);
+  --radio-air-wash: rgb(63 169 138 / 0.16);
+  --radio-air-glow: 0 0 8px rgb(63 169 138 / 0.9);
+  --radio-air-glow-soft: 0 0 6px rgb(63 169 138 / 0.85);
+
+  --font-radio-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  /* Helvetica Neue is the design's face and is present on the primary
+     target (Safari/iOS). Geist ships in the bundle for everywhere else. */
+  --font-radio-sans: "Helvetica Neue", Helvetica, "Geist Variable", system-ui,
+    sans-serif;
+
+  --background: var(--radio-screen);
+  --foreground: var(--radio-ink);
+  --card: var(--radio-surface);
+  --card-foreground: var(--radio-ink);
+  --popover: var(--radio-surface);
+  --popover-foreground: var(--radio-ink);
+  --primary: var(--radio-air);
+  --primary-foreground: var(--radio-deep);
+  --muted: var(--radio-surface);
+  --muted-foreground: var(--radio-ink-55);
+  --accent: var(--radio-surface-alt);
+  --accent-foreground: var(--radio-air);
+  --border: var(--radio-line);
+  --input: var(--radio-line-firm);
+  --ring: var(--radio-air);
+  /* The deck is square. Radius is the one shape decision the design makes
+     loudest, so it is zeroed at the token rather than per component. */
+  --radius: 0px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  [class*="radio-"] {
-    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion kill switch must beat any radio-* animation rule regardless of specificity or source order */
-    animation: none !important;
+body {
+  font-family: var(--font-radio-sans);
+  background: var(--radio-screen);
+  color: var(--radio-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+::placeholder {
+  color: var(--radio-ink-38);
+}
+
+/* Tabular everywhere a number ticks, so the playhead does not jitter. */
+.radio-mono {
+  font-family: var(--font-radio-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes radio-meter {
+  from {
+    transform: scaleY(0.15);
   }
-  /* The bar's value keeps updating — only the tweening between playhead
-     ticks is dropped. */
-  .radio-progress-fill {
-    /* biome-ignore lint/complexity/noImportantStyles: same kill-switch rationale as the animation rule above */
-    transition: none !important;
+  to {
+    transform: scaleY(1);
   }
 }
 
@@ -26,43 +91,61 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.55;
+    opacity: 0.15;
   }
 }
+
+@keyframes radio-sheet {
+  from {
+    transform: translateY(22px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes radio-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .radio-pulse {
-  animation: radio-pulse 2s ease-in-out infinite;
+  animation: radio-pulse 1.5s ease-in-out infinite;
+}
+
+.radio-sheet {
+  animation: radio-sheet 260ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.radio-fade {
+  animation: radio-fade 300ms ease both;
 }
 
 .radio-progress-fill {
   transition: width 500ms linear;
 }
 
-/* Entries arrive rather than blink into place. This is the modest half of the
-   spec's track-change choreography — a full cross-zone FLIP is descoped. */
-@keyframes radio-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
+@media (prefers-reduced-motion: reduce) {
+  [class*="radio-"] {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion kill switch must beat any radio-* animation rule regardless of specificity or source order */
+    animation: none !important;
   }
-  to {
-    opacity: 1;
-    transform: none;
+  /* The bar's value keeps updating - only the tweening between playhead
+     ticks is dropped. */
+  .radio-progress-fill {
+    /* biome-ignore lint/complexity/noImportantStyles: same kill-switch rationale as the animation rule above */
+    transition: none !important;
   }
-}
-.radio-enter {
-  animation: radio-enter 220ms ease-out;
-}
-
-@keyframes radio-bump {
-  0% {
-    color: var(--radio-amber);
-    transform: scale(1.12);
+  /* Without a height the meter collapses to nothing once its animation is
+     killed, since the keyframe is what gives it scale. */
+  .radio-meter-bar {
+    /* biome-ignore lint/complexity/noImportantStyles: same kill-switch rationale as the animation rule above */
+    transform: scaleY(0.55) !important;
   }
-  100% {
-    color: inherit;
-    transform: scale(1);
-  }
-}
-.radio-bump {
-  animation: radio-bump 600ms ease-out;
 }

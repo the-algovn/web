@@ -1,7 +1,10 @@
-import { Loader2, Pause, Play, VolumeX } from "lucide-react"
+import { Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react"
 import { useState } from "react"
 import type { PlayerState } from "../lib/player"
 
+// The mockup draws no transport at all - it assumes a stream that is simply
+// on. A radio you cannot pause is a worse radio, so the controls stay; they
+// are restyled to the deck's square, mono vocabulary instead of dropped.
 export function PlayerControls({
   playerState,
   volumeControllable,
@@ -23,39 +26,46 @@ export function PlayerControls({
   const label = busy ? "Đang kết nối" : playing ? "Tạm dừng" : "Phát"
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3">
       <button
         type="button"
         aria-label={label}
         disabled={busy}
         onClick={playing ? onPause : onPlay}
-        className="grid size-12 shrink-0 place-items-center rounded-full text-[color:var(--background)] transition active:scale-95 disabled:opacity-70"
+        className="grid size-11 shrink-0 place-items-center transition active:scale-95 disabled:opacity-70"
         style={{
-          background: "var(--radio-amber)",
-          boxShadow:
-            "0 4px 16px color-mix(in srgb, var(--radio-amber) 35%, transparent)",
+          background: "var(--radio-air)",
+          color: "var(--radio-deep)",
+          boxShadow: "0 0 14px rgb(63 169 138 / 0.35)",
         }}
       >
         {busy ? (
-          <Loader2 aria-hidden className="size-5 animate-spin" />
+          <Loader2 aria-hidden className="size-4 animate-spin" />
         ) : playing ? (
-          <Pause aria-hidden className="size-5" />
+          <Pause aria-hidden className="size-4" />
         ) : (
-          <Play aria-hidden className="size-5" />
+          <Play aria-hidden className="size-4" />
         )}
       </button>
 
       {volumeControllable ? (
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.01}
-          defaultValue={0.8}
-          aria-label="Âm lượng"
-          onChange={(e) => onVolume(Number(e.currentTarget.value))}
-          className="min-w-0 flex-1 accent-[color:var(--radio-amber)]"
-        />
+        <>
+          <Volume2
+            aria-hidden
+            className="size-4 shrink-0"
+            style={{ color: "var(--radio-ink-55)" }}
+          />
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            defaultValue={0.8}
+            aria-label="Âm lượng"
+            onChange={(e) => onVolume(Number(e.currentTarget.value))}
+            className="min-w-0 flex-1 accent-[color:var(--radio-air)]"
+          />
+        </>
       ) : (
         // iOS ignores volume writes, so a slider there is a dead control.
         // A mute toggle is the one thing that still works.
@@ -67,9 +77,17 @@ export function PlayerControls({
             setMuted(next)
             onMute(next)
           }}
-          className="grid size-11 shrink-0 place-items-center rounded-full border border-[color:var(--border)] text-[color:var(--muted-foreground)]"
+          className="grid size-11 shrink-0 place-items-center border"
+          style={{
+            borderColor: "var(--radio-line-firm)",
+            color: muted ? "var(--radio-air)" : "var(--radio-ink-55)",
+          }}
         >
-          <VolumeX aria-hidden className="size-4" />
+          {muted ? (
+            <VolumeX aria-hidden className="size-4" />
+          ) : (
+            <Volume2 aria-hidden className="size-4" />
+          )}
         </button>
       )}
     </div>
