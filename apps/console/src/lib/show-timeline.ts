@@ -188,3 +188,51 @@ export function fmtDuration(ms: number): string {
   const s = total % 60
   return `${m}:${String(s).padStart(2, "0")}`
 }
+
+// The ribbon window, aligned to the server's 30-minute projection horizon
+// (internal/timeline.HorizonS). Twenty minutes of past gives enough context to
+// see the last break without shrinking the future into noise.
+export const WINDOW_BEFORE_MS = 20 * 60_000
+export const WINDOW_AFTER_MS = 30 * 60_000
+const WINDOW_MS = WINDOW_BEFORE_MS + WINDOW_AFTER_MS
+
+// A 12s station ID is 0.4% of the window - roughly three pixels. Breaks are
+// the rows an operator most wants to click, so they get a floor.
+export const MIN_BLOCK_PCT = 0.9
+
+export interface Block {
+  seg: Segment
+  leftPct: number
+  widthPct: number
+  clippedLeft: boolean
+  clippedRight: boolean
+}
+
+export function playheadPct(): number {
+  return (WINDOW_BEFORE_MS / WINDOW_MS) * 100
+}
+
+// Segments are clipped to the window; one entirely outside is dropped from the
+// ribbon (the detail list still shows it). A segment with no start time is
+// dropped rather than pinned to the left edge, where it would read as a real
+// block that aired 20 minutes ago.
+export function layout(segs: Segment[], nowMs: number): Block[] {
+  const from = nowMs - WINDOW_BEFORE_MS
+  const to = nowMs + WINDOW_AFTER_MS
+  const out: Block[] = []
+  for (const seg of segs) {
+    if (!seg.startedAtMs) continue
+    const start = seg.startedAtMs
+    const end = start + seg.durationMs
+    if (end < from || start > to) continue
+    const clippedLeft = start < from
+    const clippedRight = end > to
+    const visibleStart = Math.max(start, from)
+    const visibleEnd = Math.min(end, to)
+    const leftPct = ((visibleStart - from) / WINDOW_MS) * 100
+    const rawWidth = ((visibleEnd - visibleStart) / WINDOW_MS) * 100
+    const widthPct = Math.min(Math.max(rawWidth, MIN_BLOCK_PCT), 100 - leftPct)
+    out.push({ seg, leftPct, widthPct, clippedLeft, clippedRight })
+  }
+  return out
+}

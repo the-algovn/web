@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest"
-import { fmtDuration, hhmm, isFact, toTimeline } from "../show-timeline"
+import {
+  fmtDuration,
+  hhmm,
+  isFact,
+  layout,
+  MIN_BLOCK_PCT,
+  playheadPct,
+  type Segment,
+  toTimeline,
+  WINDOW_AFTER_MS,
+  WINDOW_BEFORE_MS,
+} from "../show-timeline"
 
 describe("toTimeline", () => {
   it("coerces the int64 totalPast, which arrives as a decimal string", () => {
@@ -61,5 +72,68 @@ describe("formatters", () => {
   it("renders a duration as m:ss and 0 as a dash", () => {
     expect(fmtDuration(212_000)).toBe("3:32")
     expect(fmtDuration(0)).toBe("--")
+  })
+})
+
+const NOW = Date.parse("2026-09-07T09:00:00Z")
+
+function block(startMs: number, durMs: number, over: Partial<Segment> = {}): Segment {
+  return {
+    id: `s${startMs}`, kind: "track", certainty: "aired", title: "T", artist: "",
+    thumbnailUrl: "", startedAtMs: startMs, durationMs: durMs,
+    source: "", requestedByName: "", reason: "", requestId: "", status: "",
+    script: "", backsellTitle: "", promiseTitle: "", correlationId: "",
+    model: "", inTokens: 0, outTokens: 0, costUsd: 0, latencyMs: 0,
+    ...over,
+  }
+}
+
+describe("layout", () => {
+  it("puts the playhead where now sits in the window", () => {
+    // 20 min back, 30 min forward = 50 min; now is 20/50 = 40% in.
+    expect(playheadPct()).toBeCloseTo(40, 5)
+  })
+
+  it("places a segment starting at now immediately right of the playhead", () => {
+    const [b] = layout([block(NOW, 10 * 60_000)], NOW)
+    expect(b!.leftPct).toBeCloseTo(40, 5)
+    expect(b!.widthPct).toBeCloseTo(20, 5) // 10 of 50 minutes
+  })
+
+  it("clips a segment straddling the left edge and flags it", () => {
+    const start = NOW - WINDOW_BEFORE_MS - 5 * 60_000 // starts 5 min before the window
+    const [b] = layout([block(start, 10 * 60_000)], NOW)
+    expect(b!.leftPct).toBeCloseTo(0, 5)
+    expect(b!.widthPct).toBeCloseTo(10, 5) // only the 5 min inside the window
+    expect(b!.clippedLeft).toBe(true)
+    expect(b!.clippedRight).toBe(false)
+  })
+
+  it("clips a segment straddling the right edge and flags it", () => {
+    const start = NOW + WINDOW_AFTER_MS - 5 * 60_000
+    const [b] = layout([block(start, 20 * 60_000)], NOW)
+    expect(b!.clippedRight).toBe(true)
+    expect(b!.leftPct + b!.widthPct).toBeCloseTo(100, 5)
+  })
+
+  it("omits a segment entirely outside the window", () => {
+    const before = block(NOW - WINDOW_BEFORE_MS - 60 * 60_000, 60_000)
+    const after = block(NOW + WINDOW_AFTER_MS + 60_000, 60_000)
+    expect(layout([before, after], NOW)).toHaveLength(0)
+  })
+
+  it("gives a due sliver a minimum width so it stays clickable", () => {
+    // A 12s station ID is 0.4% of a 50-minute window - about 3px at 800px.
+    const [b] = layout([block(NOW, 12_000, { kind: "station_id", certainty: "due" })], NOW)
+    expect(b!.widthPct).toBeGreaterThanOrEqual(MIN_BLOCK_PCT)
+  })
+
+  it("drops a segment with no start time rather than stacking it at the left edge", () => {
+    expect(layout([block(0, 180_000)], NOW)).toHaveLength(0)
+  })
+
+  it("keeps a zero-duration segment visible at the minimum width", () => {
+    const [b] = layout([block(NOW, 0)], NOW)
+    expect(b!.widthPct).toBeCloseTo(MIN_BLOCK_PCT, 5)
   })
 })
