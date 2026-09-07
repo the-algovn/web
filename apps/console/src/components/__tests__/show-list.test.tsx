@@ -190,6 +190,25 @@ describe("ShowList", () => {
     expect(screen.getByText(/Nobody listening/)).toBeInTheDocument()
   })
 
+  it("offers an always-enabled Huy on the strip when the gate is shut", () => {
+    const onCancel = vi.fn()
+    render(<ShowList timeline={timeline({ breakGate: "no_listeners" })} {...props} onCancelBreak={onCancel} />)
+
+    const strip = screen.getByRole("region", { name: "Break controls" })
+    expect(within(strip).getByRole("button", { name: /Nói ngay/ })).toBeDisabled()
+    const cancel = within(strip).getByRole("button", { name: /Hủy/ })
+    expect(cancel).toBeEnabled()
+    fireEvent.click(cancel)
+    expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
+  it("has no strip-level Huy when the gate is ok", () => {
+    render(<ShowList timeline={timeline({ breakGate: "ok" })} {...props} />)
+
+    const strip = screen.getByRole("region", { name: "Break controls" })
+    expect(within(strip).queryByRole("button", { name: /Hủy/ })).toBeNull()
+  })
+
   it("offers Huy on a forced due break", () => {
     const onCancel = vi.fn()
     const forced = { ...seg({ id: "d1", kind: "dj", certainty: "due" }), forced: true }

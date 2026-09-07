@@ -61,19 +61,29 @@ export function ShowList(props: {
     <div className="flex flex-col gap-4">
       <StagingStrip items={tl.staging} />
 
-      <div className="border-border flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+      <section
+        aria-label="Break controls"
+        className="border-border flex items-center justify-between gap-3 rounded-lg border px-3 py-2"
+      >
         <span className="text-muted-foreground text-xs">
           {GATE_LABEL[tl.breakGate] ?? tl.breakGate}
         </span>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={props.busy || tl.breakGate !== "ok"}
-          onClick={props.onForceBreak}
-        >
-          <Mic /> Nói ngay
-        </Button>
-      </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={props.busy || tl.breakGate !== "ok"}
+            onClick={props.onForceBreak}
+          >
+            <Mic /> Nói ngay
+          </Button>
+          {tl.breakGate !== "ok" ? (
+            <Button variant="outline" size="sm" disabled={props.busy} onClick={props.onCancelBreak}>
+              <X /> Hủy
+            </Button>
+          ) : null}
+        </div>
+      </section>
 
       <Section label="On air">
         {tl.airing ? (
