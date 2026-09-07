@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { radioCall } from "../../lib/api"
 import { Radio } from "../radio"
@@ -17,6 +18,7 @@ const mocked = vi.mocked(radioCall)
 
 beforeEach(() => {
   mocked.mockReset()
+  vi.mocked(toast.error).mockReset()
   mocked.mockImplementation(async (_t: string, path: string) => {
     if (path === "/station") {
       return { station: { onAir: true, aiEnabled: true }, stats: { listeners: 2, libraryCount: 9, spendTodayUsd: 0.1, budgetUsd: 1 } }
@@ -93,6 +95,24 @@ describe("Radio module (the show timeline)", () => {
       const after = mocked.mock.calls.filter((c) => c[1] === "/station/timeline").length
       expect(after).toBeGreaterThan(before)
     })
+  })
+
+  it("a Retry that fails again says so - the once-only latch must not mute it", async () => {
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station") {
+        return { station: { onAir: true, aiEnabled: true }, stats: { listeners: 2, libraryCount: 9, spendTodayUsd: 0.1, budgetUsd: 1 } }
+      }
+      if (path === "/station/timeline") throw new Error("boom")
+      throw new Error(`unmocked ${path}`)
+    })
+    render(<Radio />)
+    const retry = await screen.findByRole("button", { name: "Retry" })
+    // The first failure toasts once and latches; nothing else in this render
+    // toasts, so the count is the timeline's alone.
+    await waitFor(() => expect(vi.mocked(toast.error)).toHaveBeenCalledTimes(1))
+
+    fireEvent.click(retry)
+    await waitFor(() => expect(vi.mocked(toast.error)).toHaveBeenCalledTimes(2))
   })
 
   it("shares selection between the ribbon and the list", async () => {

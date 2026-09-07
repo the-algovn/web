@@ -82,7 +82,13 @@ export function useShowTimeline(
     }
   }, [limit])
 
-  const refresh = useCallback(() => setNonce((n) => n + 1), [])
+  // Disarming the latch is the point: it exists to stop the 10s poll toasting
+  // forever, but an operator who clicks Retry has asked for the answer and a
+  // silent no-op reads as a dead button.
+  const refresh = useCallback(() => {
+    failingRef.current = false
+    setNonce((n) => n + 1)
+  }, [])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: nonce is a bump trigger for refresh(), not read in the body
   useEffect(() => {
