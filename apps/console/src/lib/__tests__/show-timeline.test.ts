@@ -8,6 +8,7 @@ import {
   MIN_BLOCK_PCT,
   playheadPct,
   type Segment,
+  toSegment,
   toTimeline,
   WINDOW_AFTER_MS,
   WINDOW_BEFORE_MS,
@@ -57,6 +58,16 @@ describe("toTimeline", () => {
     expect(s?.kind).toBe("")
     expect(s?.correlationId).toBe("")
   })
+
+  it("normalises an absent forced to false", () => {
+    const seg = toSegment({ segmentId: "s1", kind: "dj", certainty: "due" })
+    expect(seg.forced).toBe(false)
+  })
+
+  it("carries forced through", () => {
+    const seg = toSegment({ segmentId: "s1", kind: "dj", certainty: "due", forced: true })
+    expect(seg.forced).toBe(true)
+  })
 })
 
 describe("isFact", () => {
@@ -105,7 +116,7 @@ function block(startMs: number, durMs: number, over: Partial<Segment> = {}): Seg
     thumbnailUrl: "", startedAtMs: startMs, durationMs: durMs,
     source: "", requestedByName: "", reason: "", requestId: "", status: "",
     script: "", backsellTitle: "", promiseTitle: "", correlationId: "",
-    model: "", inTokens: 0, outTokens: 0, costUsd: 0, latencyMs: 0,
+    model: "", inTokens: 0, outTokens: 0, costUsd: 0, latencyMs: 0, forced: false,
     ...over,
   }
 }

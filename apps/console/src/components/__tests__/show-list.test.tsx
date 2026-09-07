@@ -9,7 +9,7 @@ function seg(over: Partial<Segment> = {}): Segment {
     thumbnailUrl: "", startedAtMs: Date.parse("2026-09-07T08:00:00Z"), durationMs: 180_000,
     source: "", requestedByName: "", reason: "", requestId: "", status: "",
     script: "", backsellTitle: "", promiseTitle: "", correlationId: "",
-    model: "", inTokens: 0, outTokens: 0, costUsd: 0, latencyMs: 0,
+    model: "", inTokens: 0, outTokens: 0, costUsd: 0, latencyMs: 0, forced: false,
     ...over,
   }
 }

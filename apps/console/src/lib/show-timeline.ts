@@ -29,6 +29,7 @@ export interface ShowSegmentWire {
   outTokens?: number
   costUsd?: number
   latencyMs?: number
+  forced?: boolean
 }
 
 export interface SessionMarkerWire {
@@ -70,6 +71,7 @@ export interface Segment {
   outTokens: number
   costUsd: number
   latencyMs: number
+  forced: boolean
 }
 
 export interface Session {
@@ -167,6 +169,7 @@ export function toSegment(w: ShowSegmentWire): Segment {
     backsellTitle: w.backsellTitle ?? "",
     promiseTitle: w.promiseTitle ?? "",
     correlationId: w.correlationId ?? "",
+    forced: w.forced ?? false,
     model: w.model ?? "",
     inTokens: w.inTokens ?? 0,
     outTokens: w.outTokens ?? 0,

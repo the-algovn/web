@@ -26,6 +26,8 @@ export interface ShowTimelineState {
   skip(): Promise<void>
   move(requestId: string, delta: number): Promise<void>
   remove(id: string): Promise<void>
+  forceBreak(): Promise<void>
+  cancelBreak(): Promise<void>
 }
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e))
@@ -190,5 +192,37 @@ export function useShowTimeline(
     [run, load],
   )
 
-  return { timeline, nowMs, loading, busy, page, pageSize: limit, setPage, refresh, skip, move, remove }
+  const forceBreak = useCallback(
+    () =>
+      run(async () => {
+        await radioCall(tokenRef.current ?? "", "/station/break", {})
+        await load()
+      }),
+    [run, load],
+  )
+
+  const cancelBreak = useCallback(
+    () =>
+      run(async () => {
+        await radioCall(tokenRef.current ?? "", "/station/break/cancel", {})
+        await load()
+      }),
+    [run, load],
+  )
+
+  return {
+    timeline,
+    nowMs,
+    loading,
+    busy,
+    page,
+    pageSize: limit,
+    setPage,
+    refresh,
+    skip,
+    move,
+    remove,
+    forceBreak,
+    cancelBreak,
+  }
 }

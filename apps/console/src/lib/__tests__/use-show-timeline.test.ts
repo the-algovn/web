@@ -134,6 +134,47 @@ describe("useShowTimeline", () => {
     expect(mocked).toHaveBeenCalledWith("tok", "/station/timeline", { limit: 50, offset: 0 })
   })
 
+  it("posts to force a break and refetches", async () => {
+    mocked.mockImplementation(async () => bodyAt())
+    const { result } = renderHook(() => useShowTimeline("tok", opts))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    mocked.mockClear()
+
+    await act(async () => {
+      await result.current.forceBreak()
+    })
+    expect(mocked).toHaveBeenCalledWith("tok", "/station/break", {})
+    expect(mocked).toHaveBeenCalledWith("tok", "/station/timeline", { limit: 50, offset: 0 })
+  })
+
+  it("posts to cancel a break and refetches", async () => {
+    mocked.mockImplementation(async () => bodyAt())
+    const { result } = renderHook(() => useShowTimeline("tok", opts))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    mocked.mockClear()
+
+    await act(async () => {
+      await result.current.cancelBreak()
+    })
+    expect(mocked).toHaveBeenCalledWith("tok", "/station/break/cancel", {})
+    expect(mocked).toHaveBeenCalledWith("tok", "/station/timeline", { limit: 50, offset: 0 })
+  })
+
+  it("surfaces a failed force as a toast and keeps the timeline", async () => {
+    mocked.mockImplementation(async () => bodyAt())
+    const { result } = renderHook(() => useShowTimeline("tok", opts))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const before = result.current.timeline
+
+    mocked.mockRejectedValueOnce(new Error("the DJ is not running on this deployment"))
+    await act(async () => {
+      await result.current.forceBreak()
+    })
+
+    expect(vi.mocked(toast.error)).toHaveBeenCalledWith("the DJ is not running on this deployment")
+    expect(result.current.timeline).toBe(before)
+  })
+
   it("reorders against the WHOLE pending set, not the projected running order", async () => {
     // upcoming holds one ready request; pending also holds an approved row
     // that is still downloading (so it is in staging, never in upcoming) and a
