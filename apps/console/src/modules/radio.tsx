@@ -1,14 +1,19 @@
-import { NowPlayingCard } from "../components/now-playing-card"
-import { QueuePane } from "../components/queue-pane"
-import { RecentPane } from "../components/recent-pane"
+import { Skeleton } from "@algovn/ui/skeleton"
+import { useState } from "react"
+import { ShowList } from "../components/show-list"
 import { StationBar } from "../components/station-bar"
 import { useAuth } from "../lib/use-auth"
+import { useShowTimeline } from "../lib/use-show-timeline"
 import { useStation } from "../lib/use-station"
 
-// The station console (v1.2): mirrors the real air — the playlist era is gone.
+// The station console: the operator's master row, then the show as one
+// timeline - what aired, what is airing, and a running order that states how
+// sure it is about every row.
 export function Radio() {
   const { token } = useAuth()
   const st = useStation(token)
+  const show = useShowTimeline(token)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   return (
     <div className="flex h-full flex-col">
@@ -20,19 +25,28 @@ export function Radio() {
         onGoOffAir={() => void st.goOffAir()}
         onToggleAI={(enabled) => void st.setAIEnabled(enabled)}
       />
-      <div className="flex min-h-0 flex-1 gap-6 overflow-auto p-6">
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <NowPlayingCard np={st.nowPlaying} busy={st.busy} onSkip={() => void st.skip()} />
-          <QueuePane
-            pending={st.pending}
-            busy={st.busy}
-            onReorder={(ids) => void st.reorder(ids)}
-            onRemove={(id) => void st.remove(id)}
+      <div className="min-h-0 flex-1 overflow-auto p-6">
+        {show.timeline ? (
+          <ShowList
+            timeline={show.timeline}
+            nowMs={show.nowMs}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            busy={show.busy}
+            page={show.page}
+            onPage={show.setPage}
+            onSkip={() => void show.skip()}
+            onReorder={(ids) => void show.reorder(ids)}
+            onRemove={(id) => void show.remove(id)}
           />
-        </div>
-        <div className="w-80 shrink-0">
-          <RecentPane recent={st.recent} history={st.history} />
-        </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
