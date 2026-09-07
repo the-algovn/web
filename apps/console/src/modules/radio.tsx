@@ -33,12 +33,22 @@ export function Radio() {
       <div className="min-h-0 flex-1 overflow-auto p-6">
         {show.timeline ? (
           <div className="flex flex-col gap-4">
-            <ShowRibbon
-              timeline={show.timeline}
-              nowMs={show.nowMs}
-              selectedId={selectedId}
-              onSelect={(id) => setSelectedId(id === selectedId ? null : id)}
-            />
+            {show.page === 0 ? (
+              <ShowRibbon
+                timeline={show.timeline}
+                nowMs={show.nowMs}
+                selectedId={selectedId}
+                onSelect={(id) => setSelectedId(id === selectedId ? null : id)}
+              />
+            ) : (
+              // past[] is the requested page, and on page 1+ every row of it is
+              // hours old and falls outside the ribbon's 50-minute window. The
+              // ribbon would draw an empty left half, which reads as "nothing
+              // aired recently" on a station that is on air.
+              <p className="text-muted-foreground border-border rounded-lg border px-3 py-2 text-xs">
+                The ribbon follows the live window. The list below is showing an older page.
+              </p>
+            )}
             <ShowList
               timeline={show.timeline}
               nowMs={show.nowMs}

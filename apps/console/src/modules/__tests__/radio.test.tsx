@@ -115,6 +115,38 @@ describe("Radio module (the show timeline)", () => {
     await waitFor(() => expect(vi.mocked(toast.error)).toHaveBeenCalledTimes(2))
   })
 
+  it("drops the ribbon on an older page rather than drawing an empty past", async () => {
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station") {
+        return { station: { onAir: true, aiEnabled: true }, stats: { listeners: 2, libraryCount: 9, spendTodayUsd: 0.1, budgetUsd: 1 } }
+      }
+      if (path === "/station/timeline") {
+        return {
+          airing: { segmentId: "air:9", kind: "track", certainty: "airing", title: "Airing", startedAt: new Date(Date.now() - 60_000).toISOString(), durationS: 200 },
+          past: [{ segmentId: "air:8", kind: "track", certainty: "aired", title: "Before" }],
+          breakGate: "ok",
+          // Two pages, so Older is live.
+          totalPast: "120",
+          serverNow: new Date().toISOString(),
+        }
+      }
+      throw new Error(`unmocked ${path}`)
+    })
+    render(<Radio />)
+    await waitFor(() => expect(screen.getByTestId("playhead")).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole("button", { name: "Older" }))
+    await waitFor(() => {
+      expect(screen.getByText(/ribbon follows the live window/)).toBeInTheDocument()
+    })
+    expect(screen.queryByTestId("playhead")).not.toBeInTheDocument()
+
+    // And it comes back on page 0 - the page is the reason, not a crash.
+    fireEvent.click(screen.getByRole("button", { name: "Newer" }))
+    await waitFor(() => expect(screen.getByTestId("playhead")).toBeInTheDocument())
+    expect(screen.queryByText(/ribbon follows the live window/)).not.toBeInTheDocument()
+  })
+
   it("shares selection between the ribbon and the list", async () => {
     render(<Radio />)
     await waitFor(() => expect(screen.getByText("Pick")).toBeInTheDocument())
