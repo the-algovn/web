@@ -260,6 +260,32 @@ describe("useShowTimeline", () => {
     })
   })
 
+  it("keeps the newest load's result when an older one lands after it", async () => {
+    const resolvers: ((v: unknown) => void)[] = []
+    mocked.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve)
+        }),
+    )
+    const { result } = renderHook(() => useShowTimeline("tok", opts))
+    await waitFor(() => expect(resolvers).toHaveLength(1))
+
+    act(() => result.current.setPage(1))
+    await waitFor(() => expect(resolvers).toHaveLength(2))
+
+    const page = (title: string) => ({ ...bodyAt(), airing: { ...bodyAt().airing, title } })
+    // The page-1 read finishes first, then the page-0 read it superseded.
+    await act(async () => {
+      resolvers[1]?.(page("Page one"))
+    })
+    await act(async () => {
+      resolvers[0]?.(page("Page zero"))
+    })
+
+    expect(result.current.timeline?.airing?.title).toBe("Page one")
+  })
+
   it("keeps ticking the playhead while every poll fails", async () => {
     mocked.mockRejectedValue(new Error("backend down"))
     const { result } = renderHook(() => useShowTimeline("tok", { ...opts, pollMs: 20, tickMs: 10 }))

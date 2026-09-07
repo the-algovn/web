@@ -57,20 +57,28 @@ export function useShowTimeline(
   const skewRef = useRef(0)
   // A poll failure is a single toast, not one per 10s forever.
   const failingRef = useRef(false)
+  // Poll, SSE nudge, action refetch and page change all call load() and can be
+  // in flight together, so the last ISSUED load wins rather than the last to
+  // complete - otherwise a slow page-0 read lands after a page-1 read and the
+  // list contradicts the pager. Same guard as use-llm-audit.ts.
+  const reqIdRef = useRef(0)
 
   const load = useCallback(async () => {
     const t = tokenRef.current
     if (!t) return
+    const id = ++reqIdRef.current
     try {
       const w = await radioCall<ShowTimelineWire>(t, "/station/timeline", {
         limit,
         offset: pageRef.current * limit,
       })
+      if (id !== reqIdRef.current) return
       const tl = toTimeline(w)
       setTimeline(tl)
       if (tl.serverNowMs) skewRef.current = tl.serverNowMs - Date.now()
       failingRef.current = false
     } catch (e) {
+      if (id !== reqIdRef.current) return
       // Keep the last good snapshot. A stale timeline that still ticks beats
       // a blank one, and the next poll usually fixes it.
       if (!failingRef.current) {
@@ -78,7 +86,7 @@ export function useShowTimeline(
         toast.error(msg(e))
       }
     } finally {
-      setLoading(false)
+      if (id === reqIdRef.current) setLoading(false)
     }
   }, [limit])
 
