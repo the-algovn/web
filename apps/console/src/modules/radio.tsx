@@ -1,4 +1,7 @@
+import { Button } from "@algovn/ui/button"
+import { EmptyState } from "@algovn/ui/empty-state"
 import { Skeleton } from "@algovn/ui/skeleton"
+import { WifiOff } from "lucide-react"
 import { useState } from "react"
 import { ShowList } from "../components/show-list"
 import { StationBar } from "../components/station-bar"
@@ -39,13 +42,24 @@ export function Radio() {
             onReorder={(ids) => void show.reorder(ids)}
             onRemove={(id) => void show.remove(id)}
           />
-        ) : (
+        ) : show.loading ? (
           <div className="flex flex-col gap-2">
             {Array.from({ length: 8 }).map((_, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows
               <Skeleton key={i} className="h-8 w-full" />
             ))}
           </div>
+        ) : (
+          <EmptyState
+            icon={<WifiOff />}
+            title="The show could not be loaded."
+            description="The console will keep retrying in the background."
+            action={
+              <Button variant="outline" size="sm" onClick={show.refresh}>
+                Retry
+              </Button>
+            }
+          />
         )}
       </div>
     </div>

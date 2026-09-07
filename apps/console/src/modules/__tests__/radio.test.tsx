@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { radioCall } from "../../lib/api"
 import { Radio } from "../radio"
@@ -55,5 +55,36 @@ describe("Radio module (the show timeline)", () => {
     await waitFor(() => expect(screen.getByText("Airing")).toBeInTheDocument())
     const paths = new Set(mocked.mock.calls.map((c) => c[1]))
     expect(paths).toEqual(new Set(["/station", "/station/timeline"]))
+  })
+
+  it("a persistently failing timeline poll renders the error state, not the skeleton", async () => {
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station") {
+        return { station: { onAir: true, aiEnabled: true }, stats: { listeners: 2, libraryCount: 9, spendTodayUsd: 0.1, budgetUsd: 1 } }
+      }
+      if (path === "/station/timeline") throw new Error("boom")
+      throw new Error(`unmocked ${path}`)
+    })
+    render(<Radio />)
+    await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument())
+    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeInTheDocument()
+  })
+
+  it("clicking Retry issues another /station/timeline call", async () => {
+    mocked.mockImplementation(async (_t: string, path: string) => {
+      if (path === "/station") {
+        return { station: { onAir: true, aiEnabled: true }, stats: { listeners: 2, libraryCount: 9, spendTodayUsd: 0.1, budgetUsd: 1 } }
+      }
+      if (path === "/station/timeline") throw new Error("boom")
+      throw new Error(`unmocked ${path}`)
+    })
+    render(<Radio />)
+    const retry = await screen.findByRole("button", { name: "Retry" })
+    const before = mocked.mock.calls.filter((c) => c[1] === "/station/timeline").length
+    fireEvent.click(retry)
+    await waitFor(() => {
+      const after = mocked.mock.calls.filter((c) => c[1] === "/station/timeline").length
+      expect(after).toBeGreaterThan(before)
+    })
   })
 })
