@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { describe, expect, it, vi } from "vitest"
-import type { Segment } from "../../lib/show-timeline"
+import { CERTAINTY_LABEL, type Segment } from "../../lib/show-timeline"
 import { SegmentRow } from "../segment-row"
 
 // SegmentRow renders an <li>; the listitem role needs a list parent.
@@ -26,6 +26,7 @@ describe("SegmentRow", () => {
     for (const c of ladder) {
       const { unmount } = inList(<SegmentRow seg={seg({ certainty: c })} nowMs={0} expanded={false} onToggle={noop} />)
       expect(screen.getByRole("listitem")).toHaveAttribute("data-certainty", c)
+      expect(screen.getByText(CERTAINTY_LABEL[c]!)).toBeInTheDocument()
       unmount()
     }
   })
@@ -58,6 +59,16 @@ describe("SegmentRow", () => {
     unmount()
     inList(<SegmentRow seg={seg({ certainty: "aired" })} nowMs={started} expanded={false} onToggle={noop} />)
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
+  })
+
+  it("clamps progress bar at 0 and 100", () => {
+    const started = Date.parse("2026-09-07T08:00:00Z")
+    const duration = 200_000
+    const { unmount } = inList(<SegmentRow seg={seg({ certainty: "airing", startedAtMs: started, durationMs: duration })} nowMs={started - 50_000} expanded={false} onToggle={noop} />)
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0")
+    unmount()
+    inList(<SegmentRow seg={seg({ certainty: "airing", startedAtMs: started, durationMs: duration })} nowMs={started + duration + 100_000} expanded={false} onToggle={noop} />)
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100")
   })
 
   it("reveals the script and provenance only when expanded", () => {
