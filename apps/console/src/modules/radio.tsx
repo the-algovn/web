@@ -3,6 +3,7 @@ import { EmptyState } from "@algovn/ui/empty-state"
 import { Skeleton } from "@algovn/ui/skeleton"
 import { WifiOff } from "lucide-react"
 import { useState } from "react"
+import { LLMCallDrawer } from "../components/llm-call-drawer"
 import { ShowList } from "../components/show-list"
 import { ShowRibbon } from "../components/show-ribbon"
 import { StationBar } from "../components/station-bar"
@@ -49,6 +50,11 @@ export function Radio() {
               onSkip={() => void show.skip()}
               onReorder={(ids) => void show.reorder(ids)}
               onRemove={(id) => void show.remove(id)}
+              renderDetail={(seg) =>
+                token && seg.correlationId ? (
+                  <LLMCallDrawer token={token} correlationId={seg.correlationId} />
+                ) : null
+              }
             />
           </div>
         ) : show.loading ? (

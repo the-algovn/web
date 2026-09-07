@@ -30,7 +30,7 @@ describe("LLMAudit", () => {
   it("loads and lists calls on mount", async () => {
     render(<LLMAudit />)
     await waitFor(() => expect(screen.getByText("gemini-2.5-flash")).toBeInTheDocument()) // model cell is unique (label appears in badge + filter option + stat line)
-    expect(mockedLabCall).toHaveBeenCalledWith("test-token", "/llm-calls/list", { label: "", errorsOnly: false, limit: 20, offset: 0 })
+    expect(mockedLabCall).toHaveBeenCalledWith("test-token", "/llm-calls/list", { label: "", errorsOnly: false, correlationId: "", limit: 20, offset: 0 })
     expect(screen.getByText("gemini-2.5-flash")).toBeInTheDocument()
   })
 
@@ -39,7 +39,7 @@ describe("LLMAudit", () => {
     await waitFor(() => expect(screen.getByText("gemini-2.5-flash")).toBeInTheDocument()) // model cell is unique (label appears in badge + filter option + stat line)
     fireEvent.change(screen.getByLabelText("Call site"), { target: { value: "programmer:" } })
     await waitFor(() =>
-      expect(mockedLabCall).toHaveBeenLastCalledWith("test-token", "/llm-calls/list", { label: "programmer:", errorsOnly: false, limit: 20, offset: 0 }),
+      expect(mockedLabCall).toHaveBeenLastCalledWith("test-token", "/llm-calls/list", { label: "programmer:", errorsOnly: false, correlationId: "", limit: 20, offset: 0 }),
     )
   })
 

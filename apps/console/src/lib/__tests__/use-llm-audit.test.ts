@@ -25,7 +25,7 @@ describe("useLLMAudit", () => {
   it("loads page 0 (list + stats) on mount", async () => {
     const { result } = renderHook(() => useLLMAudit("tok"))
     await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(mockedLabCall).toHaveBeenCalledWith("tok", "/llm-calls/list", { label: "", errorsOnly: false, limit: 20, offset: 0 })
+    expect(mockedLabCall).toHaveBeenCalledWith("tok", "/llm-calls/list", { label: "", errorsOnly: false, correlationId: "", limit: 20, offset: 0 })
     expect(mockedLabCall).toHaveBeenCalledWith("tok", "/llm-calls/stats", { windowDays: 30 })
     expect(result.current.total).toBe(1)
     expect(result.current.calls).toHaveLength(1)
@@ -39,7 +39,7 @@ describe("useLLMAudit", () => {
     await waitFor(() => expect(result.current.page).toBe(1))
     act(() => result.current.setLabel("programmer:pick"))
     await waitFor(() =>
-      expect(mockedLabCall).toHaveBeenLastCalledWith("tok", "/llm-calls/list", { label: "programmer:pick", errorsOnly: false, limit: 20, offset: 0 }),
+      expect(mockedLabCall).toHaveBeenLastCalledWith("tok", "/llm-calls/list", { label: "programmer:pick", errorsOnly: false, correlationId: "", limit: 20, offset: 0 }),
     )
     expect(result.current.page).toBe(0) // reset to page 0
   })
@@ -48,5 +48,27 @@ describe("useLLMAudit", () => {
     mockedLabCall.mockRejectedValue(new Error("boom"))
     renderHook(() => useLLMAudit("tok"))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("boom"))
+  })
+
+  it("passes a correlation id through to the list request", async () => {
+    renderHook(() => useLLMAudit("tok", "corr-9"))
+    await waitFor(() =>
+      expect(mockedLabCall).toHaveBeenCalledWith(
+        "tok",
+        "/llm-calls/list",
+        expect.objectContaining({ correlationId: "corr-9" }),
+      ),
+    )
+  })
+
+  it("sends an empty correlation id by default, which the server reads as all", async () => {
+    renderHook(() => useLLMAudit("tok"))
+    await waitFor(() =>
+      expect(mockedLabCall).toHaveBeenCalledWith(
+        "tok",
+        "/llm-calls/list",
+        expect.objectContaining({ correlationId: "" }),
+      ),
+    )
   })
 })

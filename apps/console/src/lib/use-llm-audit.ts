@@ -5,7 +5,7 @@ import { type LLMCall, type LLMStat, type ListResp, PAGE_SIZE, type StatsResp } 
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
-export function useLLMAudit(token: string | null) {
+export function useLLMAudit(token: string | null, correlationId = "") {
   const [calls, setCalls] = useState<LLMCall[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
@@ -26,6 +26,7 @@ export function useLLMAudit(token: string | null) {
         const r = await labCall<ListResp>(token, "/llm-calls/list", {
           label: lbl,
           errorsOnly: errs,
+          correlationId,
           limit: PAGE_SIZE,
           offset: p * PAGE_SIZE,
         })
@@ -39,7 +40,7 @@ export function useLLMAudit(token: string | null) {
         if (id === reqId.current) setLoading(false)
       }
     },
-    [token],
+    [token, correlationId],
   )
 
   const fetchStats = useCallback(
