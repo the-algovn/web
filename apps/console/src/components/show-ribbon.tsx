@@ -22,7 +22,7 @@ function blockClass(seg: Segment): string {
         : seg.kind === KIND_UNKNOWN
           ? "bg-muted-foreground/30"
           : "bg-primary"
-  return isFact(seg.certainty) ? base : `${base}/50 border-t-2 border-dotted border-t-current`
+  return isFact(seg.certainty) ? base : `${base} opacity-50 border-t-2 border-dotted border-t-current`
 }
 
 function blockLabel(seg: Segment): string {

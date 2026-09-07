@@ -47,6 +47,39 @@ describe("ShowRibbon", () => {
     const tl = timeline({ past: [seg({ id: "air:1", startedAtMs: NOW - 3 * 60 * 60_000, title: "Ancient" })] })
     render(<ShowRibbon timeline={tl} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
     expect(screen.queryByRole("button", { name: /Ancient/ })).not.toBeInTheDocument()
+    // Proves selective omission, not a render failure that drops everything.
+    expect(screen.getByRole("button", { name: /Now/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Next/ })).toBeInTheDocument()
+  })
+
+  it("keeps a background on a projected unknown block - the certainty suffix must not clash with the kind's own opacity suffix", () => {
+    const tl = timeline({
+      upcoming: [seg({ id: "shuffle:1", kind: "unknown", certainty: "unknown", title: "", startedAtMs: NOW + 60_000 })],
+    })
+    render(<ShowRibbon timeline={tl} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
+    const block = screen.getByRole("button", { name: /Shuffle/ })
+    // bg-muted-foreground/30 (kind) plus a second /NN (certainty) suffix, e.g.
+    // bg-muted-foreground/30/50, matches no Tailwind grammar and emits no rule.
+    expect(block.className).not.toMatch(/\/\d+\/\d+/)
+    expect(block.className).toMatch(/\bopacity-50\b/)
+  })
+
+  it("keeps the same DOM node for an unchanged segment across a poll (key = segment id, not array index)", () => {
+    const { rerender } = render(
+      <ShowRibbon timeline={timeline()} nowMs={NOW} selectedId={null} onSelect={() => {}} />,
+    )
+    const before = screen.getByRole("button", { name: /Now/ })
+    // A fresh timeline object with an extra past segment ahead of "Older"
+    // shifts every later segment's array position - the case an index key
+    // gets wrong and a segment-id key gets right.
+    const shifted = timeline({
+      past: [
+        seg({ id: "air:7", startedAtMs: NOW - 600_000, title: "Oldest" }),
+        seg({ id: "air:8", startedAtMs: NOW - 300_000, title: "Older" }),
+      ],
+    })
+    rerender(<ShowRibbon timeline={shifted} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
+    expect(screen.getByRole("button", { name: /Now/ })).toBe(before)
   })
 
   it("marks the selected block", () => {

@@ -105,5 +105,9 @@ describe("Radio module (the show timeline)", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Airing .* on air/ })).toHaveAttribute("aria-pressed", "true")
     })
+    // The click must reach the list too - scoped to the On-air section so
+    // this cannot accidentally match the ribbon's own button.
+    const onAir = within(screen.getByRole("region", { name: "On air" }))
+    expect(onAir.getByRole("button", { name: "Airing" })).toHaveAttribute("aria-expanded", "true")
   })
 })

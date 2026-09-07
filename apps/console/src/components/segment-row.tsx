@@ -85,6 +85,7 @@ export function SegmentRow(props: {
         <button
           type="button"
           onClick={props.onToggle}
+          aria-expanded={props.expanded}
           className="min-w-0 flex-1 truncate text-left text-sm hover:underline"
         >
           <span className={seg.title ? "" : "text-muted-foreground italic"}>{label(seg)}</span>
