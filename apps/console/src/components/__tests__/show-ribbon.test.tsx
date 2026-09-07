@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { MIN_BLOCK_PCT, type Segment, type Timeline } from "../../lib/show-timeline"
 import { ShowRibbon } from "../show-ribbon"
@@ -92,6 +92,56 @@ describe("ShowRibbon", () => {
     render(<ShowRibbon timeline={timeline()} nowMs={NOW} selectedId={null} onSelect={onSelect} />)
     fireEvent.click(screen.getByRole("button", { name: /Next/ }))
     expect(onSelect).toHaveBeenCalledWith("req:r1")
+  })
+
+  it("does not draw a prepared clip the same as a due cadence guess", () => {
+    const tl = timeline({
+      upcoming: [
+        seg({ id: "prep:1", kind: "dj", certainty: "prepared", title: "Scripted break", startedAtMs: NOW + 60_000 }),
+        seg({ id: "due:1", kind: "dj", certainty: "due", title: "", startedAtMs: NOW + 300_000 }),
+      ],
+    })
+    render(<ShowRibbon timeline={tl} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
+    const prepared = screen.getByRole("button", { name: /Scripted break/ })
+    const due = screen.getByRole("button", { name: /DJ break/ })
+
+    expect(prepared.className).not.toBe(due.className)
+    // A rendered, paid-for clip is at full strength and carries the marker.
+    expect(prepared.className).toMatch(/\bopacity-100\b/)
+    expect(within(prepared).getByTestId("prepared-marker")).toBeInTheDocument()
+    // A cadence guess is faded, dashed, and unmarked.
+    expect(due.className).toMatch(/\bborder-dashed\b/)
+    expect(due.className).toMatch(/\bopacity-30\b/)
+    expect(within(due).queryByTestId("prepared-marker")).not.toBeInTheDocument()
+  })
+
+  it("does not draw the pinned next-up the same as a plain projection", () => {
+    const tl = timeline({
+      upcoming: [
+        seg({ id: "req:c", certainty: "committed", title: "Pinned", startedAtMs: NOW + 60_000 }),
+        seg({ id: "req:p", certainty: "projected", title: "Later", startedAtMs: NOW + 300_000 }),
+      ],
+    })
+    render(<ShowRibbon timeline={tl} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
+    const committed = screen.getByRole("button", { name: /Pinned/ })
+    const projected = screen.getByRole("button", { name: /Later/ })
+
+    expect(committed.className).not.toBe(projected.className)
+    expect(committed.className).toMatch(/\bborder-solid\b/)
+    expect(projected.className).toMatch(/\bborder-dotted\b/)
+  })
+
+  it("keeps every rung's treatment a real Tailwind class, not a doubled opacity suffix", () => {
+    const rungs = ["committed", "prepared", "projected", "due", "unknown"]
+    const tl = timeline({
+      upcoming: rungs.map((c, i) =>
+        seg({ id: `rung:${c}`, kind: "unknown", certainty: c, title: c, startedAtMs: NOW + (i + 1) * 60_000 }),
+      ),
+    })
+    render(<ShowRibbon timeline={tl} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
+    for (const c of rungs) {
+      expect(screen.getByRole("button", { name: new RegExp(c) }).className).not.toMatch(/\/\d+\/\d+/)
+    }
   })
 
   it("floors a 12s station ID at the minimum width so it stays clickable", () => {

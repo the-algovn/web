@@ -11,8 +11,24 @@ import {
   type Timeline,
 } from "../lib/show-timeline"
 
-// Colour carries kind; opacity and the dotted top carry certainty. Past is
-// opaque, future is lighter and dotted, because it is a projection.
+// Colour carries kind; border style and opacity carry certainty. Facts are
+// opaque and unbordered; every projection is lighter, and how much lighter
+// tracks the ladder. Grading them apart is the point: a prepared clip is
+// rendered and paid for and will almost certainly air, while a due break is a
+// cadence guess that may never exist, so they must not look the same.
+//
+// Borders rather than rings, because the selected block already owns the ring
+// and two ring colours on one element resolve arbitrarily. prepared is set
+// apart by a marker rather than a border: an outline in the block's own text
+// colour would be indistinguishable from committed's.
+const CERTAINTY_CLASS: Record<string, string> = {
+  committed: "opacity-90 border-2 border-solid border-current",
+  prepared: "opacity-100",
+  projected: "opacity-50 border-t-2 border-dotted border-t-current",
+  due: "opacity-30 border-2 border-dashed border-current",
+}
+const PROJECTION_CLASS = "opacity-50 border-t-2 border-dotted border-t-current"
+
 function blockClass(seg: Segment): string {
   const base =
     seg.kind === KIND_DJ
@@ -22,7 +38,8 @@ function blockClass(seg: Segment): string {
         : seg.kind === KIND_UNKNOWN
           ? "bg-muted-foreground/30"
           : "bg-primary"
-  return isFact(seg.certainty) ? base : `${base} opacity-50 border-t-2 border-dotted border-t-current`
+  if (isFact(seg.certainty)) return base
+  return `${base} ${CERTAINTY_CLASS[seg.certainty] ?? PROJECTION_CLASS}`
 }
 
 function blockLabel(seg: Segment): string {
@@ -57,6 +74,13 @@ export function ShowRibbon(props: {
               props.selectedId === b.seg.id ? "ring-ring ring-2" : ""
             }`}
           >
+            {b.seg.certainty === "prepared" ? (
+              <span
+                data-testid="prepared-marker"
+                aria-hidden="true"
+                className="absolute right-0.5 top-0.5 size-1.5 rotate-45 bg-white"
+              />
+            ) : null}
             <span className="truncate">{b.seg.title}</span>
           </button>
         ))}
@@ -76,7 +100,8 @@ export function ShowRibbon(props: {
         <span className="flex items-center gap-1"><span className="inline-block size-2 rounded-sm bg-amber-500" /> DJ</span>
         <span className="flex items-center gap-1"><span className="inline-block size-2 rounded-sm bg-violet-500" /> station ID</span>
         <span className="flex items-center gap-1"><span className="bg-muted-foreground/30 inline-block size-2 rounded-sm" /> shuffle</span>
-        <span>dotted = projected</span>
+        <span>faded = projected</span>
+        <span>dashed = có thể có</span>
       </div>
     </div>
   )
