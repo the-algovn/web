@@ -16,7 +16,7 @@ function seg(over: Partial<Segment> = {}): Segment {
 
 function timeline(over: Partial<Timeline> = {}): Timeline {
   return {
-    past: [seg({ id: "air:8", title: "Older" })],
+    past: [seg({ id: "air:8", title: "Bolero Night" })],
     airing: seg({ id: "air:9", certainty: "airing", title: "Now" }),
     upcoming: [
       seg({ id: "req:r1", certainty: "committed", title: "First", requestId: "r1" }),
@@ -48,7 +48,7 @@ describe("ShowList", () => {
     render(<ShowList timeline={timeline()} {...props} />)
     expect(within(screen.getByRole("region", { name: "On air" })).getByText("Now")).toBeInTheDocument()
     expect(within(screen.getByRole("region", { name: "Coming up" })).getByText("First")).toBeInTheDocument()
-    expect(within(screen.getByRole("region", { name: "Already aired" })).getByText("Older")).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "Already aired" })).getByText("Bolero Night")).toBeInTheDocument()
   })
 
   it("explains why no break is coming when the gate is not ok", () => {
