@@ -1,23 +1,31 @@
 import { Badge } from "@algovn/ui/badge"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { labCall } from "../lib/api"
 import type { LLMCall, ListResp } from "../lib/llm-audit"
+
+const msg = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 // Every model call made for one break, in place. The correlation id groups
 // them - one prepare makes up to two, because the script validation loop
 // retries once.
 export function LLMCallDrawer({ token, correlationId }: { token: string; correlationId: string }) {
   const [calls, setCalls] = useState<LLMCall[] | null>(null)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     if (!token || !correlationId) return
     let live = true
+    setFailed(false)
     labCall<ListResp>(token, "/llm-calls/list", { correlationId, limit: 20, offset: 0 })
       .then((r) => {
         if (live) setCalls(r.calls ?? [])
       })
-      .catch(() => {
-        if (live) setCalls([])
+      .catch((e) => {
+        if (!live) return
+        setCalls(null)
+        setFailed(true)
+        toast.error(msg(e))
       })
     return () => {
       live = false
@@ -25,6 +33,7 @@ export function LLMCallDrawer({ token, correlationId }: { token: string; correla
   }, [token, correlationId])
 
   if (!correlationId) return null
+  if (failed) return <div className="text-destructive text-xs">Could not load model calls.</div>
   if (calls === null) return <div className="text-muted-foreground text-xs">Loading model calls...</div>
   if (calls.length === 0) {
     // Retention is 30 days and station IDs are not scripted, so a miss is

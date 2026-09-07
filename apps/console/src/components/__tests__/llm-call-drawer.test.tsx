@@ -41,4 +41,11 @@ describe("LLMCallDrawer", () => {
     expect(container).toBeEmptyDOMElement()
     expect(mocked).not.toHaveBeenCalled()
   })
+
+  it("says the fetch failed rather than claiming no calls were found", async () => {
+    mocked.mockRejectedValue(new Error("boom"))
+    render(<LLMCallDrawer token="tok" correlationId="corr-3" />)
+    await waitFor(() => expect(screen.getByText(/Could not load model calls/)).toBeInTheDocument())
+    expect(screen.queryByText(/No model calls/)).not.toBeInTheDocument()
+  })
 })
