@@ -129,11 +129,36 @@ describe("layout", () => {
   })
 
   it("drops a segment with no start time rather than stacking it at the left edge", () => {
-    expect(layout([block(0, 180_000)], NOW)).toHaveLength(0)
+    expect(layout([block(0, 180_000)], 0)).toHaveLength(0)
   })
 
   it("keeps a zero-duration segment visible at the minimum width", () => {
     const [b] = layout([block(NOW, 0)], NOW)
     expect(b!.widthPct).toBeCloseTo(MIN_BLOCK_PCT, 5)
+  })
+
+  it("keeps a sub-floor block near the right edge unclipped and floored", () => {
+    // A 12s segment starting 15 seconds before the window's right edge
+    const start = NOW + WINDOW_AFTER_MS - 15_000
+    const [b] = layout([block(start, 12_000)], NOW)
+    expect(b!.widthPct).toBeGreaterThanOrEqual(MIN_BLOCK_PCT)
+    expect(b!.leftPct + b!.widthPct).toBeLessThanOrEqual(100)
+  })
+
+  it("nudges a sub-floor block left when clipped at the right edge", () => {
+    // A 30s segment starting 5 seconds before the window's right edge
+    const start = NOW + WINDOW_AFTER_MS - 5_000
+    const [b] = layout([block(start, 30_000)], NOW)
+    expect(b!.clippedRight).toBe(true)
+    expect(b!.widthPct).toBeGreaterThanOrEqual(MIN_BLOCK_PCT)
+    expect(b!.leftPct + b!.widthPct).toBeLessThanOrEqual(100)
+  })
+
+  it("omits segments with zero overlap at the window edges", () => {
+    // A segment ending exactly at the left edge has zero overlap
+    const leftEdge = block(NOW - WINDOW_BEFORE_MS - 60_000, 60_000)
+    // A segment starting exactly at the right edge has zero overlap
+    const rightEdge = block(NOW + WINDOW_AFTER_MS, 60_000)
+    expect(layout([leftEdge, rightEdge], NOW)).toHaveLength(0)
   })
 })

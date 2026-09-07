@@ -224,14 +224,18 @@ export function layout(segs: Segment[], nowMs: number): Block[] {
     if (!seg.startedAtMs) continue
     const start = seg.startedAtMs
     const end = start + seg.durationMs
-    if (end < from || start > to) continue
+    if (end <= from || start >= to) continue
     const clippedLeft = start < from
     const clippedRight = end > to
     const visibleStart = Math.max(start, from)
     const visibleEnd = Math.min(end, to)
-    const leftPct = ((visibleStart - from) / WINDOW_MS) * 100
+    const rawLeft = ((visibleStart - from) / WINDOW_MS) * 100
     const rawWidth = ((visibleEnd - visibleStart) / WINDOW_MS) * 100
-    const widthPct = Math.min(Math.max(rawWidth, MIN_BLOCK_PCT), 100 - leftPct)
+    const widthPct = Math.min(Math.max(rawWidth, MIN_BLOCK_PCT), 100)
+    // A sub-floor block near the right edge is nudged left rather than shrunk:
+    // clickability is the whole point of the floor, and at these widths the
+    // position error is smaller than the block itself.
+    const leftPct = Math.min(rawLeft, 100 - widthPct)
     out.push({ seg, leftPct, widthPct, clippedLeft, clippedRight })
   }
   return out
