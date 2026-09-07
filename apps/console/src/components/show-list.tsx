@@ -16,6 +16,14 @@ function Section(props: { label: string; children: ReactNode }) {
   )
 }
 
+// An empty running order has several causes and the break gate is the only one
+// the server actually reports. Naming "off air" without it would assert a fact
+// about the station that this view never checked.
+function emptyOrder(breakGate: string): string {
+  if (breakGate === "off_air") return "No running order - the station is off air."
+  return "No running order to show."
+}
+
 export function ShowList(props: {
   timeline: Timeline
   nowMs: number
@@ -99,7 +107,7 @@ export function ShowList(props: {
             ))}
           </ul>
         ) : (
-          <p className="text-muted-foreground py-2 text-sm">No running order - the station is off air.</p>
+          <p className="text-muted-foreground py-2 text-sm">{emptyOrder(tl.breakGate)}</p>
         )}
       </Section>
 

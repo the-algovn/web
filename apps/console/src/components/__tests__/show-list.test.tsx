@@ -118,5 +118,14 @@ describe("ShowList", () => {
   it("says so plainly when the station is off air", () => {
     render(<ShowList timeline={timeline({ airing: null, upcoming: [], breakGate: "off_air" })} {...props} />)
     expect(screen.getByText(/Nothing on air/)).toBeInTheDocument()
+    expect(screen.getByText("No running order - the station is off air.")).toBeInTheDocument()
+  })
+
+  it("does not blame the station for an empty running order the gate does not explain", () => {
+    // upcoming can empty for reasons the gate never reports; asserting "off
+    // air" against an `ok` gate would state a fact this view never checked.
+    render(<ShowList timeline={timeline({ upcoming: [], breakGate: "ok" })} {...props} />)
+    expect(screen.getByText("No running order to show.")).toBeInTheDocument()
+    expect(screen.queryByText(/off air/i)).not.toBeInTheDocument()
   })
 })
