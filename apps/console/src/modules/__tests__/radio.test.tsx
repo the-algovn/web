@@ -162,4 +162,13 @@ describe("Radio module (the show timeline)", () => {
     const onAir = within(screen.getByRole("region", { name: "On air" }))
     expect(onAir.getByRole("button", { name: "Airing" })).toHaveAttribute("aria-expanded", "true")
   })
+
+  it("wires Noi ngay to the force endpoint", async () => {
+    render(<Radio />)
+    await waitFor(() => expect(screen.getByRole("button", { name: /Nói ngay/ })).toBeEnabled())
+
+    fireEvent.click(screen.getByRole("button", { name: /Nói ngay/ }))
+
+    await waitFor(() => expect(mocked).toHaveBeenCalledWith("tok", "/station/break", {}))
+  })
 })

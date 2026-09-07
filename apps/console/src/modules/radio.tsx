@@ -61,6 +61,8 @@ export function Radio() {
               onSkip={() => void show.skip()}
               onMove={(id, delta) => void show.move(id, delta)}
               onRemove={(id) => void show.remove(id)}
+              onForceBreak={() => void show.forceBreak()}
+              onCancelBreak={() => void show.cancelBreak()}
               renderDetail={(seg) =>
                 token && seg.correlationId ? (
                   <LLMCallDrawer token={token} correlationId={seg.correlationId} />

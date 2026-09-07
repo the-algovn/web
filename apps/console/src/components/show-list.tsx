@@ -1,7 +1,7 @@
 import { Button } from "@algovn/ui/button"
-import { ChevronDown, ChevronUp, SkipForward, X } from "lucide-react"
+import { ChevronDown, ChevronUp, Mic, SkipForward, X } from "lucide-react"
 import type { ReactNode } from "react"
-import { GATE_LABEL, label, type Segment, type Timeline } from "../lib/show-timeline"
+import { GATE_LABEL, KIND_DJ, label, type Segment, type Timeline } from "../lib/show-timeline"
 import { SegmentRow } from "./segment-row"
 import { StagingStrip } from "./staging-strip"
 
@@ -47,6 +47,8 @@ export function ShowList(props: {
   // and the hook builds the submission. See useShowTimeline.move.
   onMove(requestId: string, delta: number): void
   onRemove(requestId: string): void
+  onForceBreak(): void
+  onCancelBreak(): void
   renderDetail?(seg: Segment): ReactNode
 }) {
   const { timeline: tl, nowMs } = props
@@ -59,11 +61,19 @@ export function ShowList(props: {
     <div className="flex flex-col gap-4">
       <StagingStrip items={tl.staging} />
 
-      {tl.breakGate && tl.breakGate !== "ok" ? (
-        <div className="text-muted-foreground border-border rounded-lg border px-3 py-2 text-xs">
+      <div className="border-border flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+        <span className="text-muted-foreground text-xs">
           {GATE_LABEL[tl.breakGate] ?? tl.breakGate}
-        </div>
-      ) : null}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={props.busy || tl.breakGate !== "ok"}
+          onClick={props.onForceBreak}
+        >
+          <Mic /> Nói ngay
+        </Button>
+      </div>
 
       <Section label="On air">
         {tl.airing ? (
@@ -98,7 +108,11 @@ export function ShowList(props: {
                 onToggle={() => toggle(s.id)}
                 detail={detail(s)}
                 actions={
-                  s.requestId ? (
+                  s.kind === KIND_DJ && (s.certainty === "prepared" || s.forced) ? (
+                    <Button variant="ghost" size="sm" disabled={props.busy} onClick={props.onCancelBreak}>
+                      <X /> Hủy
+                    </Button>
+                  ) : s.requestId ? (
                     <>
                       <Button variant="ghost" size="sm" aria-label={`Move ${label(s)} earlier`} disabled={props.busy} onClick={() => props.onMove(s.requestId, -1)}>
                         <ChevronUp />

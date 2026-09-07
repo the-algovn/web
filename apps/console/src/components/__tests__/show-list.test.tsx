@@ -42,6 +42,8 @@ const props = {
   onSkip: () => {},
   onMove: () => {},
   onRemove: () => {},
+  onForceBreak: () => {},
+  onCancelBreak: () => {},
 }
 
 describe("ShowList", () => {
@@ -169,5 +171,49 @@ describe("ShowList", () => {
     render(<ShowList timeline={timeline({ upcoming: [], breakGate: "ok" })} {...props} />)
     expect(screen.getByText("No running order to show.")).toBeInTheDocument()
     expect(screen.queryByText(/off air/i)).not.toBeInTheDocument()
+  })
+
+  it("offers Noi ngay whenever the gate is ok", () => {
+    const onForce = vi.fn()
+    render(<ShowList timeline={timeline({ breakGate: "ok" })} {...props} onForceBreak={onForce} />)
+
+    const btn = screen.getByRole("button", { name: /Nói ngay/ })
+    expect(btn).toBeEnabled()
+    fireEvent.click(btn)
+    expect(onForce).toHaveBeenCalledTimes(1)
+  })
+
+  it("disables Noi ngay when the gate is shut and says why", () => {
+    render(<ShowList timeline={timeline({ breakGate: "no_listeners" })} {...props} />)
+
+    expect(screen.getByRole("button", { name: /Nói ngay/ })).toBeDisabled()
+    expect(screen.getByText(/Nobody listening/)).toBeInTheDocument()
+  })
+
+  it("offers Huy on a forced due break", () => {
+    const onCancel = vi.fn()
+    const forced = { ...seg({ id: "d1", kind: "dj", certainty: "due" }), forced: true }
+    render(
+      <ShowList timeline={timeline({ breakGate: "ok", upcoming: [forced] })} {...props} onCancelBreak={onCancel} />,
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: /Hủy/ }))
+    expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
+  it("offers Huy on a prepared break even when not forced", () => {
+    const prepared = { ...seg({ id: "p1", kind: "dj", certainty: "prepared" }), forced: false }
+    render(<ShowList timeline={timeline({ breakGate: "ok", upcoming: [prepared] })} {...props} />)
+
+    expect(screen.getByRole("button", { name: /Hủy/ })).toBeInTheDocument()
+  })
+
+  // A cadence-owed break is not cancellable in any meaningful sense - the
+  // cadence re-arms it on the next tick, so the button would be a lie.
+  it("does not offer Huy on a cadence-due break", () => {
+    const cadence = { ...seg({ id: "d2", kind: "dj", certainty: "due" }), forced: false }
+    render(<ShowList timeline={timeline({ breakGate: "ok", upcoming: [cadence] })} {...props} />)
+
+    expect(screen.queryByRole("button", { name: /Hủy/ })).toBeNull()
   })
 })
