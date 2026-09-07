@@ -1,7 +1,7 @@
 import { Button } from "@algovn/ui/button"
 import { ChevronDown, ChevronUp, SkipForward, X } from "lucide-react"
 import type { ReactNode } from "react"
-import { GATE_LABEL, type Segment, type Timeline } from "../lib/show-timeline"
+import { GATE_LABEL, label, type Segment, type Timeline } from "../lib/show-timeline"
 import { SegmentRow } from "./segment-row"
 import { StagingStrip } from "./staging-strip"
 
@@ -27,7 +27,7 @@ function emptyOrder(breakGate: string): string {
 // Removal is irreversible on a live station and the X sits beside two
 // same-sized chevrons, so it is guarded the way the queue pane guarded it.
 function confirmRemove(seg: Segment, onRemove: (requestId: string) => void) {
-  if (window.confirm(`Gỡ "${seg.title}" khỏi hàng đợi?`)) onRemove(seg.requestId)
+  if (window.confirm(`Gỡ "${label(seg)}" khỏi hàng đợi?`)) onRemove(seg.requestId)
 }
 
 export function ShowList(props: {

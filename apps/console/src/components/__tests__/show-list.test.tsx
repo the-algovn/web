@@ -103,6 +103,15 @@ describe("ShowList", () => {
     confirm.mockRestore()
   })
 
+  it("names an untitled request in the confirmation rather than an empty string", () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const tl = timeline({ upcoming: [seg({ id: "req:r1", certainty: "committed", title: "", requestId: "r1" })] })
+    render(<ShowList timeline={tl} {...props} />)
+    fireEvent.click(screen.getByRole("button", { name: /^Remove/ }))
+    expect(confirm).toHaveBeenCalledWith('Gỡ "Untitled" khỏi hàng đợi?')
+    confirm.mockRestore()
+  })
+
   it("does not remove when the operator declines the confirmation", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
     const onRemove = vi.fn()
