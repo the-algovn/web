@@ -23,10 +23,12 @@ import {
 // Borders rather than rings, because the selected block already owns the ring
 // and two ring colours on one element resolve arbitrarily. prepared is set
 // apart by a marker rather than a border: an outline in the block's own text
-// colour would be indistinguishable from committed's.
+// colour would be indistinguishable from committed's. Its opacity still has to
+// be below full - a prepared clip can evaporate at Take, and at the inherited
+// default it would compute identically to an aired block of the same kind.
 const CERTAINTY_CLASS: Record<string, string> = {
   committed: "opacity-90 border-2 border-solid border-current",
-  prepared: "opacity-100",
+  prepared: "opacity-75",
   projected: "opacity-50 border-t-2 border-dotted border-t-current",
   due: "opacity-30 border-2 border-dashed border-current",
 }

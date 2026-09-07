@@ -103,11 +103,16 @@ describe("ShowList", () => {
     confirm.mockRestore()
   })
 
-  it("names an untitled request in the confirmation rather than an empty string", () => {
+  it("names an untitled request the same way in the controls and the confirmation", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
     const tl = timeline({ upcoming: [seg({ id: "req:r1", certainty: "committed", title: "", requestId: "r1" })] })
     render(<ShowList timeline={tl} {...props} />)
-    fireEvent.click(screen.getByRole("button", { name: /^Remove/ }))
+    // Raw s.title would announce "Remove " and leave two untitled rows with
+    // indistinguishable accessible names.
+    expect(screen.getByRole("button", { name: "Remove Untitled" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Move Untitled earlier" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Move Untitled later" })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Remove Untitled" }))
     expect(confirm).toHaveBeenCalledWith('Gỡ "Untitled" khỏi hàng đợi?')
     confirm.mockRestore()
   })

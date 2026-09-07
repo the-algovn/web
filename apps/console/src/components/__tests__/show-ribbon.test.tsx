@@ -128,13 +128,55 @@ describe("ShowRibbon", () => {
     const due = screen.getByRole("button", { name: /DJ break/ })
 
     expect(prepared.className).not.toBe(due.className)
-    // A rendered, paid-for clip is at full strength and carries the marker.
-    expect(prepared.className).toMatch(/\bopacity-100\b/)
+    // A rendered, paid-for clip is the strongest projection and carries the
+    // marker - but it is still a projection, see the fact-weight test below.
+    expect(prepared.className).toMatch(/\bopacity-75\b/)
     expect(within(prepared).getByTestId("prepared-marker")).toBeInTheDocument()
     // A cadence guess is faded, dashed, and unmarked.
     expect(due.className).toMatch(/\bborder-dashed\b/)
     expect(due.className).toMatch(/\bopacity-30\b/)
     expect(within(due).queryByTestId("prepared-marker")).not.toBeInTheDocument()
+  })
+
+  it("never draws a prepared clip at fact weight - it can still evaporate at Take", () => {
+    // Same kind on purpose: the base colour is identical, so the only thing
+    // that can separate them is the certainty treatment itself. An opacity
+    // class that resolves to the inherited default is not a separation.
+    const tl = timeline({
+      past: [seg({ id: "air:8", kind: "dj", certainty: "aired", title: "Aired break", startedAtMs: NOW - 300_000 })],
+      airing: null,
+      upcoming: [seg({ id: "prep:1", kind: "dj", certainty: "prepared", title: "Prepared break", startedAtMs: NOW + 60_000 })],
+    })
+    render(<ShowRibbon timeline={tl} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
+    const aired = screen.getByRole("button", { name: /Aired break/ })
+    const prepared = screen.getByRole("button", { name: /Prepared break/ })
+
+    // Strip the marker out of the comparison: the block itself must differ, not
+    // just the 6px aria-hidden diamond sitting on top of it.
+    const airedClasses = new Set(aired.className.split(/\s+/))
+    const preparedOnly = prepared.className.split(/\s+/).filter((c) => c && !airedClasses.has(c))
+    expect(preparedOnly).toContain("opacity-75")
+    expect(preparedOnly).not.toContain("opacity-100")
+  })
+
+  it("grades the projections down the ladder, with facts above all of them", () => {
+    const rungs = ["committed", "prepared", "projected", "due"]
+    const tl = timeline({
+      past: [seg({ id: "air:8", kind: "dj", certainty: "aired", title: "aired", startedAtMs: NOW - 300_000 })],
+      airing: null,
+      upcoming: rungs.map((c, i) =>
+        seg({ id: `rung:${c}`, kind: "dj", certainty: c, title: c, startedAtMs: NOW + (i + 1) * 120_000 }),
+      ),
+    })
+    render(<ShowRibbon timeline={tl} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
+    const opacityOf = (name: string) => {
+      const hit = screen.getByRole("button", { name: new RegExp(`^${name} `) }).className.match(/\bopacity-(\d+)\b/)
+      // A fact carries no opacity class at all, which is full weight.
+      return hit?.[1] ? Number(hit[1]) : 100
+    }
+
+    expect(opacityOf("aired")).toBe(100)
+    expect(rungs.map(opacityOf)).toEqual([90, 75, 50, 30])
   })
 
   it("does not draw the pinned next-up the same as a plain projection", () => {

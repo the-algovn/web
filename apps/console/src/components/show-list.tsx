@@ -100,13 +100,13 @@ export function ShowList(props: {
                 actions={
                   s.requestId ? (
                     <>
-                      <Button variant="ghost" size="sm" aria-label={`Move ${s.title} earlier`} disabled={props.busy} onClick={() => props.onMove(s.requestId, -1)}>
+                      <Button variant="ghost" size="sm" aria-label={`Move ${label(s)} earlier`} disabled={props.busy} onClick={() => props.onMove(s.requestId, -1)}>
                         <ChevronUp />
                       </Button>
-                      <Button variant="ghost" size="sm" aria-label={`Move ${s.title} later`} disabled={props.busy} onClick={() => props.onMove(s.requestId, 1)}>
+                      <Button variant="ghost" size="sm" aria-label={`Move ${label(s)} later`} disabled={props.busy} onClick={() => props.onMove(s.requestId, 1)}>
                         <ChevronDown />
                       </Button>
-                      <Button variant="ghost" size="sm" aria-label={`Remove ${s.title}`} disabled={props.busy} onClick={() => confirmRemove(s, props.onRemove)}>
+                      <Button variant="ghost" size="sm" aria-label={`Remove ${label(s)}`} disabled={props.busy} onClick={() => confirmRemove(s, props.onRemove)}>
                         <X />
                       </Button>
                     </>
