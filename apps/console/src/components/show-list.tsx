@@ -24,6 +24,12 @@ function emptyOrder(breakGate: string): string {
   return "No running order to show."
 }
 
+// Removal is irreversible on a live station and the X sits beside two
+// same-sized chevrons, so it is guarded the way the queue pane guarded it.
+function confirmRemove(seg: Segment, onRemove: (requestId: string) => void) {
+  if (window.confirm(`Gỡ "${seg.title}" khỏi hàng đợi?`)) onRemove(seg.requestId)
+}
+
 export function ShowList(props: {
   timeline: Timeline
   nowMs: number
@@ -97,7 +103,7 @@ export function ShowList(props: {
                       <Button variant="ghost" size="sm" aria-label={`Move ${s.title} later`} disabled={props.busy} onClick={() => props.onMove(s.requestId, 1)}>
                         <ChevronDown />
                       </Button>
-                      <Button variant="ghost" size="sm" aria-label={`Remove ${s.title}`} disabled={props.busy} onClick={() => props.onRemove(s.requestId)}>
+                      <Button variant="ghost" size="sm" aria-label={`Remove ${s.title}`} disabled={props.busy} onClick={() => confirmRemove(s, props.onRemove)}>
                         <X />
                       </Button>
                     </>

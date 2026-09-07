@@ -92,11 +92,24 @@ describe("ShowList", () => {
     expect(screen.queryByRole("button", { name: /^Remove/ })).not.toBeInTheDocument()
   })
 
-  it("removes by request id, not segment id", () => {
+  it("removes by request id, not segment id, once the operator confirms", () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true)
     const onRemove = vi.fn()
     render(<ShowList timeline={timeline()} {...props} onRemove={onRemove} />)
     fireEvent.click(screen.getByRole("button", { name: "Remove First" }))
+    expect(confirm).toHaveBeenCalledWith('Gỡ "First" khỏi hàng đợi?')
     expect(onRemove).toHaveBeenCalledWith("r1")
+    confirm.mockRestore()
+  })
+
+  it("does not remove when the operator declines the confirmation", () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const onRemove = vi.fn()
+    render(<ShowList timeline={timeline()} {...props} onRemove={onRemove} />)
+    fireEvent.click(screen.getByRole("button", { name: "Remove First" }))
+    expect(confirm).toHaveBeenCalled()
+    expect(onRemove).not.toHaveBeenCalled()
+    confirm.mockRestore()
   })
 
   it("pages the past against totalPast, which excludes the airing row", () => {
