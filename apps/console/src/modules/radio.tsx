@@ -4,6 +4,7 @@ import { Skeleton } from "@algovn/ui/skeleton"
 import { WifiOff } from "lucide-react"
 import { useState } from "react"
 import { ShowList } from "../components/show-list"
+import { ShowRibbon } from "../components/show-ribbon"
 import { StationBar } from "../components/station-bar"
 import { useAuth } from "../lib/use-auth"
 import { useShowTimeline } from "../lib/use-show-timeline"
@@ -30,18 +31,26 @@ export function Radio() {
       />
       <div className="min-h-0 flex-1 overflow-auto p-6">
         {show.timeline ? (
-          <ShowList
-            timeline={show.timeline}
-            nowMs={show.nowMs}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            busy={show.busy}
-            page={show.page}
-            onPage={show.setPage}
-            onSkip={() => void show.skip()}
-            onReorder={(ids) => void show.reorder(ids)}
-            onRemove={(id) => void show.remove(id)}
-          />
+          <div className="flex flex-col gap-4">
+            <ShowRibbon
+              timeline={show.timeline}
+              nowMs={show.nowMs}
+              selectedId={selectedId}
+              onSelect={(id) => setSelectedId(id === selectedId ? null : id)}
+            />
+            <ShowList
+              timeline={show.timeline}
+              nowMs={show.nowMs}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              busy={show.busy}
+              page={show.page}
+              onPage={show.setPage}
+              onSkip={() => void show.skip()}
+              onReorder={(ids) => void show.reorder(ids)}
+              onRemove={(id) => void show.remove(id)}
+            />
+          </div>
         ) : show.loading ? (
           <div className="flex flex-col gap-2">
             {Array.from({ length: 8 }).map((_, i) => (
