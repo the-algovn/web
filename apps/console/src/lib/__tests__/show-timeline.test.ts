@@ -3,6 +3,7 @@ import {
   fmtDuration,
   hhmm,
   isFact,
+  label,
   layout,
   MIN_BLOCK_PCT,
   playheadPct,
@@ -16,6 +17,11 @@ describe("toTimeline", () => {
   it("coerces the int64 totalPast, which arrives as a decimal string", () => {
     expect(toTimeline({ totalPast: "137" }).totalPast).toBe(137)
     expect(toTimeline({}).totalPast).toBe(0)
+  })
+
+  it("zeroes an unparseable totalPast rather than letting NaN reach the pager", () => {
+    // NaN would render "page 1 / NaN of NaN" and leave Older enabled forever.
+    expect(toTimeline({ totalPast: "not-a-number" }).totalPast).toBe(0)
   })
 
   it("never produces NaN from omitted zero-valued numerics", () => {
@@ -60,6 +66,22 @@ describe("isFact", () => {
     for (const c of ["committed", "prepared", "projected", "due", "unknown", "staging"]) {
       expect(isFact(c)).toBe(false)
     }
+  })
+})
+
+describe("label", () => {
+  it("names an untitled segment by its kind, and an untitled track Untitled", () => {
+    const of = (kind: string) => label(toTimeline({ upcoming: [{ kind }] }).upcoming[0]!)
+    expect(of("unknown")).toBe("Shuffle")
+    expect(of("dj")).toBe("DJ break")
+    expect(of("station_id")).toBe("Station ID")
+    // The divergence the ribbon and the list used to disagree about: an
+    // untitled track is not a shuffle roll.
+    expect(of("track")).toBe("Untitled")
+  })
+
+  it("prefers the real title over every fallback", () => {
+    expect(label(toTimeline({ upcoming: [{ kind: "unknown", title: "Bolero" }] }).upcoming[0]!)).toBe("Bolero")
   })
 })
 

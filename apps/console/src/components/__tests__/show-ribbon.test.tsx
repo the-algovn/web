@@ -1,6 +1,13 @@
 import { fireEvent, render, screen, within } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import { MIN_BLOCK_PCT, type Segment, type Timeline } from "../../lib/show-timeline"
+import {
+  hhmm,
+  MIN_BLOCK_PCT,
+  type Segment,
+  type Timeline,
+  WINDOW_AFTER_MS,
+  WINDOW_BEFORE_MS,
+} from "../../lib/show-timeline"
 import { ShowRibbon } from "../show-ribbon"
 
 const NOW = Date.parse("2026-09-07T09:00:00Z")
@@ -36,6 +43,21 @@ describe("ShowRibbon", () => {
     expect(screen.getByRole("button", { name: /Older/ })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Now/ })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Next/ })).toBeInTheDocument()
+  })
+
+  it("names an untitled track the same as the list does, not Shuffle", () => {
+    const tl = timeline({
+      upcoming: [seg({ id: "req:r1", kind: "track", certainty: "projected", title: "", startedAtMs: NOW + 60_000 })],
+    })
+    render(<ShowRibbon timeline={tl} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
+    expect(screen.getByRole("button", { name: /^Untitled/ })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Shuffle/ })).not.toBeInTheDocument()
+  })
+
+  it("labels the axis from the window constants the geometry uses", () => {
+    render(<ShowRibbon timeline={timeline()} nowMs={NOW} selectedId={null} onSelect={() => {}} />)
+    expect(screen.getByText(hhmm(NOW - WINDOW_BEFORE_MS))).toBeInTheDocument()
+    expect(screen.getByText(hhmm(NOW + WINDOW_AFTER_MS))).toBeInTheDocument()
   })
 
   it("places the playhead at 40% of the window", () => {

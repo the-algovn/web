@@ -56,6 +56,7 @@ export function Radio() {
               onSelect={setSelectedId}
               busy={show.busy}
               page={show.page}
+              pageSize={show.pageSize}
               onPage={show.setPage}
               onSkip={() => void show.skip()}
               onMove={(id, delta) => void show.move(id, delta)}

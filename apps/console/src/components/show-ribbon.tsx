@@ -5,10 +5,13 @@ import {
   KIND_DJ,
   KIND_STATION_ID,
   KIND_UNKNOWN,
+  label,
   layout,
   playheadPct,
   type Segment,
   type Timeline,
+  WINDOW_AFTER_MS,
+  WINDOW_BEFORE_MS,
 } from "../lib/show-timeline"
 
 // Colour carries kind; border style and opacity carry certainty. Facts are
@@ -43,10 +46,7 @@ function blockClass(seg: Segment): string {
 }
 
 function blockLabel(seg: Segment): string {
-  const name =
-    seg.title ||
-    (seg.kind === KIND_DJ ? "DJ break" : seg.kind === KIND_STATION_ID ? "Station ID" : "Shuffle")
-  return `${name} ${hhmm(seg.startedAtMs)} ${CERTAINTY_LABEL[seg.certainty] ?? seg.certainty}`
+  return `${label(seg)} ${hhmm(seg.startedAtMs)} ${CERTAINTY_LABEL[seg.certainty] ?? seg.certainty}`
 }
 
 export function ShowRibbon(props: {
@@ -91,9 +91,9 @@ export function ShowRibbon(props: {
         />
       </div>
       <div className="text-muted-foreground flex justify-between font-mono text-[10px]">
-        <span>{hhmm(nowMs - 20 * 60_000)}</span>
+        <span>{hhmm(nowMs - WINDOW_BEFORE_MS)}</span>
         <span>now</span>
-        <span>{hhmm(nowMs + 30 * 60_000)}</span>
+        <span>{hhmm(nowMs + WINDOW_AFTER_MS)}</span>
       </div>
       <div className="text-muted-foreground flex gap-3 text-[10px]">
         <span className="flex items-center gap-1"><span className="bg-primary inline-block size-2 rounded-sm" /> track</span>

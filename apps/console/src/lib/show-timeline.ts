@@ -123,10 +123,29 @@ export function isFact(certainty: string): boolean {
   return certainty === "aired" || certainty === "airing"
 }
 
+// The walk emits unknown blocks with no title on purpose - shuffle has not
+// rolled yet, and inventing one would be the exact dishonesty this view exists
+// to remove. Shared, because the ribbon and the list are the same segment and
+// must not name it two different things.
+export function label(seg: Segment): string {
+  if (seg.title) return seg.title
+  if (seg.kind === KIND_UNKNOWN) return "Shuffle"
+  if (seg.kind === KIND_DJ) return "DJ break"
+  if (seg.kind === KIND_STATION_ID) return "Station ID"
+  return "Untitled"
+}
+
 function epochMs(rfc3339?: string): number {
   if (!rfc3339) return 0
   const t = Date.parse(rfc3339)
   return Number.isNaN(t) ? 0 : t
+}
+
+// NaN here would reach pageCount and render "page 1 / NaN of NaN" with Older
+// enabled forever, so an unparseable int64 string is treated as zero.
+function int64(v?: string | number): number {
+  const n = Number(v ?? 0)
+  return Number.isNaN(n) ? 0 : n
 }
 
 export function toSegment(w: ShowSegmentWire): Segment {
@@ -167,7 +186,7 @@ export function toTimeline(w: ShowTimelineWire): Timeline {
       endedAtMs: s.endedAt ? epochMs(s.endedAt) : null,
     })),
     breakGate: w.breakGate ?? "",
-    totalPast: Number(w.totalPast ?? 0),
+    totalPast: int64(w.totalPast),
     serverNowMs: epochMs(w.serverNow),
   }
 }

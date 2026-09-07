@@ -18,6 +18,9 @@ export interface ShowTimelineState {
   loading: boolean
   busy: boolean
   page: number
+  // The page size the polls actually use, so nothing downstream has to assume
+  // the default is in force.
+  pageSize: number
   setPage(p: number): void
   refresh(): void
   skip(): Promise<void>
@@ -187,5 +190,5 @@ export function useShowTimeline(
     [run, load],
   )
 
-  return { timeline, nowMs, loading, busy, page, setPage, refresh, skip, move, remove }
+  return { timeline, nowMs, loading, busy, page, pageSize: limit, setPage, refresh, skip, move, remove }
 }

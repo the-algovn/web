@@ -1,7 +1,7 @@
 import { Button } from "@algovn/ui/button"
 import { ChevronDown, ChevronUp, SkipForward, X } from "lucide-react"
 import type { ReactNode } from "react"
-import { GATE_LABEL, PAST_PAGE_SIZE, type Segment, type Timeline } from "../lib/show-timeline"
+import { GATE_LABEL, type Segment, type Timeline } from "../lib/show-timeline"
 import { SegmentRow } from "./segment-row"
 import { StagingStrip } from "./staging-strip"
 
@@ -37,6 +37,9 @@ export function ShowList(props: {
   onSelect(id: string | null): void
   busy: boolean
   page: number
+  // The hook owns the poll's limit; the pager must divide by that, not by the
+  // default it happens to agree with today.
+  pageSize: number
   onPage(p: number): void
   onSkip(): void
   // The id list the server compares against lives behind /station/requests,
@@ -50,7 +53,7 @@ export function ShowList(props: {
   const toggle = (id: string) => props.onSelect(props.selectedId === id ? null : id)
   const detail = (s: Segment) => (props.renderDetail ? props.renderDetail(s) : null)
 
-  const pageCount = Math.max(1, Math.ceil(tl.totalPast / PAST_PAGE_SIZE))
+  const pageCount = Math.max(1, Math.ceil(tl.totalPast / props.pageSize))
 
   return (
     <div className="flex flex-col gap-4">

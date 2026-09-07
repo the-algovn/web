@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { Segment, Timeline } from "../../lib/show-timeline"
+import { type Segment, type Timeline, toTimeline } from "../../lib/show-timeline"
 import { ShowList } from "../show-list"
 
 function seg(over: Partial<Segment> = {}): Segment {
@@ -37,6 +37,7 @@ const props = {
   onSelect: () => {},
   busy: false,
   page: 0,
+  pageSize: 50,
   onPage: () => {},
   onSkip: () => {},
   onMove: () => {},
@@ -118,6 +119,20 @@ describe("ShowList", () => {
     expect(screen.getByText(/of 120/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "Older" }))
     expect(onPage).toHaveBeenCalledWith(1)
+  })
+
+  it("pages against the size the hook actually polls with, not the default", () => {
+    const onPage = vi.fn()
+    render(<ShowList timeline={timeline({ totalPast: 120 })} {...props} pageSize={25} onPage={onPage} />)
+    expect(screen.getByText(/page 1 \/ 5 of 120/)).toBeInTheDocument()
+  })
+
+  it("keeps the pager sane when the server's totalPast will not parse", () => {
+    // Fed through the real boundary: without toTimeline's guard, pageCount is
+    // NaN, Older never disables, and the pager reads "page 1 / NaN of NaN".
+    render(<ShowList timeline={toTimeline({ totalPast: "not-a-number" })} {...props} />)
+    expect(screen.getByRole("button", { name: "Older" })).toBeDisabled()
+    expect(screen.queryByText(/NaN/)).not.toBeInTheDocument()
   })
 
   it("renders staging off the time axis", () => {

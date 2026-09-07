@@ -9,6 +9,7 @@ import {
   KIND_DJ,
   KIND_STATION_ID,
   KIND_UNKNOWN,
+  label,
   type Segment,
 } from "../lib/show-timeline"
 
@@ -31,17 +32,6 @@ function KindIcon({ kind }: { kind: string }) {
   if (kind === KIND_STATION_ID) return <RadioTower className="size-3.5 shrink-0 text-violet-600" />
   if (kind === KIND_UNKNOWN) return <Shuffle className="text-muted-foreground size-3.5 shrink-0" />
   return <Music2 className="text-muted-foreground size-3.5 shrink-0" />
-}
-
-// The walk emits unknown blocks with no title on purpose - shuffle has not
-// rolled yet, and inventing one would be the exact dishonesty this view exists
-// to remove.
-function label(seg: Segment): string {
-  if (seg.title) return seg.title
-  if (seg.kind === KIND_UNKNOWN) return "Shuffle"
-  if (seg.kind === KIND_DJ) return "DJ break"
-  if (seg.kind === KIND_STATION_ID) return "Station ID"
-  return "Untitled"
 }
 
 function attribution(seg: Segment): string | null {
