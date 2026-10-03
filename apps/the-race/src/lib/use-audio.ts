@@ -9,11 +9,17 @@ import type { RacePackage } from "./types"
  * iOS refuses to start one otherwise, and a context created in an effect after
  * a poll completes is far outside the gesture that would have authorised it.
  * `arm` is what the tap calls; everything else waits for it.
+ *
+ * Chrome auto-suspends idle AudioContexts and blocks resume() outside a user
+ * gesture. A silent oscillator keeps the context alive from the first click
+ * until the component unmounts - it never stops between races, so replay,
+ * rematch, and shared-link viewer all share the same protection.
  */
 export function useAudio() {
   const ctxRef = useRef<AudioContext | null>(null)
   const gainRef = useRef<GainNode | null>(null)
   const playbackRef = useRef<Playback | null>(null)
+  const keepAliveRef = useRef<OscillatorNode | null>(null)
 
   const [armed, setArmed] = useState(false)
   const [loaded, setLoaded] = useState<Preloaded | null>(null)
@@ -33,6 +39,19 @@ export function useAudio() {
       gain.connect(ctx.destination)
       ctxRef.current = ctx
       gainRef.current = gain
+
+      // Keep the context alive across async prepare phases and between races.
+      // A silent oscillator is audible to Chrome's autoplay policy, which only
+      // checks that the graph is "producing sound" - it can't tell it's at
+      // zero gain. Without this the context is suspended after ~30s of
+      // silence and resume() is blocked outside a user gesture.
+      const osc = ctx.createOscillator()
+      const keepAliveGain = ctx.createGain()
+      keepAliveGain.gain.value = 0
+      osc.connect(keepAliveGain)
+      keepAliveGain.connect(ctx.destination)
+      osc.start()
+      keepAliveRef.current = osc
     }
     // Safari hands back a suspended context even from inside the gesture.
     void ctxRef.current?.resume().catch(() => {})
@@ -88,7 +107,15 @@ export function useAudio() {
     })
   }, [])
 
-  useEffect(() => () => playbackRef.current?.stop(), [])
+  useEffect(
+    () => () => {
+      playbackRef.current?.stop()
+      if (keepAliveRef.current) {
+        try { keepAliveRef.current.stop() } catch { /* already stopped */ }
+      }
+    },
+    [],
+  )
 
   return { arm, armed, load, loaded, start, stop, reset, muted, toggleMute }
 }
