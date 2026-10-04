@@ -55,12 +55,29 @@ export function createFakePlayer(): RadioPlayer & {
   }
 }
 
+type HlsCtor = typeof import("hls.js").default
+
+const loadHlsJs = async (): Promise<HlsCtor> => (await import("hls.js")).default
+
+// Safari's non-standard start date of the HLS timeline (the first
+// PROGRAM-DATE-TIME); an Invalid Date until the playlist is parsed.
+type NativeHlsAudio = HTMLAudioElement & { getStartDate?: () => Date }
+
+/**
+ * Creates the live stream player bound to an audio element.
+ *
+ * @param audio - the element that plays the stream.
+ * @param opts.streamUrl - the HLS playlist URL.
+ * @param opts.loadHls - loads the hls.js constructor; defaults to a lazy import.
+ * @returns a RadioPlayer whose currentProgramDateTime() is the wall time of
+ *   what is audible now, or null while it is not yet known.
+ */
 export function createHlsPlayer(
-  audio: HTMLAudioElement,
-  opts: { streamUrl: string },
+  audio: NativeHlsAudio,
+  opts: { streamUrl: string; loadHls?: () => Promise<HlsCtor> },
 ): RadioPlayer {
   const hub = stateHub("idle")
-  let hls: import("hls.js").default | null = null
+  let hls: InstanceType<HlsCtor> | null = null
   let attached = false
   audio.addEventListener("playing", () => hub.set("playing"))
   audio.addEventListener("pause", () => hub.set("paused"))
@@ -69,12 +86,18 @@ export function createHlsPlayer(
   async function attach() {
     if (attached) return
     attached = true
-    // Safari plays HLS natively; elsewhere use hls.js (lazy — never loaded in jsdom).
-    if (audio.canPlayType("application/vnd.apple.mpegurl")) {
+    // Native only where it can report PROGRAM-DATE-TIME (Safari/iOS), which
+    // ear-sync needs. Chromium also plays HLS natively but without
+    // getStartDate, so there the UI would fall back to wall clock and run
+    // ahead of the audio by the whole stream latency.
+    if (
+      audio.canPlayType("application/vnd.apple.mpegurl") &&
+      typeof audio.getStartDate === "function"
+    ) {
       audio.src = opts.streamUrl
       return
     }
-    const Hls = (await import("hls.js")).default
+    const Hls = await (opts.loadHls ?? loadHlsJs)()
     if (!Hls.isSupported()) {
       audio.src = opts.streamUrl
       return
@@ -85,6 +108,12 @@ export function createHlsPlayer(
     })
     hls.loadSource(opts.streamUrl)
     hls.attachMedia(audio)
+  }
+
+  function nativeProgramDateTime(): number | null {
+    const start = audio.getStartDate?.().getTime()
+    if (start === undefined || Number.isNaN(start)) return null
+    return start + audio.currentTime * 1000
   }
 
   return {
@@ -102,18 +131,8 @@ export function createHlsPlayer(
     getState: hub.get,
     onState: hub.on,
     currentProgramDateTime() {
-      // hls.js exposes PROGRAM-DATE-TIME per fragment; map audible currentTime to it.
-      const level = hls?.currentLevel ?? -1
-      const details = level >= 0 ? hls?.levels?.[level]?.details : undefined
-      const frag = details?.fragments?.find(
-        (f) =>
-          audio.currentTime >= f.start &&
-          audio.currentTime < f.start + f.duration,
-      )
-      if (frag && typeof frag.programDateTime === "number") {
-        return frag.programDateTime + (audio.currentTime - frag.start) * 1000
-      }
-      return null
+      if (hls) return hls.playingDate?.getTime() ?? null
+      return nativeProgramDateTime()
     },
     destroy() {
       hls?.destroy()
